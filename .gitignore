@@ -1,0 +1,63 @@
+# Visual Studio left-overs
+*.suo
+*.ncb
+*.user
+*.ccscc
+*.cache
+*.pch
+*.sdf
+*.opensdf
+*.log
+*.lib
+*.dll
+*.obj
+*.aps
+*.res
+*.pdf
+*.user
+*.pdb
+*.filters
+_UpgradeReport_*/
+
+# Own conventions
+*.lnk
+
+# Editor left-overs, misc
+*.bak
+*.orig
+*.zip
+*.tmp
+*.TMP
+*.temp
+
+# Redundant copies
+Copy*of*.*
+*\ Copy.*
+*\ Copy*.*
+*\ v80.*.*
+
+# Compiled files
+# NOTE: git is case sensitive
+bin/
+obj/
+Obj/
+Debug/
+DebugU/
+DebugUReg/
+Release/
+ReleaseU/
+ReleaseUReg/
+DemoU/
+DemoReleaseU/
+Trial/
+ipch/
+
+# Project subfolders
+RegGen/
+Install/
+3rd Party/
+For dynamic*/
+
+# Windows left-overs
+Thumbs.db
+thumbs.db

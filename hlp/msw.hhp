@@ -1,0 +1,83 @@
+[OPTIONS]
+Auto Index=Yes
+Compatibility=1.1 or later
+Compiled file=..\Install\msw.chm
+Contents file=msw.hhc
+Default topic=main_index.htm
+Display compile progress=Yes
+Error log file=msw.log
+Full-text search=Yes
+Index file=msw.hhk
+Language=0x409 English (United States)
+Title=MagicScroll Help
+
+
+[FILES]
+afx_hidd_print.htm
+afx_hidd_printsetup.htm
+afx_hidw_status_bar.htm
+afx_hidw_toolbar.htm
+edit_window.htm
+hid_app_about.htm
+hid_app_exit.htm
+hid_context_help.htm
+hid_edit_clear.htm
+hid_edit_copy.htm
+hid_edit_cut.htm
+hid_edit_paste.htm
+hid_edit_undo.htm
+hid_file_mru_file1.htm
+hid_file_new.htm
+hid_file_open.htm
+hid_file_print.htm
+hid_file_print_preview.htm
+hid_file_print_setup.htm
+hid_file_save.htm
+hid_file_save_as.htm
+hid_help_index.htm
+hid_help_using.htm
+hid_window_all.htm
+hid_window_arrange.htm
+hid_window_cascade.htm
+hid_window_tile.htm
+howto_bullets.htm
+howto_create_save_open.htm
+howto_cut.htm
+howto_format_alignment.htm
+howto_format_font.htm
+howto_format_indent.htm
+howto_format_tabs.htm
+howto_locate_text.htm
+howto_print.htm
+howto_print_page_setup.htm
+howto_undo.htm
+main_index.htm
+menu_bookmarks.htm
+menu_edit.htm
+menu_file.htm
+menu_format.htm
+menu_help.htm
+menu_tools.htm
+menu_view.htm
+menu_window.htm
+menus.htm
+preferences.htm
+ruler.htm
+scroll_window.htm
+scrollbars.htm
+timer.htm
+toolbar.htm
+
+[ALIAS]
+rDlgGeneralPrefs=preferences.htm
+
+[MAP]
+#define rCtlPrefClearPc                 1008
+#define rDlgGeneralPrefs                198
+
+[TEXT POPUPS]
+WhatsThisTopics.h
+WhatsThisTopics.txt
+
+[INFOTYPES]
+

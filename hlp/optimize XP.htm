@@ -1,0 +1,310 @@
+  <title>Optimizing Windows XP</title>
+  <p>
+
+
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="Tuning">
+</OBJECT>
+
+  </p>
+  <p>
+  <b>Optimizing Windows XP</b></p>
+  <p><font face="arial" size="2">There are several modifications that can be 
+  made to Windows XP that will improve scrolling performance and smoothness in 
+  MagicScroll.</font></p>
+  <blockquote>
+    <p><b><font face="arial" size="2">Contents</font></b></p>
+    <ul>
+      <li><font face="arial" size="2"><a href="#Visual">Visual effects</a></font></li>
+      <li><font face="arial" size="2"><a href="#User switching">Fast-user 
+      switching</a></font></li>
+      <li><font face="arial" size="2"><a href="#auto-update">Automatic updating</a></font></li>
+      <li><font face="arial" size="2"><a href="#system restore">System restore</a></font></li>
+      <li><font face="arial" size="2"><a href="#defrag">Defragmentation</a></font></li>
+      <li><font face="arial" size="2"><a href="#start up">Background programs</a></font></li>
+      <li><font face="arial" size="2"><a href="#Services">Services</a></font></li>
+      <li><font face="arial" size="2"><a href="#tweak">Tweak utilities</a></font></li>
+      <li><font face="arial" size="2"><a href="#resources">More resources...</a></font></li>
+    </ul>
+  </blockquote>
+  <p>
+  <b><font face="arial" size="2"><span name="intelliTxt" id="intelliTXT">Use It!</span></font></b></p>
+  <p>
+  <font face="arial" size="2"><span name="intelliTxt" id="intelliTXT">Of 
+  everything you can do to optimize Windows XP, one of the simplest is just to 
+  use it. As you launch and exploit applications, Windows observes your behavior 
+  and updates a dynamic file called Layout.ini. After every three days, when it 
+  senses that the computer is idle, it rearranges the locations of programs on 
+  the system hard drive to optimize their launch and execution.</span></font></p>
+  <font face="arial" size="2"><span name="intelliTxt" id="intelliTXT">
+  <p nd="2"><b><span nd="1" class="content9"><a name="Visual"></a>Icons and Wallpaper</span></b></p>
+  <p nd="2">Excessive desktop icons and desktop wallpaper take up their share of 
+  system memory, and they're constantly refreshed by the graphics subsystems. 
+  Animated desktops are particularly hard on a system's core resources.&nbsp; 
+  The performance hit leveraged by such minor glitter is minimal, however, so as 
+  long as your system has more than 128MB of RAM and a semi-modern processor 
+  (something in the range of 600MHz or faster) then don't worry too much about 
+  icons and wallpaper. However, if you're limping along with 64MB of RAM on a 
+  200MHz Pentium Pro, then every clock cycle is critical.</p>
+  <p nd="6"><b><span nd="5" class="content9">Cut Down on the Effects</span></b></p>
+  <p nd="7">All of the visual splendor of XP can degrade the responsiveness of 
+  the user interface. XP runs a few tests to auto-configure its GUI settings for 
+  a mix of beauty and usability, but its decisions are easily overridden.</p>
+  <p nd="8">Some of the settings are accessed through the Appearance tab on the 
+  Display Properties, which you can evoke by right-clicking on an empty area of 
+  the desktop and selecting Properties. Click on the Effects button and you can 
+  tweak the menu transitions, shadows and font properties.&nbsp; </p>
+  <p nd="9">You can further tweak GUI performance through the System Properties 
+  tool. Open it through Control Panel or by right-clicking on My Computer and 
+  selecting Properties. Choose the Advanced tab. A radio button lets you 
+  optimize for performance, or you can customize your mix from a list of 
+  check-boxed visual effects options&nbsp; Click on the Advanced tab of the 
+  Performance Options dialog and ensure that processor scheduling and memory 
+  usage are configured for programs.<!-- start ziffimage //--></p>
+  <p nd="2"><b><span nd="1" class="content9"><a name="User switching"></a>Fast-User Switching</span></b></p>
+  <p nd="2">Available on XP Home Edition and on Professional when it's not part 
+  of a domain, fast user switching lets users of the same computer switch 
+  between accounts without logging off. Keeping multiple user accounts active is 
+  a burden to a PC's memory usage. Windows XP automatically disables fast user 
+  switching during installation if the computer has 64MB of RAM or less. For 
+  best performance, make sure only one user is logged in at a time, and if that 
+  becomes a nuisance, disable the feature altogether: go to Control Panel\User 
+  Accounts, click the &quot;Change the way users log on or off&quot; button, and uncheck 
+  &quot;Use Fast User Switching&quot;. </p>
+  <p nd="7"><b><span nd="6" class="content9"><a name="auto-update"></a>Automatic Updating</span></b></p>
+  <p nd="7">You should always keep Windows up to date with the latest security 
+  fixes, DirectX versions, compatibility patches and other updates. By default, 
+  XP will do this for you--but this requires a small program to run in the 
+  background and occasionally check, or remind you to check, for Windows 
+  revisions. If you'd rather handle the task of updating Windows yourself, you 
+  can tell XP not to bother. Head to the Automatic Updates tab in the System 
+  Properties tool. You can elect to have Windows detect and download updates 
+  automatically, to have the OS check for updates and notify you when they are 
+  available, or not to do anything. </p>
+  <p nd="2"><b><span nd="1" class="content9"><a name="system restore"></a>System Restore</span></b></p>
+  <p nd="2">System Restore creates periodic snapshots of 
+  your critical system files (like the registry files, COM+ database, user 
+  profiles, and such) and stores them as a &quot;restore point.&quot; Should you install 
+  an application that hoses your system, or if something important gets 
+  corrupted, you can revert the computer to the state it was in at a restore 
+  point and go on happily using it. Restore points are automatically created by the System Restore 
+  service upon several events, such as when a new application is installed, a 
+  Windows update is applied, an unsigned driver is installed, or some other 
+  event occurs that could have a negative effect on the
+  operating system. You may create manual restore points through System 
+  Restore's main interface, which you can access through 
+  Start\Programs\Accessories\System Tools\System Restore. </p>
+  <p nd="5">System Restore does require a service to run in the background that 
+  has a minimal performance impact, and its recorded backups take up hard drive 
+  space. You can control how much space it's allowed (which affects how many 
+  restore points it can create), and shut it down entirely, through the System 
+  Restore tab in the System Properties tool. </p>
+  <p nd="6">The System Restore dialog lists each active drive partition. You can 
+  adjust the percentage of space that System Restore is allowed to work with on 
+  each one. There's also a checkbox that allows you to shut down System Restore 
+  entirely for all drives. </p>
+  <p><b><span class="content9"><font nd="8" face="arial" size="2">
+  <a name="defrag"></a>Defrag Regularly</font></span></b></p>
+  <p><font nd="9" face="arial" size="2">Fragmentation is when gaps of free space 
+  open up in various areas of the hard drive as programs and files are installed 
+  and removed; later, other files are written starting at the first block of 
+  free space, filling the gaps in order by sector and ending up scattered in 
+  pieces all over the drive. When an operating system has to access several 
+  different areas of a hard disk just to load a single file or program, 
+  performance is severely degraded. </font></p>
+  <p><font nd="10" face="arial" size="2">Windows XP takes measures when used 
+  with the NTFS file system to keep hard disks contiguous--but fragmentation 
+  still does occur. Therefore, you should defrag your XP hard disk(s) on a 
+  regular basis depending on how much file juggling you do on your PC. </font>
+  <font nd="11" face="arial" size="2">If you install and remove programs 
+  frequently, or if you're constantly creating, moving and deleting data files, 
+  you should defrag the drive as often as once per week. If, however, you tend 
+  to use the same applications for long periods of time and you don't move files 
+  around too often, you can get away with defragging your drives less 
+  frequently, as seldom as once a month. </font></p>
+  <p><font nd="12" face="arial" size="2">If you defrag your hard disks often 
+  enough, you won't notice a change in performance immediately after defragging. 
+  That's a <i>good</i> thing. If your computer is noticeably more responsive 
+  right after defragging, you've let it go too long. </font></p>
+  <p><b><span class="content9"><font nd="13" face="arial" size="2">Purge 
+  Unneeded Background Clutter</font></span></b></p>
+  <p><font nd="14" face="arial" size="2">Programs that run needlessly in the 
+  background degrade the performance of foreground applications and games. TSRs 
+  hog system memory, increase page file swapping, and monopolize the CPU for 
+  tasks that aren't particularly necessary.&nbsp; </font>
+  <font nd="15" face="arial" size="2">You can see what's going on in the 
+  background by launching the Task Manager, which is invoked by simultaneously 
+  pressing CTRL, ALT and DEL. Unlike Windows 9x, XP differentiates between 
+  active end-user applications and system processes. Click on the Processes task 
+  to see a list of system processes and TSRs floating around behind the curtain. 
+  You can also shut down programs and processes from here, which you'll 
+  occasionally want to do if something hangs up on you. </font></p>
+  <p><font nd="16" face="arial" size="2">You'll recognize some of them straight 
+  out. If you're running an
+  <a itxtdid="3411094" target="_blank" href="http://www.extremetech.com/article2/0,1697,1153280,00.asp#" style="border-bottom: 0.075em solid darkgreen; font-weight: normal; font-size: 100%; text-decoration: underline; color: darkgreen; background-color: transparent; padding-bottom: 1px;" classname="iAs" class="iAs">
+  antivirus program</a>, for example, you'll see its background process listed. 
+  You may see processes that do everything from configure your mouse (like the 
+  ubiquitous EM_EXEC.EXE) to the default Windows shell EXPLORER.EXE. </font></p>
+  <p><font nd="17" face="arial" size="2">If you're a 9x user, some of the 
+  processes will be totally unfamiliar. SERVICES.EXE, WINLOGON.EXE, SYSTEM, and 
+  others. Services are discussed below. </font></p>
+  <p><b><span align="left" class="content9"><a name="start up"></a>MSCONFIG</span></b></p>
+  <p nd="1">Like versions of Windows 9x, from 98 on, XP contains the System 
+  Configuration Utility (or SCU). Invoke it by running MSCONFIG at the Run 
+  command line. It's great for experimenting with startup applications. The SCU 
+  main interface contains several tabs that allow users to selectively and 
+  non-permanently alter several startup parameters. The first two, SYSTEM.INI 
+  and WIN.INI, are included for the purpose of legacy compatibility; there's 
+  very little chance you'll ever need to tweak them. </p>
+  <p nd="5">The Services tab lets you check and uncheck XP services, but there's 
+  a better way to go about enabling and disabling them that we'll get to later.
+  </p>
+  <p nd="6">Under the Startup tab, you'll find a listing of each program that's 
+  called to start after Windows XP is booted up. It's here that you can disable 
+  things that you suspect are unnecessary, such as Microsoft Office's TSR, 
+  Quicken Agent, launchers employed by multimedia programs like RealPlayer and 
+  WinAmp, and other such nonsense. The beauty of the SCU is that disabled items 
+  aren't permanently deleted: you can uncheck particular components, reboot, and 
+  then test your applications and hardware. If you determine that something has 
+  ceased to function, you can fire the SCU back up, recheck the box next to the 
+  startup item in question, and reboot. </p>
+  <p nd="7">You can often improve system performance vastly by experimenting 
+  with the SCU and eliminating everything that isn't absolutely necessary. Once 
+  you've determined a particular startup item to be useless, you can purge it 
+  from wherever it's being called by checking its location in the SCU listing. 
+  Items shown to be in &quot;Common Startup&quot; are called through the Start Menu's 
+  Startup group--delete their icons and they won't be launched anymore. </p>
+  <p nd="8">Items launched via the registry can be purged through the REGEDIT 
+  program (after, of course, you've carefully backed up the registry in case you 
+  accidentally alter something critical). They're most often located 
+  HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run key. Simply 
+  delete their values to prevent them from being launched on subsequent Windows 
+  boots. </p>
+  <p><b><span align="left" class="content9"><a name="Services"></a>Services</span></b></p>
+  <p><i>Entire articles and even books have been written about managing 
+  services, and we can't explain every nuance and aspect of them here. If you're 
+  unsure about a particular service, don't alter it.</i></p>
+  <p>Services are generally considered important components of operating system 
+  code that provide functionality for various hardware, applications, tasks, and 
+  so on. Of course, you shouldn't attempt to disable core operating system 
+  kernel processes and related services that manage process scheduling, 
+  interrupt handing, file management, virtual memory management, etc. But in our 
+  context, there are many less critical services, invoked by default, layered 
+  atop or working alongside the core operating system services that may be 
+  disabled or modified to improve system responsiveness or performance, without 
+  serious side effects. </p>
+  <p nd="3">You can launch the Services control applet either through Control 
+  Panel/Administrative Tools/Services (if using the &quot;classic view&quot; of the 
+  Control Panel, or look within the Performance and Maintenance section when 
+  using the new &quot;category view&quot; of the Control Panel), or by running 
+  SERVICES.MSC from the Run command line. </p>
+  <p nd="4">You'll see a list box that contains every service available to user 
+  modification in your Windows XP configuration. Each entry contains a 
+  description of the service (which you can view in better detail by clicking on 
+  the service in question), its status (whether it's been started or not), its 
+  startup type (automatic, manual or disabled), and the user account with which 
+  the service logs on to the computer (unless you're far too advanced a user to 
+  benefit from this article, don't change this). </p>
+  <p nd="5">Services whose startup setting is Automatic will start when Windows 
+  starts. Manual services can be started by the user or if a dependant service 
+  (a service that cannot function without another service) is invoked. Disabled 
+  services won't start at all. </p>
+  <p nd="6">For pure performance, you can stop a number of services and/or set 
+  them on manual. Don't <i>disable</i> a service unless you're absolutely sure 
+  that no other services or hardware needs it. </p>
+  <p nd="7">For example, if you've disabled System Restore, you can stop its 
+  service and set it on manual. If you don't record CD-Rs, you can do the same 
+  to the IMAPI CD-Burning COM service. The Portable Media Serial Number service 
+  is pretty much useless, so feel free to set it on manual (or disable it if you 
+  don't have a portable music player). If you don't do any printing, shut down 
+  the Print Spooler service. Most users can set the Help and Support service on 
+  manual (advanced users may want to disable it). If you don't use themes, turn 
+  off the service. </p>
+  <p nd="8">Experiment with stopping other services cautiously. You may never 
+  need services like Telnet, Error Reporting, Task Scheduler (which is different 
+  than the core operating system process scheduler, and operates at the user 
+  application level), Indexing Service, Fast User Switching, ClipBook, 
+  Distributed Transaction Coordinator, Internet Connection Firewall/Sharing (ICF/ICS), 
+  and others. If you're unsure about a particular service, leave it alone. <i>
+  Point of clarification - forum member MURDOCDV reminded us that the Task 
+  Scheduler is used in auto-tuning operations - it assists in the creation of 
+  prefetch information for prefetching disk-resident code and data (as we 
+  alluded earlier), so it's NOT a good idea to disable the Task Scheduler. 
+  Thanks MURDOCDV!</i> </p>
+  <p nd="9">You can find out more about each service, including any dependent 
+  services or services upon which <i>it</i> depends, through its property sheet.
+  </p>
+  <p><b><span align="left" class="content9"><a name="tweak"></a>Use a Tweak 
+  Utility</span></b></p>
+  <p nd="1">Even though XP offers a wealth of ways to tinker with its settings, 
+  Microsoft kept some of the nitty-gritty hardcore tweaks undocumented, with the 
+  only way to change them being to dig deep in the registry, experiment, and 
+  hope for the best. Don't bother, though, there's a better way:
+  <a href="http://www.totalidea.de/frameset-tweakxp.htm" target="_blank">
+  Tweak-XP</a> is a full-featured shareware utility that gives users access to a 
+  vast range of configurable options, from minor GUI adjustments to 
+  performance-affecting cache and memory tweaks. The program is fully functional 
+  for 50 executions, after which you must register for $29.95 to continue using 
+  it.</p>
+  <p nd="1">Upon installation, Tweak-XP creates a system restore point so that 
+  should you hose your system with it, you can recover quickly. Its little 
+  interface is divided into four tabs, offering several pages of shortcuts and 
+  tweaks for system performance options, desktop tweaks, Internet connection 
+  streamlining, security tweaks, and so on. Most of the tweaks offered are 
+  easily adjusted through checkboxes and sliders, and some are explained in 
+  Tweak-XP's help file--although the program would benefit with more thorough 
+  descriptions of its functions. </p>
+  <p nd="4">While a discussion of Tweak-XP's entire feature set would fill a 
+  book, we can recommend a few quick enhancements in its System Performance 
+  section to speed up general Windows performance: </p>
+  <ul>
+    <li nd="5">If you have 512MB of RAM or more, experiment with the Core System 
+    Performance checkbox on the Cache Optimization page. This option forces XP's 
+    core code into memory and prevents it from being paged to a swap file. Most 
+    general operations will be more responsive with this option checked, but if 
+    you run several big programs simultaneously you may find the amount of 
+    paging actually increases, because the OS kernel takes up RAM that would 
+    otherwise be used for your applications.<br>
+&nbsp;</li>
+    <li nd="6">Under Hardware Tweaks, select your system's CPU from the list. 
+    Tweak-XP claims to implement unspecified tweaks for various graphics card 
+    chipsets, but our testing didn't reveal any in-game frame rate changes after 
+    using this feature. <br>
+&nbsp;</li>
+    <li nd="7">Before you launch a large program such as a game, a spreadsheet 
+    or a graphics suite, use Tweak-XP's RAM optimizer to reorganize your 
+    computer's memory and clear up unneeded data. Be sure to fill in the &quot;Clear 
+    the clipboard on every optimization&quot; checkbox.</li>
+  </ul>
+  <p><b><span class="content9"><font nd="11" face="arial" size="2">
+  <a name="resources"></a>Stay Tuned</font></span></b></p>
+  <p><font nd="12" face="arial" size="2">Windows XP is still being updated and 
+  patched. More optimizations are sure to be discovered and revealed as the OS 
+  ages. Watch <a href="http://www.emeTech.com">ExtremeTech.com</a> and the sites 
+  listed below for more XP performance improvements.</font></p>
+  <li nd="2">TweakXP (<a href="http://www.tweakxp.com/tweakxp/" target="_blank">www.tweakxp.com</a>): 
+  Affiliated with the Tweak-XP utility discussed above, this site is dedicated 
+  to helping users get the most out of Windows XP. Most of the data is raw and 
+  lacks sufficient explanation, but the site is updated frequently with tips and 
+  tweaks of all natures.<br>
+&nbsp;</li>
+  <li nd="3">Windows Guide Network (<a href="http://www.winguides.com/" target="_blank">www.winguides.com</a>): 
+  Great stuff about security, registry editing, tweaking third party apps, and 
+  more can be found here. <br>
+&nbsp;</li>
+  <li nd="4">TweakTown (<a href="http://www.tweaktown.com/" target="_blank">www.tweaktown.com</a>): 
+  One of the first sites to post a complete XP tweaking guide, TweakTown is full 
+  of genuinely useful information for all manner of hardware and technical 
+  stuff.<br>
+&nbsp;</li>
+  <li nd="5">Bink Windows XP (<a href="http://www.windowsxp.nu/" target="_blank">www.windowsxp.nu</a>): 
+  Its scattershot approach to good information and fluff produces some great 
+  nuggets of info. This site also has a huge list of XP-related links. <br>
+&nbsp;</li>
+  <li nd="6">Microsoft TechNet Online: (<a href="http://www.microsoft.com/technet/" target="_blank">www.microsoft.com/technet/</a>): 
+  More WinXP stuff is appearing every day, in very raw technical form. <br>
+&nbsp;</li>
+  <li nd="7">XP PowerToys (<a href="http://www.microsoft.com/windowsxp/pro/downloads/powertoys.asp" target="_blank">www.microsoft.com/windowsxp/pro/downloads/powertoys.asp</a>): 
+  The latest token PowerToys collection.</li>
+  </span></font>

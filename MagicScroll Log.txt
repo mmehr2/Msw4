@@ -1,0 +1,39 @@
+Loaded Modules: 
+ MagicScroll.exe,4.0.1,f:\Work\Magic Teleprompting\Msw4\DebugU\MagicScroll.exe
+ ntdll.dll,5.1.2600,D:\WINDOWS\system32\ntdll.dll
+ kernel32.dll,5.1.2600,D:\WINDOWS\system32\kernel32.dll
+ SETUPAPI.dll,5.1.2600,D:\WINDOWS\system32\SETUPAPI.dll
+ ADVAPI32.dll,5.1.2600,D:\WINDOWS\system32\ADVAPI32.dll
+ RPCRT4.dll,5.1.2600,D:\WINDOWS\system32\RPCRT4.dll
+ Secur32.dll,5.1.2600,D:\WINDOWS\system32\Secur32.dll
+ GDI32.dll,5.1.2600,D:\WINDOWS\system32\GDI32.dll
+ USER32.dll,5.1.2600,D:\WINDOWS\system32\USER32.dll
+ msvcrt.dll,7.0.2600,D:\WINDOWS\system32\msvcrt.dll
+ PSAPI.DLL,5.1.2600,D:\WINDOWS\system32\PSAPI.DLL
+ WINMM.dll,5.1.2600,D:\WINDOWS\system32\WINMM.dll
+ MSIMG32.dll,5.1.2600,D:\WINDOWS\system32\MSIMG32.dll
+ comdlg32.dll,6.0.2900,D:\WINDOWS\system32\comdlg32.dll
+ COMCTL32.dll,6.0.2900,D:\WINDOWS\WinSxS\x86_Microsoft.Windows.Common-Controls_6595b64144ccf1df_6.0.2600.5512_x-ww_35d4ce83\COMCTL32.dll
+ SHLWAPI.dll,6.0.2900,D:\WINDOWS\system32\SHLWAPI.dll
+ SHELL32.dll,6.0.2900,D:\WINDOWS\system32\SHELL32.dll
+ WINSPOOL.DRV,5.1.2600,D:\WINDOWS\system32\WINSPOOL.DRV
+ oledlg.dll,5.1.2600,D:\WINDOWS\system32\oledlg.dll
+ ole32.dll,5.1.2600,D:\WINDOWS\system32\ole32.dll
+ OLEAUT32.dll,5.1.2600,D:\WINDOWS\system32\OLEAUT32.dll
+ VERSION.dll,5.1.2600,D:\WINDOWS\system32\VERSION.dll
+ IMM32.DLL,5.1.2600,D:\WINDOWS\system32\IMM32.DLL
+ WINTRUST.dll,5.131.2600,D:\WINDOWS\system32\WINTRUST.dll
+ CRYPT32.dll,5.131.2600,D:\WINDOWS\system32\CRYPT32.dll
+ MSASN1.dll,5.1.2600,D:\WINDOWS\system32\MSASN1.dll
+ IMAGEHLP.dll,5.1.2600,D:\WINDOWS\system32\IMAGEHLP.dll
+ RICHED20.DLL,5.30.23,D:\WINDOWS\system32\RICHED20.DLL
+ FLVSrvLib.dll,1.0.0,D:\Documents and Settings\Dad\Local Settings\Application Data\FLVService\lib\FLVSrvLib.dll
+ MSVCR90.dll,D:\WINDOWS\WinSxS\x86_Microsoft.VC90.CRT_1fc8b3b9a1e18e3b_9.0.30729.4148_x-ww_d495ac4e\MSVCR90.dll
+ briu04a.dll,0.3.0,D:\WINDOWS\System32\spool\DRIVERS\W32X86\3\briu04a.dll
+ BRIL04A.DLL,1.1.0,D:\WINDOWS\System32\spool\DRIVERS\W32X86\3\BRIL04A.DLL
+ msctfime.ime,5.1.2600,D:\WINDOWS\system32\msctfime.ime
+ UxTheme.dll,6.0.2900,D:\WINDOWS\system32\UxTheme.dll
+ CLBCATQ.DLL,2001.12.4414,D:\WINDOWS\system32\CLBCATQ.DLL
+ COMRes.dll,2001.12.4414,D:\WINDOWS\system32\COMRes.dll
+ PolarSpellChecker.dll,5.0.0,f:\work\magic teleprompting\msw4\3rd party\polar\component\debug\PolarSpellChecker.dll
+ SXS.DLL,5.1.2600,D:\WINDOWS\system32\SXS.DLL

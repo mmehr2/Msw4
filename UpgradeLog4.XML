@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="Msw">
+</Property><Property Name="Solution File" Value="W:\Projects\MSW\Msw4\Msw.sln">
+</Property><Property Name="User Options File" Value="W:\Projects\MSW\Msw4\Msw.suo">
+</Property><Property Name="Date" Value="Sunday, June 25, 2017">
+</Property><Property Name="Time" Value="21:31">
+</Property><Property Name="Log Number" Value="4">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="Msw.sln" Description="File successfully backed up as W:\Projects\MSW\Msw4\Msw.sln.old">
+</Event><Event ErrorLevel="2" Project="" Source="Msw.suo" Description="Error creating backup file: W:\Projects\MSW\Msw4\Msw.suo.old">
+</Event><Event ErrorLevel="3" Project="Msw6" Source="Msw6.vcproj" Description="No Conversion Required">
+</Event><Event ErrorLevel="3" Project="SpellChecker" Source="3rd Party\Polar\Component\SpellChecker.vcproj" Description="No Conversion Required">
+</Event><Event ErrorLevel="0" Project="" Source="Msw.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="Msw.sln" Description="Converted">
+</Event></UpgradeLog>

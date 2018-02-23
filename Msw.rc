@@ -1,0 +1,1641 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#include ""res\\msw.rc2""  // non-App Studio edited resources\r\n"
+    "\r\n"
+    "#include ""afxres.rc""  \t// Standard components\r\n"
+    "#include ""afxprint.rc""\t// printing/print preview resources\r\n"
+    "#include ""afxolecl.rc""\t// OLE container resources\r\n"
+    "#include ""afxolesv.rc""\t// OLE server resources\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// SRGRAMMAR
+//
+
+rGrammar                SRGRAMMAR               "res\\Grammar.cfg"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+rMainFrame MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                rCmdFileNew
+        MENUITEM "&Open...\tCtrl+O",            rCmdFileOpen
+        MENUITEM "C&lose",                      rCmdFileClose
+        MENUITEM SEPARATOR
+        MENUITEM "&Save\tCtrl+S",               rCmdFileSave
+        MENUITEM "Save &As...",                 rCmdFileSaveAs
+        MENUITEM "Save &Copy As...",            rCmdFileSaveCopyAs
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",           rCmdFilePrint
+        MENUITEM "Print Pre&view",              rCmdFilePrintPreview
+        MENUITEM "Print Set&up...",             rCmdFilePageSetup
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       rCmdAppExit
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               rCmdEditUndo
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",                rCmdEditCut
+        MENUITEM "&Copy\tCtrl+C",               rCmdEditCopy
+        MENUITEM "&Paste\tCtrl+V",              rCmdEditPaste
+        MENUITEM "Paste &Special...",           rCmdEditPasteSpecial
+        MENUITEM "Select A&ll\tCtrl+A",         rCmdEditSelectAll
+        MENUITEM SEPARATOR
+        MENUITEM "&Find and Replace...\tCtrl+F", rCmdEditFind
+        MENUITEM "Find &Next\tF3",              rCmdEditFindNext
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",                    rCmdViewToolbar
+        MENUITEM "&Control Panel",              rCmdViewIconBar
+        MENUITEM "&Format Bar",                 rCmdViewFormatbar
+        MENUITEM "&Ruler",                      rCmdViewRuler
+        MENUITEM "&Status Bar",                 rCmdViewStatusBar
+        MENUITEM SEPARATOR
+        MENUITEM "Script &Queue\tCtrl+Q",       rCmdViewQueue
+        MENUITEM SEPARATOR
+        MENUITEM "&Go Into Scroll Mode\tCtrl+G", rCmdToggleScrollMode
+        MENUITEM SEPARATOR
+        MENUITEM "&Line Numbers\tCtrl-Alt-L",   rCmdViewShowLineNum
+    END
+    POPUP "F&ormat"
+    BEGIN
+        MENUITEM "&Font...",                    rCmdFormatFont
+        MENUITEM "&Bullets",                    rCmdFormatBullets
+        MENUITEM "&Paragraph...",               rCmdFormatPara
+        MENUITEM SEPARATOR
+        MENUITEM "&Styles...",                  ID_FORMAT_STYLES
+    END
+    POPUP "&Bookmarks"
+    BEGIN
+        MENUITEM "Set &Bookmark...\tAlt+K",     rCmdSetBkMk1
+        MENUITEM "&Next Bookmark\tCtrl+K",      rCmdNextBkmk
+        MENUITEM "Pre&vious Bookmark\tCtrl+Shift+K", rCmdPrevBkmk
+        MENUITEM "&Clear All Bookmarks",        rCmdClearBkMks
+        MENUITEM SEPARATOR
+        MENUITEM "Toggle &Paperclip\tAlt+P",    rCmdTogglePaperclip
+        MENUITEM "&Next Paperclip\tCtrl+Space", rCmdNextPclip
+        MENUITEM "Pre&vious Paperclip\tCtrl+Shift+Space", rCmdPrevPclip
+        MENUITEM "&Clear All Paperclips",       rCmdClearPclips
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "Remote Installations...",     rCmdRemote
+        MENUITEM SEPARATOR
+        MENUITEM "&Timer to ART\tCtrl+T",       rCmdTimerToArt
+        MENUITEM "Start Timer in Scroll &Mode\tCtrl+Shift+T", rCmdToggleTimer
+        MENUITEM "&Reset Timer\tCtrl+Alt+T",    rCmdTimerReset
+        MENUITEM SEPARATOR
+        MENUITEM "Check &Spelling...",          rCmdCheckSpelling
+        MENUITEM "Speller &Options...",         rCmdSpellerOptions
+        MENUITEM "&Auto Correct Options...",    rCmdAutoCorrectOptions
+        MENUITEM SEPARATOR
+        MENUITEM "Go To Line...\tCtrl+L",       rCmdGotoLine
+        MENUITEM SEPARATOR
+        MENUITEM "P&references...",             rCmdEditPrefs
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Cascade",                    rCmdWindowCascade
+        MENUITEM "&Tile",                       rCmdWindowTileHoriz
+        MENUITEM "&Arrange Icons",              rCmdWindowArrange
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help Topics",                rCmdHelpTopics
+        MENUITEM "Magic Teleprompting on the &Web...", rCmdHelpWeb
+        MENUITEM SEPARATOR
+        MENUITEM "&About MagicScroll",          rCmdAppAbout
+    END
+END
+
+rMenuInPlace MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New...\tCtrl+N",             rCmdFileNew
+        MENUITEM "&Open...\tCtrl+O",            rCmdFileOpen
+        MENUITEM "&Save\tCtrl+S",               rCmdFileSave
+        MENUITEM "Save &As...",                 rCmdFileSaveAs
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",           rCmdFilePrint
+        MENUITEM "Print Pre&view",              rCmdFilePrintPreview
+        MENUITEM "Page Set&up...",              rCmdFilePageSetup
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Sen&d...",                    ID_FILE_SEND_MAIL
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    MENUITEM SEPARATOR
+    MENUITEM SEPARATOR
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
+        MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
+        MENUITEM "&Arrange Icons",              ID_WINDOW_ARRANGE
+    END
+END
+
+rMenuTextPopup MENU 
+BEGIN
+    POPUP "TEXT_POPUP"
+    BEGIN
+        MENUITEM "Cu&t",                        rCmdEditCut
+        MENUITEM "&Copy",                       rCmdEditCopy
+        MENUITEM "&Paste",                      rCmdEditPaste
+        MENUITEM SEPARATOR
+        MENUITEM "&Font...",                    rCmdFormatFont
+        MENUITEM "&Bullet Style",               rCmdFormatBullets
+        MENUITEM "P&aragraph...",               rCmdFormatPara
+    END
+END
+
+rMenuDisabled MENU 
+BEGIN
+    POPUP "Disabled Features"
+    BEGIN
+        MENUITEM "Sen&d...",                    rCmdFileSend
+        MENUITEM "Cle&ar\tDel",                 rCmdEditClear
+        POPUP "&Insert"
+        BEGIN
+            MENUITEM "&Date and Time...",           rCmdInsertDate
+            MENUITEM "&Object...",                  rCmdInsertOle
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Lin&ks...",                   rCmdEditLinks
+        MENUITEM "&Object Properties\tAlt+Enter", rCmdEditObjectProperties
+        MENUITEM "&NTSC/PAL View",              rCmdViewNtsc
+        MENUITEM "Show &Invisibles",            rCmdViewShowInvis
+        MENUITEM "&Invisibles",                 ID_VIEW_SHOWINVISIBLES
+        MENUITEM "NTSC &Display Update\tCtrl+D", rCmdViewUpdate
+        MENUITEM SEPARATOR
+        MENUITEM "&Register MagicScroll...",    rCmdHelpRegisterMsw
+        MENUITEM SEPARATOR
+        MENUITEM "&Listen for Commands",        rCmdListen
+        MENUITEM "&Voice Training...",          rCmdVoiceTraining
+        MENUITEM "&Microphone Setup...",        rCmdMicSetup
+    END
+END
+
+rMenuSize MENU 
+BEGIN
+    POPUP "Size"
+    BEGIN
+        MENUITEM "12 pt.",                      rCmdSize12
+        MENUITEM "18 pt.",                      rCmdSize18
+        MENUITEM "24 pt.",                      rCmdSize24
+        MENUITEM "36 pt.",                      rCmdSize36
+        MENUITEM "40 pt.",                      rCmdSize40
+        MENUITEM "48 pt.",                      rCmdSize48
+        MENUITEM "64 pt.",                      rCmdSize64
+        MENUITEM "72 pt.",                      rCmdSize72
+        MENUITEM "96 pt.",                      rCmdSize96
+        MENUITEM SEPARATOR
+        MENUITEM "Larger\tCtrl +",              rCmdSizeLarger
+        MENUITEM "Smaller\tCtrl -",             rCmdSizeSmaller
+        MENUITEM SEPARATOR
+        MENUITEM "&Other...",                   rCmdSizeOther
+    END
+END
+
+rMenuFormat MENU 
+BEGIN
+    POPUP "Style"
+    BEGIN
+        MENUITEM "&Plain Text",                 rCmdStylePlain
+        MENUITEM "&Bold\tCtrl-B",               ID_CHAR_BOLD
+        MENUITEM "&Italics\tCtrl-I",            ID_CHAR_ITALIC
+        MENUITEM "&Underline\tCtrl-U",          ID_CHAR_UNDERLINE
+        MENUITEM SEPARATOR
+        MENUITEM "&Left Justify\tCtrl-[",       ID_PARA_LEFT
+        MENUITEM "&Center Justify\tCtrl-|",     ID_PARA_CENTER
+        MENUITEM "&Right Justify\tCtrl-]",      ID_PARA_RIGHT
+        MENUITEM SEPARATOR
+        MENUITEM "&Single Spacing",             ID_STYLE_1SPACE
+        MENUITEM "&1 1/2 Line Spacing",         ID_STYLE_15SPACE
+        MENUITEM "&Double Spacing",             ID_STYLE_2SPACE
+    END
+END
+
+IDR_MENU1 MENU 
+BEGIN
+    POPUP "TEXT_POPUP"
+    BEGIN
+        MENUITEM "Cu&t",                        ID_EDIT_CUT
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Font...",                    ID_FORMAT_FONT
+        MENUITEM "&Bullet Style",               33007
+        MENUITEM "P&aragraph...",               33008
+        MENUITEM SEPARATOR
+        MENUITEM "Object P&roperties",          ID_OLE_EDIT_PROPERTIES
+        MENUITEM "<<OLE VERBS GO HERE>>",       ID_OLE_VERB_POPUP
+        MENUITEM SEPARATOR
+        POPUP "Insert &Keystrokes"
+        BEGIN
+            MENUITEM "Space",                       33009
+            MENUITEM "Tab",                         33010
+            MENUITEM "New Line",                    33011
+        END
+        MENUITEM "E&dit Text...",               33012
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+rMainFrame ACCELERATORS 
+BEGIN
+    "1",            40100,                  VIRTKEY, CONTROL, NOINVERT
+    "2",            40101,                  VIRTKEY, CONTROL, NOINVERT
+    "3",            40102,                  VIRTKEY, CONTROL, NOINVERT
+    "4",            40103,                  VIRTKEY, CONTROL, NOINVERT
+    "5",            40104,                  VIRTKEY, CONTROL, NOINVERT
+    "6",            40105,                  VIRTKEY, CONTROL, NOINVERT
+    "7",            40106,                  VIRTKEY, CONTROL, NOINVERT
+    "8",            40107,                  VIRTKEY, CONTROL, NOINVERT
+    "9",            40108,                  VIRTKEY, CONTROL, NOINVERT
+    "0",            40109,                  VIRTKEY, CONTROL, NOINVERT
+    "1",            40110,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "2",            40111,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "3",            40112,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "4",            40113,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "5",            40114,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "6",            40115,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "7",            40116,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "8",            40117,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "9",            40118,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "0",            40119,                  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "B",            ID_CHAR_BOLD,           VIRTKEY, CONTROL, NOINVERT
+    "B",            ID_CHAR_BOLD,           VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "I",            ID_CHAR_ITALIC,         VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_CHAR_ITALIC,         VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "U",            ID_CHAR_UNDERLINE,      VIRTKEY, CONTROL, NOINVERT
+    "U",            ID_CHAR_UNDERLINE,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_F1,          ID_CONTEXT_HELP,        VIRTKEY, SHIFT, NOINVERT
+    VK_F3,          ID_EDIT_REPEAT,         VIRTKEY, NOINVERT
+    VK_F1,          ID_HELP,                VIRTKEY, NOINVERT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
+    "E",            ID_PARA_CENTER,         VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_5,       ID_PARA_CENTER,         VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_4,       ID_PARA_LEFT,           VIRTKEY, CONTROL, NOINVERT
+    "R",            ID_PARA_RIGHT,          VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_6,       ID_PARA_RIGHT,          VIRTKEY, CONTROL, NOINVERT
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+    "C",            rCmdEditCopy,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      rCmdEditCopy,           VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      rCmdEditCut,            VIRTKEY, SHIFT, NOINVERT
+    "X",            rCmdEditCut,            VIRTKEY, CONTROL, NOINVERT
+    "F",            rCmdEditFind,           VIRTKEY, CONTROL, NOINVERT
+    "H",            rCmdEditFind,           VIRTKEY, CONTROL, NOINVERT
+    "V",            rCmdEditPaste,          VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      rCmdEditPaste,          VIRTKEY, SHIFT, NOINVERT
+    "A",            rCmdEditSelectAll,      VIRTKEY, CONTROL, NOINVERT
+    VK_BACK,        rCmdEditUndo,           VIRTKEY, ALT, NOINVERT
+    "Z",            rCmdEditUndo,           VIRTKEY, CONTROL, NOINVERT
+    "N",            rCmdFileNew,            VIRTKEY, CONTROL, NOINVERT
+    "O",            rCmdFileOpen,           VIRTKEY, CONTROL, NOINVERT
+    "P",            rCmdFilePrint,          VIRTKEY, CONTROL, NOINVERT
+    "S",            rCmdFileSave,           VIRTKEY, CONTROL, NOINVERT
+    "L",            rCmdGotoLine,           VIRTKEY, CONTROL, NOINVERT
+    "K",            rCmdNextBkmk,           VIRTKEY, CONTROL, NOINVERT
+    VK_SPACE,       rCmdNextPclip,          VIRTKEY, CONTROL, NOINVERT
+    "K",            rCmdPrevBkmk,           VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_SPACE,       rCmdPrevPclip,          VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_DOWN,        rCmdScrollLineDown,     VIRTKEY, ALT, NOINVERT
+    VK_UP,          rCmdScrollLineUp,       VIRTKEY, ALT, NOINVERT
+    "B",            rCmdSetBkMk1,           VIRTKEY, CONTROL, ALT, NOINVERT
+    "K",            rCmdSetBkMk1,           VIRTKEY, ALT, NOINVERT
+    VK_OEM_PLUS,    rCmdSizeLarger,         VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_MINUS,   rCmdSizeSmaller,        VIRTKEY, CONTROL, NOINVERT
+    "T",            rCmdTimerReset,         VIRTKEY, CONTROL, ALT, NOINVERT
+    "T",            rCmdTimerToArt,         VIRTKEY, CONTROL, NOINVERT
+    "P",            rCmdTogglePaperclip,    VIRTKEY, ALT, NOINVERT
+    "G",            rCmdToggleScrollMode,   VIRTKEY, CONTROL, NOINVERT
+    VK_ESCAPE,      rCmdToggleScrollMode,   VIRTKEY, NOINVERT
+    "T",            rCmdToggleTimer,        VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "Q",            rCmdViewQueue,          VIRTKEY, CONTROL, NOINVERT
+    "L",            rCmdViewShowLineNum,    VIRTKEY, CONTROL, ALT, NOINVERT
+END
+
+rScrollAccelerators ACCELERATORS 
+BEGIN
+    "T",            rCmdToggleTimer,        VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+rDlgParaFormat DIALOGEX 0, 0, 185, 47
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Paragraph"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Indentation",IDC_BOX,32,100,114,65
+    LTEXT           "&Left:",IDC_STATIC,38,133,29,8
+    EDITTEXT        IDC_EDIT_LEFT,77,131,60,12,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "&Right:",IDC_STATIC,38,150,29,8,NOT WS_GROUP
+    EDITTEXT        IDC_EDIT_RIGHT,77,148,60,12,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "&First line:",IDC_STATIC,38,166,32,8,NOT WS_GROUP
+    EDITTEXT        IDC_EDIT_FIRST_LINE,77,164,60,12,ES_AUTOHSCROLL | WS_DISABLED
+    LTEXT           "&Alignment:",IDC_TEXT_ALIGNMENT,7,9,37,8
+    COMBOBOX        IDC_COMBO_ALIGNMENT,46,7,60,45,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,128,10,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,128,27,50,14
+    LTEXT           "&Spacing:",IDC_TEXT_SPACING,7,28,37,8
+    COMBOBOX        IDC_COMBO_SPACING,46,26,60,45,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+rDlgAbout DIALOGEX 0, 0, 198, 175
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+EXSTYLE WS_EX_TOPMOST
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    CONTROL         "",rCtlCompany,"Static",SS_BITMAP | SS_SUNKEN,7,10,184,73
+    CTEXT           "[MagicScroll Version x.x.x]",rCtlVersion,7,90,184,8,NOT WS_GROUP
+    CTEXT           "Copyright© 2008 MagicTeleprompting 1994-2008.",IDC_STATIC,7,102,184,8
+    CTEXT           "",rCtlVersion2,7,115,184,8,NOT WS_GROUP
+    CONTROL         "",IDC_STATIC,"Static",SS_BLACKRECT,7,116,184,1
+    CTEXT           "Warning: This computer program is protected by copyright law and international treaties.  Unauthorized reproduction or distribution of this program, or any portion of it, may result in severe civil and criminal penalties.",rCtlWarning,7,123,184,39
+    CONTROL         "",IDC_STATIC,"Static",SS_WHITEFRAME,3,5,191,163
+END
+
+rDlgGotoLine DIALOGEX 0, 0, 140, 55
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Go To Line"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Go to &line number:",IDC_STATIC,7,8,81,9
+    EDITTEXT        rCtlGotoLine,90,7,43,13,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,48,34,40,14
+    PUSHBUTTON      "Cancel",IDCANCEL,93,34,40,14
+END
+
+rDlgGeneralPrefs DIALOGEX 40, 40, 293, 134
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "General"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "General",IDC_STATIC,7,4,136,72
+    CONTROL         "Clear &Paperclips in Scroll Mode",rCtlPrefClearPc,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,17,113,10
+    CONTROL         "Reset &Timer in Scroll Mode",rCtlPrefResetTimer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,31,113,10
+    CONTROL         "&Manually Start Timer in Scroll Mode",rCtlPrefManualTimer,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,44,124,10
+    CONTROL         "Inverse &Video in Edit Mode",rCtlPrefInverseEditMode,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,57,113,10
+    CONTROL         "Include &Cuebar in Printouts",rCtlPrefPrintCue,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,16,66,113,10
+    GROUPBOX        "Fonts",IDC_STATIC,7,79,279,45
+    LTEXT           "Default &Font:",IDC_STATIC,16,91,45,9
+    PUSHBUTTON      "",rCtlButtonDefaultFont,99,88,110,14
+    LTEXT           "Default Font &Language:",IDC_STATIC,16,107,80,9
+    COMBOBOX        rCtlPrefsDefFontLang,99,105,110,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "ERT Time Base",IDC_STATIC,149,4,137,72
+    EDITTEXT        rCtlErtCps,156,27,42,13,ES_AUTOHSCROLL
+    LTEXT           "cps",IDC_STATIC,201,29,17,8
+    PUSHBUTTON      "Set to &Default",rCtlErtDefault,220,26,59,14,NOT WS_TABSTOP
+END
+
+rDlgVideoConfig DIALOGEX 50, 50, 293, 134
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Video"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Attributes",IDC_STATIC,7,7,94,113
+    CONTROL         "&Color Output",rCtlVcColor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,23,81,10
+    CONTROL         "&Inverse Video",rCtlVcInverse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,39,81,10
+    CONTROL         "Script &Dividers",rCtlVcShowDividers,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,55,81,10
+    CONTROL         "Show &Speed",rCtlVcShowSpeed,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,71,81,10
+    CONTROL         "Show Script &Position",rCtlVcShowPos,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,87,81,10
+    CONTROL         "Show &Timer",rCtlVcShowTimer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,103,81,10
+    GROUPBOX        "Orientation",IDC_STATIC,107,85,179,35
+    CONTROL         "Draw &Right to Left (Mirror Image)",rCtlVcMirror,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,101,143,10
+    ICON            rIcoLeftToRight,rCtlVcMirrorIcon,259,95,20,20,WS_DISABLED
+    GROUPBOX        "Scrolling",IDC_STATIC,107,7,179,60
+    CONTROL         "&Loop Script(s)",rCtlVcLoop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,22,163,10
+    CONTROL         "Lin&k Multiple Scripts",rCtlVcLink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,39,163,10
+END
+
+rDlgScriptQueue DIALOGEX 0, 0, 195, 136
+STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Script Queue"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "",rCtrlList,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,181,103
+    CONTROL         "",rCtrlStatus,"Static",SS_LEFTNOWORDWRAP | SS_ENDELLIPSIS | WS_GROUP,7,117,56,12,WS_EX_CLIENTEDGE
+    RTEXT           "",rCtrlStatus2,64,117,124,12,SS_ENDELLIPSIS,WS_EX_CLIENTEDGE
+END
+
+rDlgReplaceCount DIALOG  40, 20, 110, 45
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Replace Results"
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "10",rCtlReplaceCount,2,7,22,9
+    LTEXT           "instance(s) replaced.",IDC_STATIC,27,7,84,9
+    DEFPUSHBUTTON   "OK",IDOK,34,27,40,14
+END
+
+rDlgFindCont DIALOG  40, 20, 104, 63
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
+CAPTION "Find / Replace"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CTEXT           "Continue searching from the beginning of the document?",IDC_STATIC,6,8,90,29
+    DEFPUSHBUTTON   "Yes",IDOK,5,42,40,14
+    PUSHBUTTON      "No",IDCANCEL,57,42,40,14
+END
+
+rDlgBookmarkName DIALOGEX 0, 0, 200, 54
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set Bookmark"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Name:",IDC_STATIC,7,9,50,10
+    EDITTEXT        IDC_EDIT1,56,7,137,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,86,33,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,143,33,50,14
+END
+
+rDlgFindReplace DIALOGEX 36, 44, 241, 106
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CONTEXTHELP | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Find & Replace"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Fi&nd what:",-1,4,9,48,8
+    EDITTEXT        1152,54,7,114,12,ES_AUTOHSCROLL | WS_GROUP
+    CONTROL         "",rCtlUseFindFormat,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,173,8,11,10
+    PUSHBUTTON      "For&mat...",rCtlFindFormat,186,7,50,14,NOT WS_VISIBLE | WS_DISABLED
+    LTEXT           "Re&place with:",-1,4,26,48,8
+    EDITTEXT        1153,54,24,114,12,ES_AUTOHSCROLL | WS_GROUP
+    CONTROL         "",rCtlUseReplaceFormat,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,173,25,11,10
+    PUSHBUTTON      "Forma&t...",rCtlReplaceFormat,186,23,50,14,WS_DISABLED
+    CONTROL         "Match &whole word only",1040,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,5,46,104,12
+    CONTROL         "Match &case",1041,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,62,59,12
+    DEFPUSHBUTTON   "&Find Next",IDOK,30,87,50,14,WS_GROUP
+    PUSHBUTTON      "&Replace",1024,82,87,50,14
+    PUSHBUTTON      "Replace &All",1025,134,87,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,186,87,50,14
+    PUSHBUTTON      "&Help",1038,186,63,50,14
+END
+
+rListStyle DIALOGEX 0, 0, 192, 146
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Styles"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_LIST1,7,7,120,131,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Add...",IDC_BUTTON2,135,7,50,14
+    PUSHBUTTON      "&Edit...",IDC_BUTTON3,135,26,50,14
+    PUSHBUTTON      "&Delete",IDC_BUTTON4,135,45,50,14
+    DEFPUSHBUTTON   "Close",IDCANCEL,135,124,50,14
+END
+
+rDlgStyle DIALOGEX 0, 0, 196, 134
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Style"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Style Name",IDC_STATIC,7,7,37,8
+    EDITTEXT        IDC_EDIT1,7,18,126,14,ES_AUTOHSCROLL
+    GROUPBOX        "Sample Font",IDC_GROUP1,7,41,182,64
+    PUSHBUTTON      "&Font...",IDC_BUTTON1,139,18,50,14
+    DEFPUSHBUTTON   "OK",IDOK,83,113,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,139,113,50,14
+END
+
+rDlgScrollPrefs DIALOGEX 0, 0, 293, 134
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Scroll Control"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    RTEXT           "Speed Sensitivit&y:",rCtlStatic99,47,117,74,8,NOT WS_VISIBLE | WS_DISABLED
+    COMBOBOX        rCtlPrefSensitivity,124,115,92,41,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "&Left Button:",rCtlPrefSensitivity3,47,35,74,8
+    COMBOBOX        rCtlPrefLButton,124,31,92,69,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "&Right Button:",rCtlPrefSensitivity4,47,55,74,8
+    COMBOBOX        rCtlPrefRButton,124,52,92,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Reverse Sense of Speed Control",rCtlPrefRevSpeed,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,87,79,142,10
+END
+
+rDlgScroll DIALOGEX 0, 0, 1106, 617
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_APPWINDOW
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",rCtlRichEdit,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_TABSTOP,34,0,1072,637
+END
+
+rDlgOtherSize DIALOGEX 0, 0, 119, 58
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Font Size"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Size:",IDC_STATIC,12,8,36,12
+    EDITTEXT        rCtrlOtherSize,49,7,63,13,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,7,37,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,62,37,50,14
+END
+
+rDlgUnregisteredVersion DIALOGEX 0, 0, 264, 273
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "MagicScroll Unregistered Copy"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    ICON            rIcoMainFrame,IDC_STATIC,9,9,20,20
+    CTEXT           "Thank you for trying MagicScroll!",IDC_TEXT2,38,9,190,19
+    LTEXT           "This is an evaluation version of MagicScroll. When it expires, you must purchase a license to continue using MagicScroll.",IDC_STATIC,16,38,234,16
+    LTEXT           "Purchase MagicScroll",IDC_TEXT3,16,59,234,8
+    LTEXT           "Clicking on the Buy Now button will open your browser to the MagicScroll purchase page. When you purchase MagicScroll, you will receive a registration name and number that will unlock this trial version and make it the full version.",IDC_STATIC,16,67,234,33
+    LTEXT           "Unlock Full Version",IDC_TEXT4,16,104,234,8
+    LTEXT           "After purchasing MagicScroll, click on the Register button and enter your registration name and number into the appropriate fields. Your registration information will unlock the full version of MagicScroll.",IDC_STATIC,16,112,234,29
+    LTEXT           "By using this software without registering it, you agree to use it for evaluation purposes only, and that any other use requires payment of the registration fee. You also agree to abide by the MagicScroll Evaluation License Agreement.",IDC_STATIC,16,141,234,32
+    CTEXT           "",IDC_TEXT1,9,175,248,8
+    GROUPBOX        "",IDC_STATIC,7,30,250,159
+    CONTROL         "&Buy Now",IDC_BUTTON2,"Button",BS_OWNERDRAW | BS_BITMAP | WS_TABSTOP,92,223,82,14
+    PUSHBUTTON      "I &Agree",IDOK,42,252,50,14
+    PUSHBUTTON      "&Quit",IDCANCEL,108,252,50,14
+    PUSHBUTTON      "&Register",IDC_BUTTON1,174,252,50,14
+    LTEXT           "Computer ID:",IDC_STATIC,16,201,53,8
+    GROUPBOX        "",IDC_STATIC,7,192,250,22
+    EDITTEXT        IDC_COMPUTER_ID,73,201,138,10,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+END
+
+rDlgRegister DIALOGEX 0, 0, 285, 138
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Register MagicScroll"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Registration &Name:",IDC_STATIC,7,53,76,8
+    EDITTEXT        IDC_EDIT1,85,52,128,14,ES_AUTOHSCROLL
+    LTEXT           "Registration Nu&mber:",IDC_STATIC,7,70,77,8
+    EDITTEXT        IDC_EDIT2,85,69,128,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,229,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,229,24,50,14
+    PUSHBUTTON      "Help",ID_HELP,229,41,50,14
+    LTEXT           "Enter your name and registration number exactly as they appear on your registration confirmation.\n\nIf you do not have a registration number, press the 'Buy Now' button to Purchase MagicScroll online.",IDC_STATIC,7,7,216,45
+    CONTROL         "&Buy Now",IDC_BUTTON1,"Button",BS_OWNERDRAW | WS_TABSTOP,103,117,80,14
+    LTEXT           "Computer ID:",IDC_STATIC,16,98,53,8
+    GROUPBOX        "",IDC_STATIC,7,89,206,22
+    EDITTEXT        IDC_COMPUTER_ID,73,98,138,11,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+END
+
+rDlgEval DIALOGEX 0, 0, 163, 166
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+EXSTYLE WS_EX_TOPMOST
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",rCtlCompany,"Static",SS_BITMAP | SS_SUNKEN,9,11,33,25
+    CONTROL         "",-1,"Static",SS_BLACKRECT,7,83,149,1
+    CTEXT           "<expiration notice>",rCtlWarning,7,88,149,48
+    CONTROL         "",-1,"Static",SS_WHITEFRAME,3,7,157,132
+    DEFPUSHBUTTON   "Close",IDCANCEL,57,145,50,14
+END
+
+rDlgRemote DIALOGEX 0, 0, 293, 228
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_CONTEXTHELP
+CAPTION "Remote Installations"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Local Login Information",IDC_STATIC,7,7,229,73
+    LTEXT           "My &Username:",IDC_STATIC,14,23,71,8
+    EDITTEXT        rCtlMe,90,20,138,14,ES_AUTOHSCROLL
+    LTEXT           "My &Password:",IDC_STATIC,14,38,73,8
+    EDITTEXT        rCtlMe2,90,36,138,14,ES_PASSWORD | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&Login",ID_LOGIN,90,58,50,14
+    GROUPBOX        "Remote Installations",IDC_STATIC,7,92,279,105
+    LISTBOX         rCtlSlaves,14,104,208,65,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "&Add...",ID_ADD,229,104,50,14
+    DEFPUSHBUTTON   "&Edit...",ID_EDIT,229,121,50,14
+    DEFPUSHBUTTON   "&Settings...",ID_SETTINGS,229,139,50,14
+    DEFPUSHBUTTON   "&Remove",ID_REMOVE,229,156,50,14
+    DEFPUSHBUTTON   "Co&nnect",ID_CONNECT,89,176,50,14
+    DEFPUSHBUTTON   "&Close",IDOK,236,207,50,14
+END
+
+rDlgAddSlave DIALOGEX 0, 0, 186, 66
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Remote Installation"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Installation:",IDC_STATIC,7,8,55,9
+    EDITTEXT        rCtlRemoteName,65,7,114,14,ES_AUTOHSCROLL
+    LTEXT           "Username:",IDC_STATIC,7,25,55,9
+    EDITTEXT        rCtlRegNumber,65,24,114,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,76,45,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,45,50,14
+END
+
+IDD_MEMHOG_DIALOG DIALOGEX 0, 0, 130, 126
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "MemHog"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_ALLOCATE,62,74,37,14,ES_AUTOHSCROLL
+    LTEXT           "Total physical:",IDC_STATIC,7,10,54,8
+    EDITTEXT        IDC_TOTAL_PHYSICAL,72,8,37,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP,WS_EX_CLIENTEDGE
+    LTEXT           "MB",IDC_STATIC,113,10,10,8
+    LTEXT           "Remaining Physical:",IDC_STATIC,7,27,63,8
+    EDITTEXT        IDC_REMAINING,72,25,37,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP,WS_EX_CLIENTEDGE
+    LTEXT           "MB",IDC_STATIC,113,27,10,8
+    LTEXT           "Allocate:",IDC_STATIC,7,77,54,8
+    LTEXT           "MB",IDC_STATIC,113,77,10,8
+    DEFPUSHBUTTON   "Allocate",IDOK,7,103,50,16
+    PUSHBUTTON      "Close",IDCANCEL,73,103,50,16
+    CTEXT           "Static",IDC_STATUS,7,92,116,8
+    LTEXT           "Remaining Virtual:",IDC_STATIC,7,45,63,8
+    EDITTEXT        IDC_VREMAINING,72,43,37,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP,WS_EX_CLIENTEDGE
+    LTEXT           "MB",IDC_STATIC,113,45,10,8
+END
+
+rDlgAboutReg DIALOGEX 0, 0, 198, 203
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+EXSTYLE WS_EX_TOPMOST
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    CONTROL         "",rCtlCompany,"Static",SS_BITMAP | SS_SUNKEN,7,10,184,73
+    CTEXT           "[MagicScroll Version x.x.x]",rCtlVersion,7,90,184,8,NOT WS_GROUP
+    CTEXT           "Copyright© 2008 MagicTeleprompting 1994-2008.",IDC_STATIC,7,102,184,8
+    CTEXT           "",rCtlVersion2,7,115,184,8,NOT WS_GROUP
+    CONTROL         "",IDC_STATIC,"Static",SS_BLACKRECT,7,116,184,1
+    CTEXT           "Warning: This computer program is protected by copyright law and international treaties.  Unauthorized reproduction or distribution of this program, or any portion of it, may result in severe civil and criminal penalties.",rCtlWarning,7,122,184,358
+    CONTROL         "",IDC_STATIC,"Static",SS_WHITEFRAME,3,5,191,163
+    LTEXT           "Computer ID:",IDC_STATIC,11,180,53,8
+    GROUPBOX        "",IDC_STATIC,2,171,192,22
+    EDITTEXT        IDC_COMPUTER_ID,62,180,129,11,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+END
+
+rDlgCaptionsConfig DIALOGEX 50, 50, 293, 134
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Captions"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    COMBOBOX        rCtlPort,100,24,98,63,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Port:",IDC_STATIC,65,26,31,8
+    GROUPBOX        "",IDC_STATIC,7,7,279,120
+    CONTROL         "Enable",rCtlCcEnable,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,6,35,10
+    RTEXT           "Baud Rate:",IDC_STATIC,39,43,57,8
+    RTEXT           "Parity:",IDC_STATIC,39,77,57,8
+    RTEXT           "Byte Size:",IDC_STATIC,65,60,31,8
+    RTEXT           "Stop Bits:",IDC_STATIC,65,94,31,8
+    COMBOBOX        rCtlBaudRate,100,41,98,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        rCtlByteSize,100,58,98,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        rCtlParity,100,75,98,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        rCtlStopBits,100,92,98,63,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+rVersionInfo VERSIONINFO
+ FILEVERSION 4,0,1,25602
+ PRODUCTVERSION 4,0,1,25602
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Magic Teleprompting"
+            VALUE "FileDescription", "MagicScroll for Windows"
+            VALUE "FileVersion", "4, 0, 1, 25602"
+            VALUE "InternalName", "MagicScroll"
+            VALUE "LegalCopyright", "Copyright© 2006 MagicTeleprompting 1994-2006.  All rights reserved."
+            VALUE "OriginalFilename", "MSW.exe"
+            VALUE "ProductName", "MagicScroll for Windows"
+            VALUE "ProductVersion", "4, 0, 1, 25602"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_RULER_BLOCK         BITMAP                  "res\\rulerbl.bmp"
+IDB_RULER_DOWN          BITMAP                  "res\\rulerdo.bmp"
+IDB_RULER_TAB           BITMAP                  "res\\rulerta.bmp"
+IDB_RULER_UP            BITMAP                  "res\\rulerup.bmp"
+rTbFormat               BITMAP                  "res\\formatba.bmp"
+IDB_RULER_BLOCKM        BITMAP                  "res\\rulerblm.bmp"
+IDB_RULER_DOWNM         BITMAP                  "res\\rulerdom.bmp"
+IDB_RULER_TABM          BITMAP                  "res\\rulertam.bmp"
+IDB_RULER_UPM           BITMAP                  "res\\rulerupm.bmp"
+rBmpRightArrow          BITMAP                  "RES\\RARROW.BMP"
+rBmpRightArrowM         BITMAP                  "RES\\RARROWM.BMP"
+rBmpMswLogo             BITMAP                  "res\\ms.bmp"
+rBmpLeftArrow           BITMAP                  "RES\\LARROW.BMP"
+rBmpLeftArrowM          BITMAP                  "RES\\LARROWM.BMP"
+rBmpCompanyLogo         BITMAP                  "res\\logo.bmp"
+rBmpBlip                BITMAP                  "RES\\BLIP.BMP"
+rBmpCheckboxes          BITMAP                  "res\\checkboxes.bmp"
+rBmpCueBar1             BITMAP                  "res\\CUEPOP0.BMP"
+rBmpCueBar0             BITMAP                  "res\\CUEPOP1.BMP"
+rBmpCueBar2             BITMAP                  "res\\CUEPOP2.BMP"
+rBmpCueBar3             BITMAP                  "res\\CUEPOP3.BMP"
+rBmpCueBar4             BITMAP                  "res\\CUEPOP4.BMP"
+rTbMain                 BITMAP                  "res\\toolbar1.bmp"
+rTbIconBig              BITMAP                  "res\\rtbiconb.bmp"
+IDB_FONTTYPE            BITMAP                  "res\\font.bmp"
+rBmpDemo                BITMAP                  "res\\demo.bmp"
+rBmpCompanyLogo1        BITMAP                  "res\\rbmpcomp.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+rIcoMainFrame           ICON                    "RES\\MSW.ICO"
+rIcoLeftToRight         ICON                    "RES\\L2R.ICO"
+rIcoNtsc                ICON                    "RES\\NTSC.ICO"
+rIcoRightToLeft         ICON                    "RES\\R2L.ICO"
+rMagicsType             ICON                    "RES\\PADDOC.ICO"
+rIcoCueBar0             ICON                    "res\\ricorabb.ico"
+rIcoCueBarWhite0        ICON                    "res\\ricocueb.ico"
+rIcoPaperclip           ICON                    "res\\Paperclip.ico"
+rIcoBookmark            ICON                    "res\\bookmark.ico"
+rIcoCueBar1             ICON                    "res\\ico00001.ico"
+rIcoCueBar2             ICON                    "res\\ico00002.ico"
+rIcoCueBar3             ICON                    "res\\ico00003.ico"
+rIcoCueBar4             ICON                    "res\\ico00004.ico"
+rIcoCueBarWhite1        ICON                    "res\\ico00005.ico"
+rIcoCueBarWhite2        ICON                    "res\\ico00006.ico"
+rIcoCueBarWhite3        ICON                    "res\\ico00007.ico"
+rIcoCueBarWhite4        ICON                    "res\\ico00008.ico"
+rIcoCueBar4Alt          ICON                    "res\\ico00010.ico"
+rIcoCueBar3Alt          ICON                    "res\\ico00011.ico"
+rIcoCueBar2Alt          ICON                    "res\\ico00012.ico"
+rIcoCueBar1Alt          ICON                    "res\\ico00013.ico"
+rIcoCueBar0Alt          ICON                    "res\\ico00009.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+rDlgScrollPrefs DLGINIT
+BEGIN
+    rCtlPrefSensitivity, 0x403, 4, 0
+0x6f4c, 0x0077, 
+    rCtlPrefSensitivity, 0x403, 7, 0
+0x654d, 0x6964, 0x6d75, "\000" 
+    rCtlPrefSensitivity, 0x403, 5, 0
+0x6948, 0x6867, "\000" 
+    rCtlPrefLButton, 0x403, 23, 0
+0x6e45, 0x6574, 0x2f72, 0x7845, 0x7469, 0x5320, 0x7263, 0x6c6f, 0x206c, 
+0x6f4d, 0x6564, "\000" 
+    rCtlPrefLButton, 0x403, 14, 0
+0x654e, 0x7478, 0x4220, 0x6f6f, 0x6d6b, 0x7261, 0x006b, 
+    rCtlPrefLButton, 0x403, 18, 0
+0x7250, 0x7665, 0x6f69, 0x7375, 0x4220, 0x6f6f, 0x6d6b, 0x7261, 0x006b, 
+
+    rCtlPrefLButton, 0x403, 14, 0
+0x6553, 0x2074, 0x6150, 0x6570, 0x6372, 0x696c, 0x0070, 
+    rCtlPrefLButton, 0x403, 15, 0
+0x6f47, 0x6f74, 0x5020, 0x7061, 0x7265, 0x6c63, 0x7069, "\000" 
+    rCtlPrefLButton, 0x403, 12, 0
+0x4e28, 0x206f, 0x6341, 0x6974, 0x6e6f, 0x0029, 
+    rCtlPrefRButton, 0x403, 23, 0
+0x6e45, 0x6574, 0x2f72, 0x7845, 0x7469, 0x5320, 0x7263, 0x6c6f, 0x206c, 
+0x6f4d, 0x6564, "\000" 
+    rCtlPrefRButton, 0x403, 14, 0
+0x654e, 0x7478, 0x4220, 0x6f6f, 0x6d6b, 0x7261, 0x006b, 
+    rCtlPrefRButton, 0x403, 18, 0
+0x7250, 0x7665, 0x6f69, 0x7375, 0x4220, 0x6f6f, 0x6d6b, 0x7261, 0x006b, 
+
+    rCtlPrefRButton, 0x403, 14, 0
+0x6553, 0x2074, 0x6150, 0x6570, 0x6372, 0x696c, 0x0070, 
+    rCtlPrefRButton, 0x403, 15, 0
+0x6f47, 0x6f74, 0x5020, 0x7061, 0x7265, 0x6c63, 0x7069, "\000" 
+    rCtlPrefRButton, 0x403, 12, 0
+0x4e28, 0x206f, 0x6341, 0x6974, 0x6e6f, 0x0029, 
+    0
+END
+
+rDlgCaptionsConfig DLGINIT
+BEGIN
+    rCtlBaudRate, 0x403, 4, 0
+0x3131, 0x0030, 
+    rCtlBaudRate, 0x403, 4, 0
+0x3033, 0x0030, 
+    rCtlBaudRate, 0x403, 4, 0
+0x3036, 0x0030, 
+    rCtlBaudRate, 0x403, 5, 0
+0x3231, 0x3030, "\000" 
+    rCtlBaudRate, 0x403, 5, 0
+0x3432, 0x3030, "\000" 
+    rCtlBaudRate, 0x403, 5, 0
+0x3834, 0x3030, "\000" 
+    rCtlBaudRate, 0x403, 5, 0
+0x3639, 0x3030, "\000" 
+    rCtlBaudRate, 0x403, 6, 0
+0x3431, 0x3034, 0x0030, 
+    rCtlBaudRate, 0x403, 6, 0
+0x3931, 0x3032, 0x0030, 
+    rCtlBaudRate, 0x403, 6, 0
+0x3833, 0x3034, 0x0030, 
+    rCtlBaudRate, 0x403, 6, 0
+0x3635, 0x3030, 0x0030, 
+    rCtlBaudRate, 0x403, 6, 0
+0x3735, 0x3036, 0x0030, 
+    rCtlBaudRate, 0x403, 7, 0
+0x3131, 0x3235, 0x3030, "\000" 
+    rCtlBaudRate, 0x403, 7, 0
+0x3231, 0x3038, 0x3030, "\000" 
+    rCtlBaudRate, 0x403, 7, 0
+0x3532, 0x3036, 0x3030, "\000" 
+    rCtlByteSize, 0x403, 2, 0
+0x0037, 
+    rCtlByteSize, 0x403, 2, 0
+0x0038, 
+    rCtlParity, 0x403, 5, 0
+0x6f4e, 0x656e, "\000" 
+    rCtlParity, 0x403, 4, 0
+0x644f, 0x0064, 
+    rCtlParity, 0x403, 5, 0
+0x7645, 0x6e65, "\000" 
+    rCtlParity, 0x403, 5, 0
+0x614d, 0x6b72, "\000" 
+    rCtlParity, 0x403, 5, 0
+0x6150, 0x6563, "\000" 
+    rCtlStopBits, 0x403, 2, 0
+0x0031, 
+    rCtlStopBits, 0x403, 4, 0
+0x2e31, 0x0035, 
+    rCtlStopBits, 0x403, 2, 0
+0x0032, 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+rCurScroll              CURSOR                  "RES\\SCROLL.CUR"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    rDlgParaFormat, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 178
+        TOPMARGIN, 7
+    END
+
+    rDlgAbout, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 191
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 168
+    END
+
+    rDlgGotoLine, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 133
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+
+    rDlgGeneralPrefs, DIALOG
+    BEGIN
+        VERTGUIDE, 7
+        VERTGUIDE, 16
+        VERTGUIDE, 286
+        HORZGUIDE, 4
+        HORZGUIDE, 76
+    END
+
+    rDlgVideoConfig, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 286
+        TOPMARGIN, 7
+    END
+
+    rDlgScriptQueue, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 188
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 129
+    END
+
+    rDlgBookmarkName, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 193
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 47
+    END
+
+    rDlgFindReplace, DIALOG
+    BEGIN
+        RIGHTMARGIN, 167
+        VERTGUIDE, 236
+    END
+
+    rListStyle, DIALOG
+    BEGIN
+        RIGHTMARGIN, 185
+    END
+
+    rDlgScrollPrefs, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 286
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 127
+    END
+
+    rDlgScroll, DIALOG
+    BEGIN
+        LEFTMARGIN, 16
+        VERTGUIDE, 34
+    END
+
+    rDlgOtherSize, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 112
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 51
+    END
+
+    rDlgUnregisteredVersion, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 257
+        VERTGUIDE, 16
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 266
+    END
+
+    rDlgRegister, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 278
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 131
+    END
+
+    rDlgEval, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 160
+        VERTGUIDE, 7
+        VERTGUIDE, 156
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 159
+    END
+
+    rDlgRemote, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 286
+        VERTGUIDE, 14
+        VERTGUIDE, 89
+        VERTGUIDE, 222
+        VERTGUIDE, 279
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 221
+    END
+
+    rDlgAddSlave, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 59
+    END
+
+    IDD_MEMHOG_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 123
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 119
+    END
+
+    rDlgAboutReg, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 191
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 160
+    END
+
+    rDlgCaptionsConfig, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 286
+        TOPMARGIN, 7
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+rTbFormat TOOLBAR  16, 16
+BEGIN
+    BUTTON      rCmdSizeLarger
+    BUTTON      rCmdSizeSmaller
+    BUTTON      ID_CHAR_BOLD
+    BUTTON      ID_CHAR_ITALIC
+    BUTTON      ID_CHAR_UNDERLINE
+    BUTTON      rCmdColor0
+    BUTTON      rCmdColor0
+    BUTTON      rCmdColor0
+    BUTTON      rCmdColor0
+    BUTTON      rCmdColor0
+    BUTTON      rCmdColor0
+    BUTTON      rCmdColor0
+    BUTTON      ID_PARA_LEFT
+    BUTTON      ID_PARA_CENTER
+    BUTTON      ID_PARA_RIGHT
+    BUTTON      rCmdFormatBullets
+    BUTTON      ID_BUTTON33054
+END
+
+rTbIconBig TOOLBAR  24, 24
+BEGIN
+    BUTTON      rCmdFormatFontBtn
+    BUTTON      rCmdEditFind
+    BUTTON      rCmdBookmarks
+    BUTTON      rCmdToggleScrollMode
+    BUTTON      rCmdToggleInverseOut
+    BUTTON      rCmdToggleInverseEdit
+    BUTTON      rCmdTimerToArt
+    BUTTON      rCmdLoop
+    BUTTON      rCmdLink
+END
+
+rTbMain TOOLBAR  16, 16
+BEGIN
+    BUTTON      rCmdFileNew
+    BUTTON      rCmdFileOpen
+    BUTTON      rCmdFileClose
+    BUTTON      rCmdFileSave
+    BUTTON      rCmdFilePrint
+    BUTTON      rCmdFilePrintPreview
+    BUTTON      rCmdEditCut
+    BUTTON      rCmdEditCopy
+    BUTTON      rCmdEditPaste
+    BUTTON      rCmdEditUndo
+    BUTTON      rCmdEditFind
+    BUTTON      rCmdHelpTopics
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDP_OLE_INIT_FAILED     "OLE initialization failed.  MagicScroll can not continue."
+    rMainFrame              "MagicScroll\nDocument\nMagicScroll Document\nWord for Windows (*.doc)\n.DOC\nMagicScroll.Document.1\nMagicScroll Document"
+    IDP_FAILED_TO_CREATE    "Failed to create object.  Make sure the object is entered in the system registry."
+    IDS_INVALID_MEASUREMENT "This is not a valid measurement."
+    IDS_PLEASE_WAIT         "%d%% complete  Formatting ... please wait"
+    IDS_COMPLETE            "%d%% complete"
+    IDS_SAVE_UNSUPPORTED    "Can not save this file in its current format.  Do you wish to save this file in a different format?"
+    IDS_CLOSE_TEXT          "Cl&ose"
+    IDS_RICHED_LOAD_FAIL    "Could not load the RichEdit control DLL.  The file RICHED32.DLL may be missing or corrupt."
+    rStrDefaultFont         "Times New Roman"
+    IDS_TF_BUTTONS          "&Word Document\n&Rich Text Document\n&Text Document\nCancel"
+    rStrControlPanelCaption "Control Panel"
+END
+
+STRINGTABLE 
+BEGIN
+    rStrRulerRight          "Right indent: click and drag to adjust the right indent for the current or selected paragraph(s)."
+    rStrRulerTabs           "Tabs: click to create a tab, click and drag a tab off the ruler to remove it."
+    rStrAddStyle            "<Add a new style>"
+    rStrNotOnline           "No internet connection was detected.\nEstablish an internet connection then try again."
+    rStrAddSlave            "Specify an installation name (i.e. Chicago Studio)\nand a username (i.e. remote_name@gmail.com)."
+    rStrConnStatus          "*** Connected to MagicScroll %1 ***"
+    rStrUnconnStatus        "*** Not Connected ***"
+    rStrEditConnSlave       "Failed to edit %1.\nDisconnect first, then try again."
+    rStrConnStatus0         "*** OK ***"
+    rStrUnconnStatus0       "*** ERROR ***"
+    rStrConnect             "&Connect"
+    rStrDisconnect          "Dis&connect"
+    rStrToolBarCaption      "Tool Bar"
+    rStrFormatBarCaption    "Format Bar"
+    rStrWarnLink            "Multiple scripts will not be queued for scrolling unless linking is enabled.\nWould you like to turn script linking on now?"
+    rStrCloseApps           "The following processes running on your system have been\nknown to cause scrolling irregularities in MagicScroll. Please\nconsider shutting down these applications before using MagicScroll\nin a production environment.\n\n%1\nWould you like MagicScroll to attempt to close these process for you?"
+END
+
+STRINGTABLE 
+BEGIN
+    rStrCloseApps2          "MagicScroll failed to shut down the following processes:\n\n%1\nIf one of these looks unfamiliar, do an internet search to find out\nwhat it is and how to shut it down.\n\n"
+    rStrInitProtection      "MagicScroll system verification has failed.\n\nPlease reainstall the application or contact MagicTeleprompting."
+    rStrStyle               "<style>"
+    rStrBtnLogout           "Logout"
+    rStrBtnLogin            "Login"
+END
+
+STRINGTABLE 
+BEGIN
+    rStrSingleSpace         "Single"
+    IDS_TEXT_DOC            "Text Document\nText Documents (*.txt)\n*.txt\nText Document"
+    IDS_RICHTEXT_DOC        "Rich Text Format (RTF)\nRich Text Format (*.rtf)\n*.rtf\nRich Text Document"
+    rStrOneAndAHalfSpace    "1.5 lines"
+    IDS_ALL_DOC             "All\nAll Documents (*.*)\n*.*"
+    IDS_WINWORD6_DOC        "Word for Windows\nWord for Windows (*.doc)\n*.doc\nWord Document"
+    IDS_WINWORD2_DOC        "Word for Windows 2.0\nWord for Windows 2.0 (*.doc)\n*.doc"
+    IDS_EXE_DOC             "Executable\nExecutable (*.exe)\n*.exe"
+    IDS_FILE_EXISTS         "%1 already exists.\nDo you want to replace it?"
+    IDS_OEMTEXT_DOC         "Text Document - MS-DOS Format\nText Documents - MS-DOS Format (*.txt)\n*.txt\nMS-DOS Text Document"
+    IDS_CLIP_TEXT           "Unformatted Text\ntext without any formatting"
+    rStrNoConverter         "No converter is available for this file. It will be opened as plain text."
+    rStrSpellerInit         "Failed to initialize Polar Spell Checker. Please reinstall MagicScroll."
+    rStrDoubleSpace         "Double"
+    IDS_JUSTIFY             "Justify"
+    IDS_NEW_STYLE           "<New Style>"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_WRITEPROTECT        "Unable to write to %1.\nThe disk is write-protected.\nA file cannot be saved on a write-protected disk."
+    IDS_TITLE_ICONBAR       "Controls"
+    rStrExpired             "This evaluation version of MagicScroll has expired.\n\nLog on to www.MagicScroll.com to order MagicScroll today!"
+    rStrWillExpire          "This is an evaluation version of MagicScroll.\n\nPlease send feedback and problem reports to\nEricS@EcsVideoSystems.com"
+    rStrCancelBtn           "Cancel"
+    rStrTimer               "Timer\n%1"
+    IDS_URICHTEXT_DOC       "Unicode Rich Text Format (RTF)\nUnicode Rich Text Format (*.rtf)\n*.rtf\nUnicode Rich Text Document"
+    IDS_UTEXT_DOC           "Unicode Text Document\nUnicode Text Documents (*.txt)\n*.txt\nUnicode Text Document"
+    rStrFinishedReplaceAll  "MagicScroll has completed its search and has made %1!d! replacement(s)."
+    IDP_NO_STYLE_NAME       "Please enter a name."
+    rStrExpiredReg          "This registration number is only valid for an evaluation\nversion of MagicScroll.\n\nLog on to www.MagicScroll.com to order MagicScroll today!"
+    rStrRulerLeftScroll     "Left scroll border: click and drag to adjust the margins used during scrolling."
+    rStrRulerRightScroll    "Right scroll border: click and drag to adjust the margins used during scrolling."
+    rStrRulerFirstLine      "First line indent: click and drag to adjust the first line indent for the current or selected paragraph(s)."
+    rStrRulerHang           "Hanging indent: click and drag to adjust the hanging indent for the current or selected paragraph(s)."
+    rStrRulerLeft           "Left indent: click and drag to adjust both the first line and hanging indent for the current or selected paragraph(s)."
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_APP_TITLE       "MagicScroll"
+    AFX_IDS_IDLEMESSAGE     "For Help, press F1"
+    AFX_IDS_HELPMODEMESSAGE "Select an object you want to get Help on."
+END
+
+STRINGTABLE 
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdFileNew             "Creates a new document\nNew"
+    rCmdFileOpen            "Opens an existing document\nOpen"
+    rCmdFileClose           "Closes the active document\nClose"
+    rCmdFileSave            "Saves the active document\nSave"
+    rCmdFileSaveAs          "Saves the active document with a new name\nSave As"
+    rCmdFilePageSetup       "Changes the printing options\nPage Setup"
+    rCmdFilePrintSetup      "Changes the printer and printing options\nPrint Setup"
+    rCmdFilePrint           "Prints the active document\nPrint"
+    rCmdPrintDirect         "Prints the active document\nPrint"
+    rCmdFilePrintPreview    "Displays full pages\nPrint Preview"
+    ID_FILE_UPDATE          "Updates the container to show any changes\nUpdate"
+    ID_FILE_SEND_MAIL       "Sends the document through electronic mail\nSend"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdFileSaveCopyAs      "Saves a copy of the active document with a new name\nSave Copy"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdViewRuler           "Shows or hides the ruler\nToggle Ruler"
+    rCmdListen              "Enables voice-activation\nListen for Commands"
+    rCmdVoiceTraining       "Shows voice training wizard\nVoice training"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_APP_ABOUT            "Displays program information, version number, and copyright\nAbout"
+    ID_APP_EXIT             "Quits the application; prompts you to save documents\nExit"
+    ID_HELP_INDEX           "Lists Help topics\nHelp Index"
+    ID_HELP_USING           "Displays instructions about how to use help\nHelp"
+    ID_CONTEXT_HELP         "Displays Help for the button, menu, or window you click\nHelp"
+    ID_HELP                 "Displays Help for current task or command\nHelp"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_MRU_FILE1       "Opens this document"
+    ID_FILE_MRU_FILE2       "Opens this document"
+    ID_FILE_MRU_FILE3       "Opens this document"
+    ID_FILE_MRU_FILE4       "Opens this document"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_NEXT_PANE            "Switches to the next window pane\nNext Pane"
+    ID_PREV_PANE            "Switches back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
+    ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
+    ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_EDIT_CLEAR           "Erases the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erases everything\nErase All"
+    rCmdEditCopy            "Copies the selection and puts it on the Clipboard\nCopy"
+    rCmdEditCut             "Cuts the selection and puts it on the Clipboard\nCut"
+    rCmdEditPaste           "Inserts Clipboard contents\nPaste"
+    ID_EDIT_PASTE_LINK      "Inserts Clipboard contents and a link to its source\nPaste Link"
+    ID_EDIT_PASTE_SPECIAL   "Inserts Clipboard contents with options\nPaste Special"
+    ID_EDIT_REPEAT          "Repeats the last find\nFind Next"
+    rCmdEditFind            "Finds and optionally replaces the specified text\nFind and Replace"
+    rCmdEditSelectAll       "Selects the entire document\nSelect All"
+    rCmdEditUndo            "Reverses the last action\nUndo"
+    ID_EDIT_REDO            "Carries out the previously undone action\nRedo"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdViewToolbar         "Shows or hides the toolbar\nToggle ToolBar"
+    rCmdViewStatusBar       "Shows or hides the status bar\nToggle StatusBar"
+    rCmdViewFormatbar       "Shows or hides the format bar\nToggle Format Bar"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCSIZE          "Changes the window size"
+    AFX_IDS_SCMOVE          "Changes the window position"
+    AFX_IDS_SCMINIMIZE      "Reduces the window to an icon"
+    AFX_IDS_SCMAXIMIZE      "Enlarges the window to full size"
+    AFX_IDS_SCNEXTWINDOW    "Switches to the next document window"
+    AFX_IDS_SCPREVWINDOW    "Switches to the previous document window"
+    AFX_IDS_SCCLOSE         "Closes the active window and prompts to save the documents"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCRESTORE       "Restores the window to normal size"
+    AFX_IDS_SCTASKLIST      "Activates Task List"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_PREVIEW_CLOSE   "Closes print preview mode\nCancel Preview"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdInsertDate          "Inserts today's date and/or time\nDate/Time"
+    rCmdFormatPara          "Formats current or selected paragraph(s)"
+    rCmdColor0              "Black\nBlack"
+    rCmdColor1              "Dark Red\nDark Red"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdMicSetup            "Shows the microphone setup wizard\nMicrophone setup"
+    rCmdFormatBullets       "Inserts or removes a bullet on this line\nBullets"
+    rCmdFormatTabs          "Sets Tabs"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdSizeLarger          "Increases the size of the selected text\nIncrease text size"
+    rCmdSizeSmaller         "Decreases the size of the selected text\nDecrease text size"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdFormatFont          "Selects font for current selection\nFont"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdToggleTimer         "Starts or stops the timer in scroll mode\nTimer On/Off"
+    rCmdFormatFontBtn       "Selects font for current selection\nFont"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CHAR_BOLD            "Makes the selection bold (toggle).\nBold"
+    ID_CHAR_ITALIC          "Makes the selection italic (toggle)\nItalic"
+    ID_CHAR_COLOR           "Formats the selection with a color\nColor"
+    ID_CHAR_UNDERLINE       "Formats the selection with a continuous underline (toggle)\nUnderline"
+    ID_PARA_LEFT            "Left-justifies paragraph\nAlign Left"
+    ID_PARA_CENTER          "Center-justifies paragraph\nCenter"
+    ID_PARA_RIGHT           "Right-justifies paragraph\nAlign Right"
+    rCmdTogglePaperclip     "Adds or removes a paperclip on the current line\nToggle paperclip"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdColor2              "Green\nGreen"
+    rCmdColor3              "Olive\nOlive"
+    rCmdColor4              "Navy\nNavy"
+    rCmdColor5              "Purple\nPurple"
+    rCmdColor6              "Teal\nTeal"
+    rCmdColor7              "Gray\nGray"
+    rCmdColor8              "Silver\nSilver"
+    rCmdColor9              "Red\nRed"
+    rCmdColor10             "Lime\nLime"
+    rCmdColor11             "Yellow\nYellow"
+    rCmdColor12             "Blue\nBlue"
+    rCmdColor13             "Fuchsia\nFuchsia"
+    rCmdColor14             "Aqua\nAqua"
+    rCmdColor15             "White\nWhite"
+    rCmdColor16             "Automatic\nAutomatic"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_SAVE_FORMAT_TEXT    "You are about to save the document in Text-Only format, which will remove all formatting. Are you sure?"
+    IDS_SAVING              "Saving File.  Please Wait."
+    IDS_CLIP_RTF            "Formatted Text (RTF)\ntext with formatting"
+    IDS_FORMATTING          "Formatting... Please Wait."
+    IDS_LEFT                "Left"
+    IDS_CENTER              "Center"
+    IDS_RIGHT               "Right"
+    IDS_MEASUREMENT_RANGE   "The measurement must be between %1 and %2."
+    IDS_INVALID_NUMBER      "This is not a valid number."
+    IDS_INVALID_FONTSIZE    "The number must be between 1 and 1638."
+    IDS_INCHES              "Inches"
+    IDS_CENTIMETERS         "Centimeters"
+    IDS_POINTS              "Points"
+    IDS_PICAS               "Picas"
+    IDS_WORD6_WARNING       "This document was created by Microsoft Word. MagicScroll does not support all of the features provided by Word. Therefore, you may lose information by saving this file as a Word file with the same name."
+    IDS_WORD6_WARNING_BUTTONS "&Save\nSave &As...\nCancel"
+END
+
+STRINGTABLE 
+BEGIN
+    rStrScriptsQueued       "(%1!d!) Queued"
+    rStrScriptsRunTime      "Running Time: %1  %2"
+    rStrScriptBookmarksMenu "%1 Bookmarks"
+    rStrInvalidCharacters   "This file contains invalid characters that will be replaced."
+    IDS_FINISHED_SEARCH     "MagicScroll has finished searching the document."
+    IDC_FONTNAME            "Changes the font of the selection\nFont"
+    IDC_FONTSIZE            "Changes the font size of the selection\nFont Size"
+    IDS_TITLE_FORMATBAR     "Formatting"
+    IDS_TITLE_TOOLBAR       "Standard"
+    IDS_INCH1_ABBREV        """"
+    IDS_INCH2_ABBREV        "in"
+    IDS_INCH3_ABBREV        "inch"
+    IDS_INCH4_ABBREV        "inches"
+    IDS_CM_ABBREV           "cm"
+    IDS_POINT_ABBREV        "pt"
+    IDS_PICA_ABBREV         "pi"
+END
+
+STRINGTABLE 
+BEGIN
+    IDP_CONFIRM_DELETE      "Are you sure you want to delete %1?"
+    IDP_DUPLICATE_STYLE     "The style '%1' already exists. Please chose a different name."
+    IDP_BOOKMARK_NAME       "The bookmark name must be between %1!d! and %2!d! characters long."
+    IDS_DEFAULT_BOOKMARK_NAME "Bookmark #%1!d!"
+    IDC_FONTSTYLE           "Changes the style of the selection\nStyle"
+    IDP_DUPLICATE_BOOKMARK  "A bookmark named '%1' already exists."
+    IDS_MAX_BOOKMARKS       "The maximum number of bookmarks has been reached."
+    rStrGotoBookmark        "Go To Bookmark"
+    IDS_SET_PAPERCLIP       "Set Paperclip\t Alt+P"
+    IDS_DEL_PAPERCLIP       "Remove Paperclip\t Alt+P"
+    rStrPreferencesDlg      "Preferences"
+    rStrMissingConverter    "The converter for this file type could not be found. Please reinstall MagicScroll."
+    rStrConfirmClear        "Clear all Bookmarks?"
+    rStrScriptQName         "Name"
+    rStrScriptQErt          "ERT"
+    rStrScriptQArt          "ART"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_NOMORETABS          "There are too many tab stops set in this paragraph."
+    IDS_MAPI_FAIL           "An error occurred while sending the document."
+    IDS_ERRSPACE            "There is not enough memory. Quit one or more programs and then try again."
+    IDS_CANT_LOAD           "Can not load %1 files."
+    IDS_TOOMANYFILES        "Unable to open %1.  There are too many files already open."
+    IDS_DIRFULL             "Unable to create %1. This folder is full. Use another folder or delete some files from this folder."
+    IDS_SHAREVIOLATION      "The document %1 is in use by another application and cannot be accessed."
+    IDS_TEXT_OPTIONS        "Text"
+    IDS_RTF_OPTIONS         "Rich Text"
+    IDS_WORD6_OPTIONS       "Word"
+    IDS_OPTIONS             "Options"
+    IDS_WRITE_OPTIONS       "Write"
+    IDS_EMBEDDED_OPTIONS    "Embedded"
+    IDS_TEXT_DOCUMENT       "Text Document"
+    IDS_RTF_DOCUMENT        "Rich Text Document"
+    IDS_WORD6_DOCUMENT      "Word Document"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdClearBkMks          "Clears all bookmarks\nClear bookmarks"
+    rCmdClearPclips         "Clears all paperclips"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdSetBkMk1            "Adds a bookmark on the current line\nSet bookmark"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdTimerToArt          "Puts the current timer value in the ART for the active script\nTimer to ART"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdTimerReset          "Resets the timer\nReset timer"
+    rCmdEditPrefs           "Sets MagicScroll preferences\nPreferences"
+    rCmdNextPclip           "Jumps to the next paperclip\nNext paperclip"
+    rCmdPrevPclip           "Jumps to the previous paperclip\nPrevious paperclip"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdViewShowLineNum     "Shows line numbers\nToggle line numbers"
+    rCmdViewShowInvis       "Shows text formating information\nShow invisibles"
+    rCmdGotoLine            "Goes to a specific line number within the document\nGo to line"
+    rCmdCheckSpelling       "Checks spelling of selected text or entire document\nCheck spelling"
+    rCmdSpellerOptions      "Sets spell checking options\nSpeller options"
+    rCmdAutoCorrectOptions  "Sets auto correction options\nAuto correct options"
+    rCmdViewIconBar         "Shows or hides the control panel\nToggle control panel"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdToggleInverseEdit   "Toggle inverse video edit mode\nInverse Edit"
+    rCmdViewNtsc            "Shows or hides the NTSC/PAL window\nToggle NTSC/PAL view"
+    rCmdViewQueue           "Displays the script queue\nToggle script queue"
+    rCmdToggleInverseOut    "Toggle inverse video scroll mode\nInverse Out"
+    rCmdToggleScrollMode    "Enters scrolling (prompter) mode\nScroll"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdViewUpdate          "Updates the NTSC display\nNTSC Update"
+    rCmdViewConfig          "Configures video output options\nConfigure video output"
+    rStrEmptyReg            "You have not entered your registration number.\nMake sure you enter your registration name and number exactly."
+    rStrRegExpired          "Your registration number has expired.\nYou need to purchase MagicScroll to get a registration number that does not expire."
+    rStrRegPriorVersion     "Your registration number is from a previous version of MagicScroll.\nYou need to purchase a license for the current version of MagicScroll."
+    rStrInvalidReg          "Your registration name or number is invalid.\nMake sure you enter your registration name and number exactly."
+    rStrRegNameEmpty        "MagicScroll requires both a registration name and number."
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FORMAT_BULLETS       "Adds/removes bullets from current or selected paragraph(s)"
+    ID_FORMAT_STYLES        "Adds, edits, or removes styles\nStyles"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_SHOWINVISIBLES  "Shows invisible characters\nInvisibles"
+    rCmdHelpWeb             "Jumps to Magic Teleprompting on the web\nMagic Teleprompting on the web"
+    rCmdNextBkmk            "Jumps to the next bookmark\nNext bookmark"
+    rCmdPrevBkmk            "Jumps to the previous bookmark\nPrevious bookmark"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdBookmarks           "Goes to the selected bookmark\nGo to bookmark"
+    rCmdLoop                "Loop scripts when scrolling\nLoop"
+    rCmdOut                 "Sent to video out\nOut"
+    rCmdLink                "Link scripts when scrolling\nLink"
+END
+
+STRINGTABLE 
+BEGIN
+    rCmdHelpRegisterMsw     "Allows you to purchase and register MagicScroll"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#include "res\msw.rc2"  // non-App Studio edited resources
+
+#include "afxres.rc"  	// Standard components
+#include "afxprint.rc"	// printing/print preview resources
+#include "afxolecl.rc"	// OLE container resources
+#include "afxolesv.rc"	// OLE server resources
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

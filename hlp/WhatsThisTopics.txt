@@ -1,0 +1,20 @@
+.topic rCtlPrefClearPc
+When transitioning from edit to scroll mode, paperclips are usually retained. Check this option to clear them.
+
+.topic rCtlPrefResetTimer
+When transitioning from edit to scroll mode, the timer is resumed from the last session. Check this option to set the time to 0 each time.
+
+.topic rCtlPrefPrintCue
+When checked, the cue bar will be printed.
+
+.topic rCtlPrefInverseEditMode
+This option causes white text on a black background to be displayed in scroll mode. Otherwise the scheme is black text on a white background.
+
+.topic rCtlErtCps
+The number of characters per second used to calculate the ERT for scripts in the script queue.
+
+.topic rCtlErtDefault
+The number of characters per second used to calculate the ERT for scripts in the script queue.
+
+.topic rCtlButtonDefaultFont
+The font to be used when a text (.TXT) file is opened.

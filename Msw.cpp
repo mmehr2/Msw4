@@ -421,7 +421,7 @@ void AMswApp::SaveOptions()
    this->WriteProfileInt(gStrSection, gStrLoop, fLoop);
    this->WriteProfileInt(gStrSection, gStrLink, fLink);
    this->WriteProfileInt(gStrSection, gStrMirror, fMirror);
-   this->WriteProfileInt(gStrSection, gStrFrameInterval, AScrollDialog.gMinFrameInterval);
+   this->WriteProfileInt(gStrSection, gStrFrameInterval, AScrollDialog::gMinFrameInterval);
 
    VERIFY(gStyles.Write());
    //fCaption.SaveCCSettings();

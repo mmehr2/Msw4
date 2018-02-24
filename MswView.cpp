@@ -3,6 +3,10 @@
 
 
 #include "stdafx.h"
+
+// MLMehr - following fix suggested for errors in Afximpl.h involving HRAWINPUT definition missing
+#define HRAWINPUT DWORD
+
 #include <../Src/Mfc/AfxImpl.h>
 
 #include "Bookmark.h"

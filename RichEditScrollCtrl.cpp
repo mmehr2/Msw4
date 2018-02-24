@@ -42,7 +42,7 @@ void ARichEditScrollCtrl::PreSubclassWindow()
 {  // base class first
    CRichEditCtrl::PreSubclassWindow();	
 
-   m_pIRichEditOleCallback = new XRichEditOleCallback;
+   m_pIRichEditOleCallback = new XRichEditOleCallback(true);
    ASSERT(m_pIRichEditOleCallback != NULL);
 
    m_bCallbackSet = this->SetOLECallback(m_pIRichEditOleCallback);
@@ -197,17 +197,19 @@ void ARichEditScrollCtrl::OnSize(UINT nType, int cx, int cy)
    }
 }
 
-ARichEditScrollCtrl::XRichEditOleCallback::XRichEditOleCallback() :
+ARichEditScrollCtrl::XRichEditOleCallback::XRichEditOleCallback(bool used) :
    fRef(0),
    pStorage(NULL)
 {
-   // set up OLE storage
-   HRESULT hr = ::StgCreateDocfile(NULL, STGM_TRANSACTED | 
-      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | //STGM_DELETEONRELEASE | 
-      STGM_CREATE, 0, &pStorage);
+   if (used) {
+      // set up OLE storage
+      HRESULT hr = ::StgCreateDocfile(NULL, STGM_TRANSACTED | 
+         STGM_READWRITE | STGM_SHARE_EXCLUSIVE | //STGM_DELETEONRELEASE | 
+         STGM_CREATE, 0, &pStorage);
 
-   if ((NULL == pStorage) || FAILED(hr))
-      ::AfxThrowOleException(hr);
+      if ((NULL == pStorage) || FAILED(hr))
+         ::AfxThrowOleException(hr);
+   }
 }
 
 HRESULT STDMETHODCALLTYPE 
@@ -248,7 +250,10 @@ ULONG STDMETHODCALLTYPE ARichEditScrollCtrl::XRichEditOleCallback::AddRef()
 
 ULONG STDMETHODCALLTYPE ARichEditScrollCtrl::XRichEditOleCallback::Release()
 {
-	if (0 == --fRef)
+   if (0 == --fRef) {
+      pStorage->Release();
 		delete this;
-	return fRef;
+   }
+
+   return fRef;
 }

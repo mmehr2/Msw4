@@ -12,7 +12,6 @@
 #include "doctype.h"
 #include "ScriptQueueDlg.h"
 #include "HandController.h"
-#include "Caption.h"
 #include "Comm.h"
 #ifdef REGISTER
 #  include "RegGen\Registration.h"
@@ -111,7 +110,6 @@ public:  // data
    AScriptQueue fScriptQueue;
    AScriptQueueDlg fScriptQueueDlg;
    AHandController fHandController;
-   ACaption fCaption;
    CCharFormat fDefaultFont;
    bool fShowRuler;
    int fScrollMarginLeft;

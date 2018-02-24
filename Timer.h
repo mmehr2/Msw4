@@ -7,6 +7,10 @@
 // includes
 #include <ctime>
 
+#pragma warning (push)
+#pragma warning (disable: 4201)
+#	include "mmsystem.h"
+
 //-----------------------------------------------------------------------
 // classes
 
@@ -133,3 +137,5 @@ inline DWORD ATimer::Now() const
 {
    return ::timeGetTime();
 }
+
+#pragma warning (pop)

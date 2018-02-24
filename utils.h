@@ -4,7 +4,6 @@
 #pragma once
 
 static const BYTE sRtfPrefix[]      = {'{', '\\', 'r', 't', 'f'};
-static const wchar_t sURtfPrefix[]  = {0xFFFE, L'{', L'\\', L'r', L't', L'f'};
 static const BYTE sUTxt[]           = {0xFF, 0xFE};
 static const BYTE sWord2Prefix[]    = {0xDB, 0xA5, 0x2D, 0x00};
 static const BYTE sCompFilePrefix[] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};

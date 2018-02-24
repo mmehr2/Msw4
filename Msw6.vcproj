@@ -870,6 +870,14 @@
 			<File
 				RelativePath=".\Caption.cpp"
 				>
+				<FileConfiguration
+					Name="ReleaseU|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="childfrm.cpp"
@@ -994,6 +1002,14 @@
 				>
 				<FileConfiguration
 					Name="DebugU|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseU|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -2285,6 +2301,14 @@
 				<File
 					RelativePath=".\CaptionsPg.cpp"
 					>
+					<FileConfiguration
+						Name="ReleaseU|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\EvalDialog.cpp"
@@ -2533,6 +2557,14 @@
 							Name="VCCLCompilerTool"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseU|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\RemoteDlg.cpp"
@@ -2741,6 +2773,14 @@
 					>
 					<FileConfiguration
 						Name="DebugU|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="ReleaseU|Win32"
 						ExcludedFromBuild="true"
 						>
 						<Tool

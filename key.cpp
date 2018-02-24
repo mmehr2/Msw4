@@ -19,12 +19,14 @@ void AKey::Close()
 bool AKey::Create(HKEY key, LPCTSTR lpszKeyName)
 {
 	ASSERT(key != NULL);
+   this->Close();
    return (::RegCreateKey(key, lpszKeyName, &fKey) == ERROR_SUCCESS);
 }
 
 bool AKey::Open(HKEY key, LPCTSTR lpszKeyName)
 {
 	ASSERT(key != NULL);
+   this->Close();
    return (::RegOpenKey(key, lpszKeyName, &fKey) == ERROR_SUCCESS);
 }
 

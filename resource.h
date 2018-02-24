@@ -196,7 +196,6 @@
 #define rDisabled                       197
 #define rMenuDisabled                   197
 #define rStrTimer                       197
-#define IDS_URICHTEXT_DOC               198
 #define rDlgGeneralPrefs                198
 #define IDS_UTEXT_DOC                   199
 #define IDB_BITMAP2                     200

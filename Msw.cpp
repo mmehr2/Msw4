@@ -13,6 +13,7 @@
 #include "strings.h"
 #include "style.h"
 #include "EvalDialog.h"
+#include "ScrollDialog.h"
 
 #include <locale.h>
 #include <winnls.h>
@@ -420,9 +421,10 @@ void AMswApp::SaveOptions()
    this->WriteProfileInt(gStrSection, gStrLoop, fLoop);
    this->WriteProfileInt(gStrSection, gStrLink, fLink);
    this->WriteProfileInt(gStrSection, gStrMirror, fMirror);
+   this->WriteProfileInt(gStrSection, gStrFrameInterval, AScrollDialog.gMinFrameInterval);
 
    VERIFY(gStyles.Write());
-   fCaption.SaveCCSettings();
+   //fCaption.SaveCCSettings();
 #ifdef _REMOTE
    gComm.Write();
 #endif // _REMOTE
@@ -509,9 +511,11 @@ void AMswApp::LoadOptions()
    fLoop = this->GetProfileInt(gStrSection, gStrLoop, fLoop) ? true : false;
    fLink = this->GetProfileInt(gStrSection, gStrLink, fLink) ? true : false;
    fMirror = this->GetProfileInt(gStrSection, gStrMirror, fMirror) ? true : false;
+   AScrollDialog::gMinFrameInterval = this->GetProfileInt(
+      gStrSection, gStrFrameInterval, AScrollDialog::gMinFrameInterval);
 
    VERIFY(gStyles.Read());
-   fCaption.LoadCCSettings();
+   //fCaption.LoadCCSettings();
 #ifdef _REMOTE
    gComm.Read();
 #endif // _REMOTE

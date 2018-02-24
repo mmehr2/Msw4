@@ -69,6 +69,7 @@ extern const TCHAR gStrShowTimer[];
 extern const TCHAR gStrLoop[];
 extern const TCHAR gStrLink[];
 extern const TCHAR gStrMirror[];
+extern const TCHAR gStrFrameInterval[];
 
 extern const TCHAR gStrCueMarker[];
 

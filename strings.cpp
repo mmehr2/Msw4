@@ -66,6 +66,7 @@ const TCHAR gStrShowTimer[]      = _T("ShowTimer");
 const TCHAR gStrLoop[]           = _T("Loop");
 const TCHAR gStrLink[]           = _T("Link");
 const TCHAR gStrMirror[]         = _T("Mirror");
+const TCHAR gStrFrameInterval[]  = _T("FrameInterval");
 
 const TCHAR gStrCueMarker[]      = _T("CueMarker");
 

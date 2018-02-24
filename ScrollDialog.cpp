@@ -433,7 +433,7 @@ LRESULT AScrollDialog::OnScroll(WPARAM, LPARAM)
    VERIFY(::SetCursorPos(fMouseRect.CenterPoint().x, fMouseRect.CenterPoint().y));
    VERIFY(::GetCursorPos(&fPausedPos));
 
-   theApp.fCaption.BeginCaption(fRtfHelper);
+   //theApp.fCaption.BeginCaption(fRtfHelper);
 
 #ifdef _DEBUG
    std::set<int> ignoredMessages;
@@ -450,7 +450,7 @@ LRESULT AScrollDialog::OnScroll(WPARAM, LPARAM)
       }
 #endif // _REMOTE
 
-      theApp.fCaption.UpdateCaption(fRtfHelper);
+      //theApp.fCaption.UpdateCaption(fRtfHelper);
 
       fSpeed = newSpeed;
       if (0 == fSpeed)
@@ -664,7 +664,7 @@ void AScrollDialog::OnToggleScroll()
    }
 
    fRtfHelper.fArt.Stop();
-   theApp.fCaption.EndCaption();
+   //theApp.fCaption.EndCaption();
 
    this->UnclipCursor();
 
@@ -1040,7 +1040,7 @@ void AScrollDialog::Pause(bool toggle)
    {  // pause
       ::GetCursorPos(&fPausedPos);
       ::SetCursorPos(fPausedPos.x, fMouseRect.CenterPoint().y);
-      theApp.fCaption.ResetCaption(fRtfHelper);
+      //theApp.fCaption.ResetCaption(fRtfHelper);
    }
 }
 

@@ -13,11 +13,10 @@ public:
       RD_WINWORD6 = 1,
       RD_MSW      = 2,
       RD_RICHTEXT = 3,
-      RD_URICHTEXT = 4,
-      RD_TEXT     = 5,
-      RD_UTEXT    = 6,
-      RD_OEMTEXT  = 7,
-      RD_ALL      = 8,
+      RD_TEXT     = 4,
+      RD_UTEXT    = 5,
+      RD_OEMTEXT  = 6,
+      RD_ALL      = 7,
 
       RD_DEFAULT  = RD_MSW,
       RD_NATIVE   = RD_RICHTEXT

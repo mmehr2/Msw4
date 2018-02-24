@@ -183,9 +183,12 @@ CStringA CRtfMemFile::GetPrintableRtfSymbol(LPCSTR szRtfSymbol)
 {
    static const Rtf_SYM rgsymRtf[] = {
       {"par",        "\n"},
+      {"line",       "\n"},
 	   {"tab",        "\t"},
 	   {"ldblquote",  "\"\""},
 	   {"rdblquote",  "\"\""},
+	   {"lquote",     "'"},
+	   {"rquote",     "'"},
 	   {"{",          "{"},
 	   {"}",          "}"},
       {"\\",         "\\"}
@@ -663,7 +666,6 @@ static DWORD CALLBACK MemFileInCallBack(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG 
       // page breaks display as a blank line in edit mode, but not at all
       // in scroll mode, so we need to make adjustments...
       
-      //!!! UNICODE RTF text is not handled here. Later.
       pbBuff[*pcb] = 0;
       char pageBreakTag[] = "\\page";
       char paragraphTag[] = "\\par\r\n";

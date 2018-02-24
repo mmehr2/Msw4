@@ -14,7 +14,6 @@ APrefsDlg::APrefsDlg(UINT nIDCaption, CWnd* pParentWnd, UINT iSelectPage)
    this->AddPage(&fGeneralPage);
    this->AddPage(&fScrollPage);
    this->AddPage(&fVideoPage);
-   this->AddPage(&fCaptionsPage);
 
    // remove the Apply button
    m_psh.dwFlags |= PSH_NOAPPLYNOW;

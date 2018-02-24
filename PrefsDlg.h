@@ -6,7 +6,6 @@
 #include "GeneralPrefsDlg.h"
 #include "ScrollPrefsDlg.h"
 #include "VideoPg.h"
-#include "CaptionsPg.h"
 
 
 class APrefsDlg : public CPropertySheet
@@ -30,7 +29,6 @@ public:  // data
    AGeneralPrefsDlg fGeneralPage;
    AScrollPrefsDlg fScrollPage;
    AVideoPage fVideoPage;
-   ACaptionsPage fCaptionsPage;
 };
 
 

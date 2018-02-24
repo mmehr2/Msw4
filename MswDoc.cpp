@@ -67,11 +67,12 @@ void AMswDoc::ReportSaveLoadException(LPCTSTR lpszPathName,
 		case CFileException::tooManyOpenFiles: nIDP = IDS_TOOMANYFILES; break;
 		case CFileException::directoryFull:    nIDP = IDS_DIRFULL; break;
 		case CFileException::sharingViolation: nIDP = IDS_SHAREVIOLATION; break;
-      case CFileException::lockViolation:
+        case CFileException::lockViolation:
 		case CFileException::badSeek:
 		case CFileException::genericException:
 		case CFileException::invalidFile:
 		case CFileException::hardIO:           nIDP = bSaving ? AFX_IDP_FAILED_IO_ERROR_WRITE : AFX_IDP_FAILED_IO_ERROR_READ; break;
+        case CFileException::endOfFile:        /*!!! ???*/ break;
 		default:                               break;
 
       case CFileException::accessDenied:
@@ -347,7 +348,6 @@ int AMswDoc::GetStreamFormat() const
    switch (m_nDocType)
    {
    case DocType::RD_RICHTEXT:    return SF_RTF;
-   case DocType::RD_URICHTEXT:   return SF_RTF | SF_TEXT | SF_UNICODE;
    case DocType::RD_UTEXT:       return SF_TEXT | SF_UNICODE;
    default:                      return SF_TEXT;
    }

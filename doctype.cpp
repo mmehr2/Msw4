@@ -26,7 +26,6 @@ DocType gDocTypes[] =
 	DECLARE_DOCTYPE(WINWORD6, TRUE, FALSE, FALSE, gStrWordConverter),
 	DECLARE_DOCTYPE_SYN(MSW, RICHTEXT, TRUE, TRUE, TRUE, NULL),
 	DECLARE_DOCTYPE(RICHTEXT, TRUE, TRUE, FALSE, NULL),
-	DECLARE_DOCTYPE(URICHTEXT, TRUE, TRUE, FALSE, NULL),
 	DECLARE_DOCTYPE(TEXT, TRUE, TRUE, FALSE, NULL),
 	DECLARE_DOCTYPE(UTEXT, TRUE, TRUE, FALSE, NULL),
 	DECLARE_DOCTYPE(OEMTEXT, TRUE, TRUE, FALSE, NULL),
@@ -117,9 +116,6 @@ DocType::Id GetDocTypeFromName(LPCTSTR pszPathName, DocType::Id& supposedType, C
 	// RTF
 	if (IsLeadMatch(file, sRtfPrefix, sizeof(sRtfPrefix)))
 		return supposedType = DocType::RD_RICHTEXT;
-   // Unicode Rtf
-	else if (IsLeadMatch(file, (BYTE*)sURtfPrefix, sizeof(sURtfPrefix)))
-		return supposedType = DocType::RD_URICHTEXT;
 	// WORD 2
 	else if (IsLeadMatch(file, sWord2Prefix, sizeof(sWord2Prefix)))
 		return supposedType = DocType::RD_WINWORD2;

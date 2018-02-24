@@ -694,12 +694,14 @@ void AMainFrame::OnPreferences()
    dlg.fVideoPage.fLink = theApp.fLink;
    dlg.fVideoPage.fRightToLeft = theApp.fMirror;
 
+   /*
    dlg.fCaptionsPage.fPort = theApp.fCaption.fPortNum;
    dlg.fCaptionsPage.fEnabled = theApp.fCaption.fEnabled;
    dlg.fCaptionsPage.fBaudRate = theApp.fCaption.fBaudRate;
    dlg.fCaptionsPage.fByteSize = theApp.fCaption.fByteSize;
    dlg.fCaptionsPage.fParity = theApp.fCaption.fParity;
    dlg.fCaptionsPage.fStopBits = theApp.fCaption.fStopBits;
+   */
 
    if (IDOK == dlg.DoModal())
    {  // save 'em
@@ -735,12 +737,14 @@ void AMainFrame::OnPreferences()
       theApp.fLink = dlg.fVideoPage.fLink ? true : false;
       theApp.fMirror = dlg.fVideoPage.fRightToLeft ? true : false;
 
+      /*
       theApp.fCaption.fPortNum = dlg.fCaptionsPage.fPort;
       theApp.fCaption.fEnabled = dlg.fCaptionsPage.fEnabled;
       theApp.fCaption.fBaudRate = dlg.fCaptionsPage.fBaudRate;
       theApp.fCaption.fByteSize = dlg.fCaptionsPage.fByteSize;
       theApp.fCaption.fParity = dlg.fCaptionsPage.fParity;
       theApp.fCaption.fStopBits = dlg.fCaptionsPage.fStopBits;
+      */
    }
 }
 

@@ -415,7 +415,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         "",rCtlCompany,"Static",SS_BITMAP | SS_SUNKEN,7,10,184,73
     CTEXT           "[MagicScroll Version x.x.x]",rCtlVersion,7,90,184,8,NOT WS_GROUP
-    CTEXT           "Copyright© 2008 MagicTeleprompting 1994-2008.",IDC_STATIC,7,102,184,8
+    CTEXT           "Copyright© 2008 MagicTeleprompting 1994-2011.",IDC_STATIC,7,102,184,8
     CTEXT           "",rCtlVersion2,7,115,184,8,NOT WS_GROUP
     CONTROL         "",IDC_STATIC,"Static",SS_BLACKRECT,7,116,184,1
     CTEXT           "Warning: This computer program is protected by copyright law and international treaties.  Unauthorized reproduction or distribution of this program, or any portion of it, may result in severe civil and criminal penalties.",rCtlWarning,7,123,184,39
@@ -755,8 +755,8 @@ END
 //
 
 rVersionInfo VERSIONINFO
- FILEVERSION 4,0,1,25602
- PRODUCTVERSION 4,0,1,25602
+ FILEVERSION 4,0,1,26117
+ PRODUCTVERSION 4,0,1,26117
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -773,12 +773,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Magic Teleprompting"
             VALUE "FileDescription", "MagicScroll for Windows"
-            VALUE "FileVersion", "4, 0, 1, 25602"
+            VALUE "FileVersion", "4, 0, 1, 26117"
             VALUE "InternalName", "MagicScroll"
             VALUE "LegalCopyright", "Copyright© 2006 MagicTeleprompting 1994-2006.  All rights reserved."
             VALUE "OriginalFilename", "MSW.exe"
             VALUE "ProductName", "MagicScroll for Windows"
-            VALUE "ProductVersion", "4, 0, 1, 25602"
+            VALUE "ProductVersion", "4, 0, 1, 26117"
         END
     END
     BLOCK "VarFileInfo"
@@ -1261,7 +1261,6 @@ BEGIN
     rStrWillExpire          "This is an evaluation version of MagicScroll.\n\nPlease send feedback and problem reports to\nEricS@EcsVideoSystems.com"
     rStrCancelBtn           "Cancel"
     rStrTimer               "Timer\n%1"
-    IDS_URICHTEXT_DOC       "Unicode Rich Text Format (RTF)\nUnicode Rich Text Format (*.rtf)\n*.rtf\nUnicode Rich Text Document"
     IDS_UTEXT_DOC           "Unicode Text Document\nUnicode Text Documents (*.txt)\n*.txt\nUnicode Text Document"
     rStrFinishedReplaceAll  "MagicScroll has completed its search and has made %1!d! replacement(s)."
     IDP_NO_STYLE_NAME       "Please enter a name."

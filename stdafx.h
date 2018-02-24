@@ -41,11 +41,11 @@
 
 //-----------------------------------------------------------------------
 // voice recognition
-#pragma warning (push)
-#pragma warning (disable: 4996)  // 'wcscpy' was declared deprecated
-#include <sapi.h>
-#include <sphelper.h>
-#pragma warning (pop)
+//#pragma warning (push)
+//#pragma warning (disable: 4996)  // 'wcscpy' was declared deprecated
+//#include <sapi.h>
+//#include <sphelper.h>
+//#pragma warning (pop)
 
 #define DATE_DIRECT			// tells program not to use date fudge
 

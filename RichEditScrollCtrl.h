@@ -34,7 +34,7 @@ private:
    BOOL m_bCallbackSet;
 
 	BEGIN_INTERFACE_PART(RichEditOleCallback, IRichEditOleCallback)
-   	XRichEditOleCallback();
+   	XRichEditOleCallback(bool used = false);
 		INIT_INTERFACE_PART(CRichEditView, RichEditOleCallback)
 		STDMETHOD(GetNewStorage) (LPSTORAGE*);
       STDMETHOD(GetInPlaceContext) (LPOLEINPLACEFRAME*, LPOLEINPLACEUIWINDOW*, LPOLEINPLACEFRAMEINFO) {return S_OK;}

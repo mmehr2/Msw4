@@ -1,45 +1,45 @@
 Loaded Modules: 
- MagicScroll.exe,4.0.1,w:\Projects\MSW\Msw4\ReleaseU\MagicScroll.exe
- ntdll.dll,6.1.7600,C:\Windows\SysWOW64\ntdll.dll
- kernel32.dll,6.1.7600,C:\Windows\syswow64\kernel32.dll
- KERNELBASE.dll,6.1.7600,C:\Windows\syswow64\KERNELBASE.dll
- SETUPAPI.dll,6.1.7600,C:\Windows\syswow64\SETUPAPI.dll
- CFGMGR32.dll,6.1.7600,C:\Windows\syswow64\CFGMGR32.dll
- msvcrt.dll,7.0.7600,C:\Windows\syswow64\msvcrt.dll
- RPCRT4.dll,6.1.7600,C:\Windows\syswow64\RPCRT4.dll
- SspiCli.dll,6.1.7600,C:\Windows\syswow64\SspiCli.dll
- CRYPTBASE.dll,6.1.7600,C:\Windows\syswow64\CRYPTBASE.dll
- sechost.dll,6.1.7600,C:\Windows\SysWOW64\sechost.dll
- ADVAPI32.dll,6.1.7600,C:\Windows\syswow64\ADVAPI32.dll
- GDI32.dll,6.1.7600,C:\Windows\syswow64\GDI32.dll
- USER32.dll,6.1.7600,C:\Windows\syswow64\USER32.dll
- LPK.dll,6.1.7600,C:\Windows\syswow64\LPK.dll
- USP10.dll,1.626.7600,C:\Windows\syswow64\USP10.dll
- OLEAUT32.dll,6.1.7600,C:\Windows\syswow64\OLEAUT32.dll
- ole32.dll,6.1.7600,C:\Windows\syswow64\ole32.dll
- DEVOBJ.dll,6.1.7600,C:\Windows\syswow64\DEVOBJ.dll
+ MagicScroll.exe,4.0.1,C:\Users\Mike\Documents\Toptal\ECSVideo\MSW\Msw4\DebugU\MagicScroll.exe
+ ntdll.dll,6.1.7601,C:\Windows\SysWOW64\ntdll.dll
+ kernel32.dll,6.1.7601,C:\Windows\syswow64\kernel32.dll
+ KERNELBASE.dll,6.1.7601,C:\Windows\syswow64\KERNELBASE.dll
+ SETUPAPI.dll,6.1.7601,C:\Windows\syswow64\SETUPAPI.dll
+ CFGMGR32.dll,6.1.7601,C:\Windows\syswow64\CFGMGR32.dll
+ msvcrt.dll,7.0.7601,C:\Windows\syswow64\msvcrt.dll
+ RPCRT4.dll,6.1.7601,C:\Windows\syswow64\RPCRT4.dll
+ SspiCli.dll,6.1.7601,C:\Windows\syswow64\SspiCli.dll
+ CRYPTBASE.dll,6.1.7601,C:\Windows\syswow64\CRYPTBASE.dll
+ sechost.dll,6.1.7601,C:\Windows\SysWOW64\sechost.dll
+ ADVAPI32.dll,6.1.7601,C:\Windows\syswow64\ADVAPI32.dll
+ GDI32.dll,6.1.7601,C:\Windows\syswow64\GDI32.dll
+ USER32.dll,6.1.7601,C:\Windows\syswow64\USER32.dll
+ LPK.dll,6.1.7601,C:\Windows\syswow64\LPK.dll
+ USP10.dll,1.626.7601,C:\Windows\syswow64\USP10.dll
+ OLEAUT32.dll,6.1.7601,C:\Windows\syswow64\OLEAUT32.dll
+ ole32.dll,6.1.7601,C:\Windows\syswow64\ole32.dll
+ DEVOBJ.dll,6.1.7601,C:\Windows\syswow64\DEVOBJ.dll
  PSAPI.DLL,6.1.7600,C:\Windows\syswow64\PSAPI.DLL
- WINMM.dll,6.1.7600,C:\Windows\system32\WINMM.dll
+ WINMM.dll,6.1.7601,C:\Windows\system32\WINMM.dll
  MSIMG32.dll,6.1.7600,C:\Windows\system32\MSIMG32.dll
- comdlg32.dll,6.1.7600,C:\Windows\syswow64\comdlg32.dll
- SHLWAPI.dll,6.1.7600,C:\Windows\syswow64\SHLWAPI.dll
- COMCTL32.dll,6.10.7600,C:\Windows\WinSxS\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.7600.16661_none_420fe3fa2b8113bd\COMCTL32.dll
- SHELL32.dll,6.1.7600,C:\Windows\syswow64\SHELL32.dll
- WINSPOOL.DRV,6.1.7600,C:\Windows\system32\WINSPOOL.DRV
+ COMDLG32.dll,6.1.7601,C:\Windows\syswow64\COMDLG32.dll
+ SHLWAPI.dll,6.1.7601,C:\Windows\syswow64\SHLWAPI.dll
+ COMCTL32.dll,6.10.7601,C:\Windows\WinSxS\x86_microsoft.windows.common-controls_6595b64144ccf1df_6.0.7601.18837_none_41e855142bd5705d\COMCTL32.dll
+ SHELL32.dll,6.1.7601,C:\Windows\syswow64\SHELL32.dll
+ WINSPOOL.DRV,6.1.7601,C:\Windows\system32\WINSPOOL.DRV
  oledlg.dll,6.1.7600,C:\Windows\system32\oledlg.dll
  VERSION.dll,6.1.7600,C:\Windows\system32\VERSION.dll
- IMM32.DLL,6.1.7600,C:\Windows\system32\IMM32.DLL
- MSCTF.dll,6.1.7600,C:\Windows\syswow64\MSCTF.dll
- WINTRUST.dll,6.1.7600,C:\Windows\syswow64\WINTRUST.dll
- CRYPT32.dll,6.1.7600,C:\Windows\syswow64\CRYPT32.dll
- MSASN1.dll,6.1.7600,C:\Windows\syswow64\MSASN1.dll
+ gdiplus.dll,6.1.7601,C:\Windows\WinSxS\x86_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.7601.23894_none_5c0be957a009922e\gdiplus.dll
+ OLEACC.dll,7.0.0,C:\Windows\system32\OLEACC.dll
+ IMM32.dll,6.1.7601,C:\Windows\syswow64\IMM32.dll
+ MSCTF.dll,6.1.7601,C:\Windows\syswow64\MSCTF.dll
+ apphelp.dll,6.1.7601,C:\Windows\system32\apphelp.dll
+ AcLayers.DLL,6.1.7601,C:\Windows\AppPatch\AcLayers.DLL
+ USERENV.dll,6.1.7601,C:\Windows\syswow64\USERENV.dll
+ profapi.dll,6.1.7600,C:\Windows\syswow64\profapi.dll
+ MPR.dll,6.1.7600,C:\Windows\system32\MPR.dll
+ WINTRUST.dll,6.1.7601,C:\Windows\syswow64\WINTRUST.dll
+ CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
+ MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  uxtheme.dll,6.1.7600,C:\Windows\system32\uxtheme.dll
+ dwmapi.dll,6.1.7601,C:\Windows\system32\dwmapi.dll
  RICHED20.DLL,5.31.23,C:\Windows\system32\RICHED20.DLL
- dwmapi.dll,6.1.7600,C:\Windows\system32\dwmapi.dll
- KatMouseS.dll,1.0.0,W:\Tools\KatMouse\KatMouseS.dll
- CLBCatQ.DLL,2001.12.8530,C:\Windows\syswow64\CLBCatQ.DLL
- PolarSpellChecker.dll,5.0.0,C:\Program Files (x86)\MagicScroll\PolarSpellChecker.dll
- SXS.DLL,6.1.7600,C:\Windows\system32\SXS.DLL
- propsys.dll,7.0.7600,C:\Windows\system32\propsys.dll
- ntmarta.dll,6.1.7600,C:\Windows\system32\ntmarta.dll
- WLDAP32.dll,6.1.7600,C:\Windows\syswow64\WLDAP32.dll

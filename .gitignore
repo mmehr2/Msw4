@@ -55,7 +55,13 @@ ipch/
 # Project subfolders
 RegGen/
 Install/
-3rd Party/
+3rd Party/libjingle/
+3rd Party/DiskId/
+3rd Party/Gloox
+3rd Party/Polar
+3rd Party/SpeechSdk/
+3rd Party/Inno Setup 5/
+3rd Party/Sentinel*/
 For dynamic*/
 
 # Windows left-overs

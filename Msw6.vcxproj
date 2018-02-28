@@ -186,6 +186,7 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
     <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">MagicScroll</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">MagicScroll</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -667,6 +668,10 @@
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
     </ClCompile>
     <ClCompile Include="cntritem.cpp" />
+    <ClCompile Include="Comm.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="RegGen\CRCGenerator.cpp" />
     <ClCompile Include="doctype.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">Disabled</Optimization>
@@ -1107,7 +1112,6 @@
     <ClCompile Include="PrefsDlg.cpp" />
     <ClCompile Include="RemoteDlg.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DemoU|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseUReg|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">true</ExcludedFromBuild>

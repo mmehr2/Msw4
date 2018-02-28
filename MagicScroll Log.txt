@@ -43,3 +43,7 @@ Loaded Modules:
  uxtheme.dll,6.1.7600,C:\Windows\system32\uxtheme.dll
  dwmapi.dll,6.1.7601,C:\Windows\system32\dwmapi.dll
  RICHED20.DLL,5.31.23,C:\Windows\system32\RICHED20.DLL
+ CLBCatQ.DLL,2001.12.8530,C:\Windows\syswow64\CLBCatQ.DLL
+ propsys.dll,7.0.7601,C:\Windows\system32\propsys.dll
+ ntmarta.dll,6.1.7600,C:\Windows\system32\ntmarta.dll
+ WLDAP32.dll,6.1.7601,C:\Windows\syswow64\WLDAP32.dll

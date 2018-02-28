@@ -180,3 +180,60 @@ LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
 
    return 0;
 }
+
+#ifdef _REMOTEX
+// MLM - this code shims out the Comm.cpp code that uses libjingle - for now
+AComm gComm;
+
+AComm::AComm() :
+   fState(kUnknown),
+   fIsMaster(false),
+   fThread(NULL)
+{
+   fImpl = NULL; //new ACommImpl(this);
+   this->SetState(kIdle);
+}
+
+AComm::~AComm() {
+   this->Disconnect();
+   //delete fImpl;
+}
+
+void AComm::Connect(LPCTSTR username, LPCTSTR password) {
+   ASSERT(username && *username && password);
+
+   this->Disconnect();
+
+   this->SetState(kConnecting);
+   fUsername = username;
+   fPassword = password;
+   //fThread = ::AfxBeginThread(Connect, this);
+}
+
+void AComm::Disconnect() {
+   if (NULL != fThread) {
+      fThread->Delete();
+      fThread = NULL;
+   }
+   this->SetState(kIdle);
+}
+
+bool AComm::StartChat(LPCTSTR target) {
+   // end the current one, if it exists
+   this->EndChat();
+
+   this->SetState(kChatting);
+   fIsMaster = true;
+
+   return true;
+}
+
+void AComm::EndChat() {
+   fIsMaster = false;
+}
+
+CString AComm::GetSessionJid() const {
+   return CString();
+}
+
+#endif

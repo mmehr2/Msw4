@@ -45,6 +45,8 @@
 static const int kRecvTimeout          = 1;              // seconds
 static const int kConnectPeriod        = 1000;           // milliseconds between connect retries
 static const int kMaxJid               = 256;
+static const char* talk_server         = "192.168.1.136"; //"talk.google.com"; // MLM-local testing with ejabberd on this machine
+static const int talk_server_port      = 5222;
 
 class FileShareClient : public sigslot::has_slots<> {
 public:
@@ -159,13 +161,13 @@ UINT AComm::Connect(LPVOID param) {
    xcs.set_user(pThis->fImpl->fJid.node());
    xcs.set_resource("MSW");
    xcs.set_host(pThis->fImpl->fJid.domain());
-   xcs.set_use_tls(true);
+   xcs.set_use_tls(false); // MLM - no TLS for now
 
    VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fPassword) < sizeof(buffer));
    talk_base::InsecureCryptStringImpl pass;
    pass.password() = buffer;
    xcs.set_pass(talk_base::CryptString(pass));
-   xcs.set_server(talk_base::SocketAddress("talk.google.com", 5222));
+   xcs.set_server(talk_base::SocketAddress(talk_server, talk_server_port));
 
    talk_base::PhysicalSocketServer ss;
    talk_base::Thread main_thread(&ss);

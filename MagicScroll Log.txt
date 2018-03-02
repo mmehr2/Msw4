@@ -20,6 +20,8 @@ Loaded Modules:
  DEVOBJ.dll,6.1.7601,C:\Windows\syswow64\DEVOBJ.dll
  PSAPI.DLL,6.1.7600,C:\Windows\syswow64\PSAPI.DLL
  WINMM.dll,6.1.7601,C:\Windows\system32\WINMM.dll
+ CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
+ MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  MSIMG32.dll,6.1.7600,C:\Windows\system32\MSIMG32.dll
  COMDLG32.dll,6.1.7601,C:\Windows\syswow64\COMDLG32.dll
  SHLWAPI.dll,6.1.7601,C:\Windows\syswow64\SHLWAPI.dll
@@ -27,23 +29,27 @@ Loaded Modules:
  SHELL32.dll,6.1.7601,C:\Windows\syswow64\SHELL32.dll
  WINSPOOL.DRV,6.1.7601,C:\Windows\system32\WINSPOOL.DRV
  oledlg.dll,6.1.7600,C:\Windows\system32\oledlg.dll
+ IPHLPAPI.DLL,6.1.7601,C:\Windows\system32\IPHLPAPI.DLL
+ NSI.dll,6.1.7601,C:\Windows\syswow64\NSI.dll
+ WINNSI.DLL,6.1.7601,C:\Windows\system32\WINNSI.DLL
  VERSION.dll,6.1.7600,C:\Windows\system32\VERSION.dll
+ WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
  gdiplus.dll,6.1.7601,C:\Windows\WinSxS\x86_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.7601.23894_none_5c0be957a009922e\gdiplus.dll
  OLEACC.dll,7.0.0,C:\Windows\system32\OLEACC.dll
  IMM32.dll,6.1.7601,C:\Windows\syswow64\IMM32.dll
  MSCTF.dll,6.1.7601,C:\Windows\syswow64\MSCTF.dll
+ Secur32.dll,6.1.7601,C:\Windows\system32\Secur32.dll
  apphelp.dll,6.1.7601,C:\Windows\system32\apphelp.dll
  AcLayers.DLL,6.1.7601,C:\Windows\AppPatch\AcLayers.DLL
  USERENV.dll,6.1.7601,C:\Windows\syswow64\USERENV.dll
  profapi.dll,6.1.7600,C:\Windows\syswow64\profapi.dll
  MPR.dll,6.1.7600,C:\Windows\system32\MPR.dll
  WINTRUST.dll,6.1.7601,C:\Windows\syswow64\WINTRUST.dll
- CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
- MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  uxtheme.dll,6.1.7600,C:\Windows\system32\uxtheme.dll
  dwmapi.dll,6.1.7601,C:\Windows\system32\dwmapi.dll
  RICHED20.DLL,5.31.23,C:\Windows\system32\RICHED20.DLL
+ mswsock.dll,6.1.7601,C:\Windows\system32\mswsock.dll
+ wshtcpip.dll,6.1.7600,C:\Windows\System32\wshtcpip.dll
  CLBCatQ.DLL,2001.12.8530,C:\Windows\syswow64\CLBCatQ.DLL
  propsys.dll,7.0.7601,C:\Windows\system32\propsys.dll
  ntmarta.dll,6.1.7600,C:\Windows\system32\ntmarta.dll
- WLDAP32.dll,6.1.7601,C:\Windows\syswow64\WLDAP32.dll

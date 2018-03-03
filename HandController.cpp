@@ -74,7 +74,7 @@ void AHandController::Connect()
       ::SetupDiDestroyDeviceInfoList(info);
    }
    else
-      TRACE1("HC: SetupDiClassDevs() failed. GetLastError() returns: 0x%x\n", GetLastError());
+      TRACE("HC: SetupDiClassDevs() failed. GetLastError() returns: 0x%x\n", GetLastError());
 }
 
 void AHandController::Disconnect()
@@ -126,13 +126,13 @@ bool AHandController::Poll(int& speed, bool& lClick, bool& rClick)
    // update the speed
 #ifdef _DEBUG
 static int x = 0;
-if (0 == (x %20)) TRACE1("raw h/c speed: %d\n", data.get()[i + 2]);
+if (0 == (x %20)) TRACE("raw h/c speed: %d\n", data.get()[i + 2]);
 #endif // _DEBUG
 
    speed = (data.get()[i + 2] & 0xFE) - 128;
 
 #ifdef _DEBUG
-if (0 == (x++ %20)) TRACE1("h/c speed: %d\n", speed);
+if (0 == (x++ %20)) TRACE("h/c speed: %d\n", speed);
 #endif // _DEBUG
 
    return true;

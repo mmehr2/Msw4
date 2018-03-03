@@ -198,7 +198,7 @@ BOOL AMswDoc::DoSave(LPCTSTR pszPathName, BOOL bReplace /*=TRUE*/)
 			}
 			CATCH_ALL(e)
 			{
-				TRACE0("Warning: failed to delete file after failed SaveAs\n");
+				TRACE("Warning: failed to delete file after failed SaveAs\n");
 			}
 			END_CATCH_ALL
 		}

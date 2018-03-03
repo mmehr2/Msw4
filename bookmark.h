@@ -91,7 +91,7 @@ inline bool AMarker::operator == (const AMarker& marker) const
 #ifdef _DEBUG
 inline void AMarker::Dump() const
 {
-   TRACE1("%d", fPos);
+   TRACE("%d", fPos);
 }
 #endif // _DEBUG
 
@@ -215,7 +215,7 @@ inline bool ABookmark::operator == (const ABookmark& bookmark) const
 #ifdef _DEBUG
 inline void ABookmark::Dump() const
 {
-   TRACE1("%s:", (LPCTSTR)fName);
+   TRACE("%s:", (LPCTSTR)fName);
    AMarker::Dump();
 }
 #endif // _DEBUG

@@ -168,6 +168,7 @@ UINT AComm::Connect(LPVOID param) {
    pass.password() = buffer;
    xcs.set_pass(talk_base::CryptString(pass));
    xcs.set_server(talk_base::SocketAddress(talk_server, talk_server_port));
+   TRACE("MLM: Connection to talk server will be through %s:%d\n", talk_server, talk_server_port);
 
    talk_base::PhysicalSocketServer ss;
    talk_base::Thread main_thread(&ss);
@@ -179,7 +180,7 @@ UINT AComm::Connect(LPVOID param) {
    pump.client()->SignalLogOutput.connect(&debug_log_, &DebugLog::Output);
    pump.client()->SignalStateChange.connect(pThis->fImpl, &ACommImpl::OnStateChange);
 
-   pump.DoLogin(xcs, new XmppSocket(true), NULL);
+   pump.DoLogin(xcs, new XmppSocket(false), NULL);
    main_thread.Run();
    pump.DoDisconnect();
 
@@ -321,7 +322,7 @@ void ACommImpl::OnStateChange(buzz::XmppEngine::State state) {
       
       case buzz::XmppEngine::STATE_OPEN:
       {
-         TRACE1("Logged in as %S\n", fJid.Str().c_str());
+         TRACE("Logged in as %S\n", fJid.Str().c_str());
          fComm->SetState(AComm::kConnected);
 
          std::string client_unique = fClient->jid().Str();
@@ -398,7 +399,7 @@ void FileShareClient::OnSessionState(cricket::FileShareState state) {
    switch(state) {
       case cricket::FS_OFFER:
       // The offer has been made; print a summary of it and, if it's an incoming transfer, accept it
-      TRACE2("%S file %S\n", session_->is_sender() ? "Offering" : "Receiving", 
+      TRACE("%S file %S\n", session_->is_sender() ? "Offering" : "Receiving", 
          session_->manifest()->item(0).name.c_str());
       if (!session_->is_sender() && waiting_for_file_) {
          session_->Accept();

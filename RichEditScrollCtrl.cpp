@@ -19,7 +19,7 @@ ARichEditScrollCtrl::ARichEditScrollCtrl() :
 
 ARichEditScrollCtrl::~ARichEditScrollCtrl()
 {
-   TRACE1("~ARichEditScrollCtrl::m_dwRef = %d\n", this->m_dwRef);
+   TRACE("~ARichEditScrollCtrl::m_dwRef = %d\n", this->m_dwRef);
 }
 
 int ARichEditScrollCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)

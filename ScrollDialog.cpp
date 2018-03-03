@@ -477,7 +477,7 @@ LRESULT AScrollDialog::OnScroll(WPARAM, LPARAM)
 const int kAcceptablePause = 5;
 const DWORD elapsed = (clock.Now() - prevFrameTime);
 if (fSpeed && (elapsed > (currentFrameInterval + kAcceptablePause)))
-   TRACE1("SLOW!!!\t%d\n", elapsed - currentFrameInterval);
+   TRACE("SLOW!!!\t%d\n", elapsed - currentFrameInterval);
 #endif // _DEBUG
 
          do {  // check for messages while we're killing time...
@@ -500,7 +500,7 @@ if (fSpeed && (elapsed > (currentFrameInterval + kAcceptablePause)))
             }
          } while ((clock.Now() - prevFrameTime) < currentFrameInterval);
 
-//if (0 == (z++ % 20)) TRACE1("frame time: %d\n", clock.Now() - prevFrameTime);
+//if (0 == (z++ % 20)) TRACE("frame time: %d\n", clock.Now() - prevFrameTime);
          prevFrameTime = clock.Now();
       }
 
@@ -947,7 +947,7 @@ int AScrollDialog::GetSpeed(int &deltaPixels, int &frameInterval)
    frameInterval = fIntervalTable[i];  
 #if 0 // _DEBUG
 static int z = 0;
-if (0 == (z % 100)) TRACE3("speed:%d pixels:%d intervals:%d\n", speed, deltaPixels, frameInterval);
+if (0 == (z % 100)) TRACE("speed:%d pixels:%d intervals:%d\n", speed, deltaPixels, frameInterval);
 #endif // _DEBUG
 
    return speed;

@@ -458,7 +458,7 @@ LRESULT AMainFrame::OnVoiceCommand(WPARAM, LPARAM)
       const int command = elements->pProperties->vValue.ulVal;
       ::CoTaskMemFree(elements);
 
-      TRACE2("Voice command (%d,%d)\n", commandType, command);
+      TRACE("Voice command (%d,%d)\n", commandType, command);
       switch (commandType)
       {
          case ASRManager::Command:

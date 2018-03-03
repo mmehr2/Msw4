@@ -296,7 +296,7 @@ int AFormatBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		WS_VSCROLL|CBS_DROPDOWN|CBS_SORT|CBS_AUTOHSCROLL|CBS_HASSTRINGS|
 		CBS_OWNERDRAWFIXED, rect, this, IDC_FONTNAME))
 	{
-		TRACE0("Failed to create fontname combo-box\n");
+		TRACE("Failed to create fontname combo-box\n");
 		return -1;
 	}
 	m_comboFontName.LimitText(LF_FACESIZE);
@@ -305,7 +305,7 @@ int AFormatBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (!m_comboStyles.Create(WS_TABSTOP|WS_VISIBLE|
 		WS_VSCROLL|CBS_DROPDOWNLIST|CBS_SORT|CBS_AUTOHSCROLL, rect, this, IDC_FONTSTYLE))
 	{
-		TRACE0("Failed to create Style combo-box\n");
+		TRACE("Failed to create Style combo-box\n");
 		return -1;
 	}
 	this->FillStyleList();
@@ -314,7 +314,7 @@ int AFormatBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (!m_comboFontSize.Create(WS_TABSTOP|WS_VISIBLE|
 		WS_VSCROLL|CBS_DROPDOWN, rect, this, IDC_FONTSIZE))
 	{
-		TRACE0("Failed to create fontsize combo-box\n");
+		TRACE("Failed to create fontsize combo-box\n");
 		return -1;
 	}
 

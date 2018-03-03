@@ -231,7 +231,7 @@ AMswView::AMswView() :
 
 AMswView::~AMswView()
 {
-   TRACE1("~AMswView::m_dwRef = %d\n", this->m_dwRef);
+   TRACE("~AMswView::m_dwRef = %d\n", this->m_dwRef);
    if (theApp.fScriptQueue.Remove(this))
       theApp.fScriptQueueDlg.RefreshList();
 }
@@ -507,7 +507,7 @@ void AMswView::OnTimer(UINT nIDEvent)
          else
             end = edit.LineIndex(line + 2) - 1;
          edit.SetSel(start, end);
-         TRACE3("auto-scroll (%s) %d:%d\n", up ? _T("up") : _T("down"), start, end);
+         TRACE("auto-scroll (%s) %d:%d\n", up ? _T("up") : _T("down"), start, end);
 
          edit.SendMessage(EM_LINESCROLL, 0, up ? -1 : 1);
       }
@@ -769,7 +769,7 @@ BOOL AMswView::CreateRulerBar()
 
    if (!m_wndRulerBar.Create(this, style, rCmdViewRuler))
 	{
-		TRACE0("Failed to create ruler\n");
+		TRACE("Failed to create ruler\n");
 		return FALSE;      // fail to create
 	}
 

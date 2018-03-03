@@ -110,7 +110,7 @@ void ARtfHelper::SetCurrentUserPos(int pos)
       fEdit->SendMessage(EM_SETSCROLLPOS, NULL, (LPARAM)&p);
    }
 
-   //TRACE1("SetCurrentUserPos:\t%d\n", pos);
+   //TRACE("SetCurrentUserPos:\t%d\n", pos);
 }
 
 int ARtfHelper::GetCurrentUserCharPos(bool max)
@@ -308,7 +308,7 @@ bool ARtfHelper::NextBookmark()
    if (valid)
    {
       const int charPos = fBookmarks.Next(this->GetCurrentUserCharPos(true));
-      TRACE1("GotoBookmark at char pos %d\n", charPos);
+      TRACE("GotoBookmark at char pos %d\n", charPos);
       this->SetCurrentUserCharPos(charPos);
    }
    return valid;
@@ -325,7 +325,7 @@ bool ARtfHelper::PrevBookmark()
    if (valid)
    {
       const int charPos = fBookmarks.Prev(this->GetCurrentUserCharPos(false));
-      TRACE1("GotoBookmark at char pos %d\n", charPos);
+      TRACE("GotoBookmark at char pos %d\n", charPos);
       this->SetCurrentUserCharPos(charPos);
    }
    return valid;
@@ -408,7 +408,7 @@ bool ARtfHelper::NextPaperclip()
    if (valid)
    {
       const int charPos = fPaperclips.Next(this->GetCurrentUserCharPos(true));
-      TRACE1("GotoPaperclip at char pos %d\n", charPos);
+      TRACE("GotoPaperclip at char pos %d\n", charPos);
       this->SetCurrentUserCharPos(charPos);
    }
    return valid;
@@ -425,7 +425,7 @@ bool ARtfHelper::PrevPaperclip()
    if (valid)
    {
       const int charPos = fPaperclips.Prev(this->GetCurrentUserCharPos(false));
-      TRACE1("GotoPaperclip at char pos %d\n", charPos);
+      TRACE("GotoPaperclip at char pos %d\n", charPos);
       this->SetCurrentUserCharPos(charPos);
    }
    return valid;
@@ -609,7 +609,7 @@ bool ARtfHelper::StartDrag(const CPoint& point)
       fDragPoint = point;
       fDragDelta = fDragPoint.y - sCueMarker.GetPosition().y;
       fDragging = true;
-      //TRACE2("Start dragging at (%d,%d)\n", point.x, point.y);
+      //TRACE("Start dragging at (%d,%d)\n", point.x, point.y);
    }
 
    return fDragging;
@@ -628,7 +628,7 @@ void ARtfHelper::Drop(const CPoint&)
       VERIFY(theApp.WriteProfileInt(gStrSection, gStrCuePos, 
          sCueMarker.GetPosition().y));
 
-      //TRACE2("Drop at (%d,%d)\n", point.x, point.y);
+      //TRACE("Drop at (%d,%d)\n", point.x, point.y);
    }
 }
 
@@ -644,7 +644,7 @@ void ARtfHelper::Drag(const CPoint& point)
       fDragPoint = point;
       sCueMarker.SetPosition(cueMarker.left, fDragPoint.y - fDragDelta);
       fParent->InvalidateRect(sCueMarker.GetRect(cueBar.top));
-      //TRACE2("Drag to (%d,%d)\n", point.x, point.y);
+      //TRACE("Drag to (%d,%d)\n", point.x, point.y);
    }
 }
 

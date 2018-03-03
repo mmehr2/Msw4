@@ -268,7 +268,7 @@ void ACaption::OutputCC(int i) {
    ASSERT(INVALID_HANDLE_VALUE != fPort);
    DWORD written = 0;
 #ifdef _DEBUG
-   TRACE1("CC Output: %d\n", i);
+   TRACE("CC Output: %d\n", i);
 #endif // _DEBUG
    if (!::WriteFile(fPort, (void*)&i, sizeof(i), &written, NULL)) {
       ::err();
@@ -280,7 +280,7 @@ void ACaption::OutputCC(char* lpOutString, long size) {
    DWORD written = 0;
 #ifdef _DEBUG
    TRACE("CC Output: ");
-   for (int i = 0; i < size; ++i) {TRACE1("%x", lpOutString[i]);}
+   for (int i = 0; i < size; ++i) {TRACE("%x", lpOutString[i]);}
    TRACE("\n");
 #endif // _DEBUG
    if (!::WriteFile(fPort, lpOutString, size, &written, NULL)) {

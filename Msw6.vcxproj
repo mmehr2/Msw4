@@ -372,7 +372,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>.;.\3rd Party\LibJingle;.\3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; _REMOTEx;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; _REMOTE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -394,14 +394,16 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjingle.lib;SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;crypt32.lib;libexpatMT.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\ReleaseU/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\ReleaseU;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\ReleaseU;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;.\3rd Party\libjingle\talk\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\ReleaseU/Msw6.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Message>Copying files to install folder...</Message>
@@ -671,9 +673,7 @@
       <BrowseInformation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BrowseInformation>
     </ClCompile>
     <ClCompile Include="cntritem.cpp" />
-    <ClCompile Include="Comm.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="Comm.cpp" />
     <ClCompile Include="RegGen\CRCGenerator.cpp" />
     <ClCompile Include="doctype.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">Disabled</Optimization>
@@ -1116,7 +1116,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DemoU|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseUReg|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ScriptQueueDlg.cpp" />
     <ClCompile Include="ScrollDialog.cpp">

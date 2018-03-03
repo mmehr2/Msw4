@@ -1508,7 +1508,7 @@ BOOL BCMenu::LoadMenu(int nResource)
 
 BOOL BCMenu::LoadMenu(LPCTSTR lpszResourceName)
 {
-	TRACE(_T(
+	TRACE((
 		"IMPORTANT:Use BCMenu::DestroyMenu to destroy Loaded Menu's\n"));
 	ASSERT_VALID(this);
 	ASSERT(lpszResourceName != NULL);

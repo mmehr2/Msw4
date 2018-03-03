@@ -47,7 +47,7 @@ DWORD AScript::GetArt() const
 #ifdef _DEBUG
 void AScript::Dump() const
 {
-   TRACE(_T("AScript: %s {%d,%d}\n"), (LPCTSTR)this->GetName(), 
+   TRACE(("AScript: %s {%d,%d}\n"), (LPCTSTR)this->GetName(), 
       this->GetStart(), this->GetEnd());
 }
 #endif // _DEBUG
@@ -143,11 +143,11 @@ void AScriptQueue::Activate(size_t i)
 #ifdef _DEBUG
 void AScriptQueue::Dump() const
 {
-   TRACE(_T("AScriptQueue:\n"));
+   TRACE(("AScriptQueue:\n"));
    const size_t active = this->GetActive();
    for (size_t i = 0; i < this->size(); ++i)
    {
-      TRACE(_T("\t%s"), (active == i) ? _T("*") : _T(""));
+      TRACE(("\t%s"), (active == i) ? _T("*") : _T(""));
       (*this)[i].Dump();
    }
 }

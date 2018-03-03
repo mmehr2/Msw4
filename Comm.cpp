@@ -202,8 +202,11 @@ bool AComm::StartChat(LPCTSTR target) {
    char buffer[kMaxJid] = {0};
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
    buzz::Jid jid(buffer);
+   TRACE("M1\n");
    fImpl->fChat = fImpl->fChatSession->CreateChat(jid, false);
+   TRACE("M2\n");
    fImpl->fChat->SendMessage("", "MSW is your master", XmppChat::CHAT_STATE_ACTIVE);
+   TRACE("M3\n");
 
    this->SetState(kChatting);
    fIsMaster = true;
@@ -316,9 +319,9 @@ void ACommImpl::SetParent(HWND parent) {
 
 void ACommImpl::OnStateChange(buzz::XmppEngine::State state) {
    switch (state) {
-      case buzz::XmppEngine::STATE_START:    TRACE(_T("Connecting...\n")); fComm->SetState(AComm::kConnecting); break;
-      case buzz::XmppEngine::STATE_OPENING:  TRACE(_T("Logging in.\n")); fComm->SetState(AComm::kConnecting); break;
-      case buzz::XmppEngine::STATE_CLOSED:   TRACE(_T("Logged out.\n")); fComm->SetState(AComm::kIdle); break;
+      case buzz::XmppEngine::STATE_START:    TRACE(("Connecting...\n")); fComm->SetState(AComm::kConnecting); break;
+      case buzz::XmppEngine::STATE_OPENING:  TRACE(("Logging in.\n")); fComm->SetState(AComm::kConnecting); break;
+      case buzz::XmppEngine::STATE_CLOSED:   TRACE(("Logged out.\n")); fComm->SetState(AComm::kIdle); break;
       
       case buzz::XmppEngine::STATE_OPEN:
       {

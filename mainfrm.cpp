@@ -237,7 +237,7 @@ int AMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
    if (fSpeech.Initialize(this->m_hWnd))
       fSpeech.SetIsActive(theApp.m_bVoiceActivated);
    else
-      TRACE(_T("Error creating speech recognition engine\n"));
+      TRACE(("Error creating speech recognition engine\n"));
 */
 
    this->SetTimer(1, 250, NULL);

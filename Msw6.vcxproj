@@ -307,8 +307,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.;.\3rd Party\LibJingle;.\3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS; _REMOTE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS; _REMOTE;PUBNUB_THREADSAFE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -332,7 +332,7 @@
       <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;libjingle.lib;crypt32.lib;libexpatMT.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\DebugU/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\DebugU;.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\DebugU;.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\pubnub\c-core\windows;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\DebugU/MagicScroll.pdb</ProgramDatabaseFile>
@@ -637,6 +637,10 @@
   <ItemGroup>
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat.cc" />
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat_session_client.cc" />
+    <ClCompile Include="CustomSocket.cpp" />
+    <ClCompile Include="PubnubComm.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Caption.cpp" />
     <ClCompile Include="childfrm.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">Disabled</Optimization>
@@ -674,6 +678,7 @@
     </ClCompile>
     <ClCompile Include="cntritem.cpp" />
     <ClCompile Include="Comm.cpp" />
+    <ClCompile Include="CustomComm.cpp" />
     <ClCompile Include="RegGen\CRCGenerator.cpp" />
     <ClCompile Include="doctype.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">Disabled</Optimization>
@@ -1309,6 +1314,8 @@
     <ResourceCompile Include="Msw.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CustomSocket.h" />
+    <ClInclude Include="PubnubComm.h" />
     <ClInclude Include="bookmark.h" />
     <ClInclude Include="Caption.h" />
     <ClInclude Include="childfrm.h" />
@@ -1316,6 +1323,7 @@
     <CustomBuildStep Include="Comm.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DemoU|Win32'">true</ExcludedFromBuild>
     </CustomBuildStep>
+    <ClInclude Include="CustomComm.h" />
     <ClInclude Include="RegGen\CRCGenerator.h" />
     <ClInclude Include="doctype.h" />
     <ClInclude Include="helpids.h" />

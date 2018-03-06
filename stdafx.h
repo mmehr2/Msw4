@@ -79,3 +79,4 @@ struct CParaFormat : public PARAFORMAT2
 
 #include "Utils.h"
 #include <afxdlgs.h>
+#include <afxsock.h>

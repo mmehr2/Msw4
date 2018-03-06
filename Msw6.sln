@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Msw", "Msw6.vcxproj", "{BE2
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjingle", "3rd Party\libjingle\talk\libjingle.vcxproj", "{DC948D76-8503-490C-A07D-11044004FCE3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PubnubView", "..\PubnubView\PubnubView.vcxproj", "{EACA36AD-6044-4180-A4F5-06E757B88DEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -54,6 +56,24 @@ Global
 		{DC948D76-8503-490C-A07D-11044004FCE3}.ReleaseUReg|Win32.Build.0 = Release|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Template|Win32.ActiveCfg = Release|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Template|Win32.Build.0 = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Debug|Win32.Build.0 = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugU|Win32.ActiveCfg = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugU|Win32.Build.0 = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugUReg|Win32.ActiveCfg = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugUReg|Win32.Build.0 = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DemoReleaseU|Win32.ActiveCfg = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DemoReleaseU|Win32.Build.0 = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DemoU|Win32.ActiveCfg = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DemoU|Win32.Build.0 = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Release|Win32.ActiveCfg = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Release|Win32.Build.0 = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseU|Win32.ActiveCfg = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseU|Win32.Build.0 = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseUReg|Win32.ActiveCfg = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseUReg|Win32.Build.0 = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Template|Win32.ActiveCfg = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Template|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,7 +9,6 @@
 #include <Iphlpapi.h>
 #pragma comment (lib, "Iphlpapi")
 
-
 //-LibJingle ------------------------------------------------------------------
 #pragma warning (push)
 #pragma warning (disable: 4310 4996)
@@ -39,6 +38,21 @@
 #include "talk/examples/login/jingleinfotask.h"
 #pragma warning (pop)
 
+#define REM_CUSTOM
+
+// MLM: Pubnub
+#ifdef REM_PUB
+#include "PubnubComm.h"
+static APubnubComm* fRemote = NULL; // don't use it directly, we can change the implementation class later; try to keep the API pure, devoid of Pubnub-isms
+typedef ACommClassImplType APubnubComm;
+#endif
+
+// MLM: Custom
+#ifdef REM_CUSTOM
+#include "CustomComm.h"
+static ACustomComm* fRemote = NULL;
+typedef ACustomComm ACommClassImplType;
+#endif
 
 //-----------------------------------------------------------------------------
 // settings
@@ -116,11 +130,13 @@ AComm::AComm() :
    fThread(NULL)
 {
    fImpl = new ACommImpl(this);
+   fRemote = new ACommClassImplType(this);
    this->SetState(kIdle);
 }
 
 AComm::~AComm() {
    this->Disconnect();
+   delete fRemote;
    delete fImpl;
 }
 
@@ -149,6 +165,12 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    fUsername = username;
    fPassword = password;
    fThread = ::AfxBeginThread(Connect, this);
+
+   fRemote->Initialize(kSecondary); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
+   if (fRemote->isSecondary()) {
+      // SECONDARY: configure and set up the listener too
+      fRemote->OpenLink("");
+   }
 }
 
 UINT AComm::Connect(LPVOID param) {
@@ -192,6 +214,8 @@ void AComm::Disconnect() {
       fThread->Delete();
       fThread = NULL;
    }
+   if (fRemote->isSet())
+      fRemote->Deinitialize();
    this->SetState(kIdle);
 }
 
@@ -199,17 +223,34 @@ bool AComm::StartChat(LPCTSTR target) {
    // end the current one, if it exists
    this->EndChat();
 
-   char buffer[kMaxJid] = {0};
-   VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
-   buzz::Jid jid(buffer);
-   TRACE("M1\n");
-   fImpl->fChat = fImpl->fChatSession->CreateChat(jid, false);
-   TRACE("M2\n");
-   fImpl->fChat->SendMessage("", "MSW is your master", XmppChat::CHAT_STATE_ACTIVE);
-   TRACE("M3\n");
+   //char buffer[kMaxJid] = {0};
+   //VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
+   //buzz::Jid jid(buffer);
+   //TRACE("M1\n");
+   //fImpl->fChat = fImpl->fChatSession->CreateChat(jid, false);
+   //TRACE("M2\n");
+   //fImpl->fChat->SendMessage("", "MSW is your master", XmppChat::CHAT_STATE_ACTIVE);
+   //TRACE("M3\n");
+   const char * addressVM = "192.168.1.136";
+   const char * addressDell = "192.168.1.136";
+   if (fRemote->Initialize(ConnectionType::kPrimary)) {
+      // convert this end to Primary
+     fIsMaster = true;
+     if (fRemote->OpenLink(addressVM)) {
+         // SECONDARY ADDRESS FOR TESTING
+         TRACE("SUCCESSFULLY CONVERTED TO PRIMARY MODE. LINK CONNECTED!\n");
+         this->SetState(kChatting);
+      }
+      else {
+         TRACE("CANNOT OPEN LINK IN PRIMARY MODE.\n");
+         this->SetState(kConnected);
+      }
+   }
+   else {
+      TRACE("CANNOT CONVERT FROM SECONDARY TO PRIMARY MODE.\n");
+      fIsMaster = false;
+   }
 
-   this->SetState(kChatting);
-   fIsMaster = true;
 
    return true;
 }
@@ -219,7 +260,10 @@ void AComm::EndChat() {
       fImpl->fChatSession->DestroyChat(fImpl->fChat);
       fImpl->fChat = NULL;
    }
-   fIsMaster = false;
+
+   fRemote->CloseLink();
+   //fIsMaster = false; // this shouldn't change, right? at least for our TEST version... one Connection request should be enough to change things around
+   this->SetState(kConnected); // no longer chatting
 }
 
 bool AComm::SendFile(LPCTSTR filename) {
@@ -239,6 +283,7 @@ bool AComm::SendCommand(Command cmd, int param1, int param2) {
 }
 
 bool AComm::SendCommand(Command cmd, const std::string& param) {
+   TRACE("R>%c%s\n", cmd, param.c_str()); // send these to gRemote
    if (NULL != fImpl->fChatSession) {
       char buffer[32] = {0};
       VERIFY(::sprintf_s(buffer, _countof(buffer), "%c%s", cmd, param.c_str()) < mCountOf(buffer));
@@ -250,6 +295,7 @@ bool AComm::SendCommand(Command cmd, const std::string& param) {
 
 void AComm::SetParent(HWND parent) {
    fImpl->SetParent(parent);
+   fRemote->SetParent(parent);
 }
 
 CString AComm::GetSessionJid() const {

@@ -29,11 +29,12 @@ Loaded Modules:
  SHELL32.dll,6.1.7601,C:\Windows\syswow64\SHELL32.dll
  WINSPOOL.DRV,6.1.7601,C:\Windows\system32\WINSPOOL.DRV
  oledlg.dll,6.1.7600,C:\Windows\system32\oledlg.dll
- IPHLPAPI.DLL,6.1.7601,C:\Windows\system32\IPHLPAPI.DLL
+ WSOCK32.dll,6.1.7600,C:\Windows\system32\WSOCK32.dll
+ WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
  NSI.dll,6.1.7601,C:\Windows\syswow64\NSI.dll
+ IPHLPAPI.DLL,6.1.7601,C:\Windows\system32\IPHLPAPI.DLL
  WINNSI.DLL,6.1.7601,C:\Windows\system32\WINNSI.DLL
  VERSION.dll,6.1.7600,C:\Windows\system32\VERSION.dll
- WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
  gdiplus.dll,6.1.7601,C:\Windows\WinSxS\x86_microsoft.windows.gdiplus_6595b64144ccf1df_1.1.7601.23894_none_5c0be957a009922e\gdiplus.dll
  OLEACC.dll,7.0.0,C:\Windows\system32\OLEACC.dll
  IMM32.dll,6.1.7601,C:\Windows\syswow64\IMM32.dll
@@ -55,4 +56,3 @@ Loaded Modules:
  SXS.DLL,6.1.7601,C:\Windows\system32\SXS.DLL
  propsys.dll,7.0.7601,C:\Windows\system32\propsys.dll
  ntmarta.dll,6.1.7600,C:\Windows\system32\ntmarta.dll
- WLDAP32.dll,6.1.7601,C:\Windows\syswow64\WLDAP32.dll

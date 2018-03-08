@@ -15,6 +15,7 @@ ACustomComm::ACustomComm(AComm* pComm)
    : fComm(pComm)
    , fParent(NULL)
    , fConnection(kNotSet)
+   , fLinked(kDisconnected)
    , pSocket(NULL)
    , pListenerSocket(NULL)
    , protocol_port(PROTOCOL_PORT)
@@ -64,6 +65,20 @@ void ACustomComm::Deinitialize()
    //fConnection = kNotSet; // actually don't forget our last choice, don't use this
 }
 
+CString TraceHelper(const ACustomSocket* pOurSocket, const CString& typeStr, const CString& operation)
+{
+   CString err, classErr = _T("Generic error.");
+   if(pOurSocket->isProgrammerError()) 
+      classErr.Format(_T("Programming error."));
+   if(pOurSocket->isDown()) 
+      classErr.Format(_T("Network subsystem failed."));
+   if(pOurSocket->isResourceError()) 
+      classErr.Format(_T("Ran out of runtime resources."));
+   err.Format(_T("%s START LINK ERROR = %s ATTEMPTING TO %s"), 
+      (LPCTSTR)typeStr, (LPCTSTR)classErr, (LPCTSTR)operation);
+   return err;
+}
+
 bool ACustomComm::OpenLink(const char * address)
 {
    bool result = true;
@@ -86,11 +101,11 @@ bool ACustomComm::OpenLink(const char * address)
             pSocket = pOurSocket;
             // PRIMARY: set up the communications socket
             typeStr.Format(_T("PRIMARY"));
-            operation.Format(_T("ConfigureX(port=%d,addr=%s)"), protocol_port, address);
+            operation.Format(_T("ConfigureX(port=%d,addr=%s)"), protocol_port, (LPCTSTR)CString(address));
             pOurSocket->Configure(protocol_port, std::string(address));
             if (!pOurSocket->isOK()) { goto Errors; }
             // then establish the connection
-            operation.Format(_T("ConnectX(port=%d,addr=%s)"), protocol_port, address);
+            operation.Format(_T("ConnectX(port=%d,addr=%s)"), protocol_port, (LPCTSTR)CString(address));
             pOurSocket->ConnectX();
             if (!pOurSocket->isOK()) { goto Errors; }
             fLinked = kConnected;
@@ -114,18 +129,9 @@ bool ACustomComm::OpenLink(const char * address)
          }
          goto NoErrors;
 Errors:
-         CString err, classErr = _T("Generic error.");
-         if(pOurSocket->isProgrammerError()) 
-            classErr.Format(_T("Programming error."));
-         if(pOurSocket->isDown()) 
-            classErr.Format(_T("Network subsystem failed."));
-         if(pOurSocket->isResourceError()) 
-            classErr.Format(_T("Ran out of runtime resources."));
-         err.Format(_T("%S START LINK ERROR = %S ATTEMPTING TO %S"), typeStr, classErr, operation);
-         throw(std::exception(CT2A(err)));
+         throw(std::exception(CT2A(TraceHelper(pOurSocket, typeStr, operation))));
 NoErrors:
-         err.Format(_T("%S START LINK SUCCESS ATTEMPTING TO %S.\n"), typeStr, operation);
-         TRACE(err);
+         TRACE(_T("%s START LINK SUCCESS ATTEMPTING TO %s.\n"), (LPCTSTR)typeStr, (LPCTSTR)operation);
       }
    } catch (std::exception x) {
       TRACE("DEMO SOCKET ERROR: %s", x.what());
@@ -157,4 +163,9 @@ bool ACustomComm::CloseLink()
    }
    fLinked = kDisconnected; // restart the link process
    return true;
+}
+
+void ACustomComm::OnAccept() {
+
+   TRACE("RECEIVED SOCKET ACCEPT REQUEST.\n");
 }

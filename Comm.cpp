@@ -158,15 +158,24 @@ bool AComm::IsOnline() const {
 
 void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //ASSERT(username && *username && password);
-
    this->Disconnect();
+
+   if (!(username && *username && password)) {
+      TRACE("CANNOT CONFIGURE IP ADDRESS AT STARTUP - USE REMOTE DIALOG TO CONFIGURE LOCAL ADDRESS.\n");
+      return;
+   }
 
    this->SetState(kConnecting);
    fUsername = username;
    fPassword = password;
    fThread = ::AfxBeginThread(Connect, this);
 
-   fRemote->Initialize(kSecondary); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
+   CT2A ascii(username); // convert from wide to narrow chars
+   std::string local_addr = ascii.m_psz;
+   int port = _tstoi(password);
+   //char buffer[128];
+   //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
+   fRemote->Initialize(kSecondary, ascii.m_psz, port); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
    if (fRemote->isSecondary()) {
       // SECONDARY: configure and set up the listener too
       fRemote->OpenLink("");

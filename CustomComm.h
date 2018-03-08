@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RemoteCommon.h" // in common between protocols, for use by AComm public interface
+#include <string>
 
 enum {
    PROTOCOL_PORT = 8826, // agreed by customers for default direct comm, TBD needs to be reconfigurable later
@@ -18,6 +19,8 @@ class ACustomComm
    ACustomSocket* pSocket; // communications socket (either)
    ACustomSocket* pListenerSocket; // SECONDARY: listener socket
    int protocol_port; // set to allow reconfiguration later
+   std::string local_address; // local, configured on machine
+   int last_sockerror; // most recent error code from socket operation OR 0 if OK
 
    // really, it's a singleton; disallow assignment and copying
    ACustomComm(const ACustomComm&);
@@ -48,7 +51,7 @@ public:
    // Will be called at program startup; returns false if immediate errors, else true
    // TEST VERSION: assumed to be secondary at startup
    // ALSO: call AfxSocketInit() to init the subsystem (P & S both)
-   bool Initialize(ConnectionType conn_type);
+   bool Initialize(ConnectionType conn_type, const char* local_address = NULL, int port = (-1));
    void Deinitialize();
 
    // PRIMARY: will open up a link to a particular SECONDARY
@@ -66,12 +69,15 @@ public:
 
    // SECONDARY: called to handle events from underlying socket
    void OnAccept(); // SECONDARY: ready to set up new connection (incoming request event)
-   //void OnConnect(); // PRIMARY: completed conection attempt, OK or not, check w underlying socket
+   void OnConnect(); // PRIMARY: completed conection attempt, OK or not, check w underlying socket
    //void OnReceive(); // SECONDARY: data available for retrieval by Receive()
    //void OnSend(); // PRIMARY: buffer space is available to fill using Send() [continuation]
 
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);
+
+   int getLastCommErrorCode() const;
+   CString getLastCommErrorString() const;
 
 };
 

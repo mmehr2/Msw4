@@ -47,9 +47,9 @@ void ACustomSocket::Configure(int _port, const std::string& _address)
       res = this->AsyncSelect(flags);
       if (0 != res) {
          status = acsOK;
-         TRACE(_T(" AsyncSelect listener OK!\n"));
+         TRACE(_T(" AsyncSelect setup OK!\n"));
       } else {
-         TRACE(_T(" AsyncSelect listener FAILED!\n"));
+         TRACE(_T(" AsyncSelect setup FAILED!\n"));
       }
    }
    // error processing for any error types
@@ -66,8 +66,9 @@ void ACustomSocket::PostProcessError(int res, int wsaCode)
    }
 }
 
-void ACustomSocket::ConnectX() {
-   LPCTSTR aparm = (LPCTSTR)CA2T(address.c_str());
+void ACustomSocket::ConnectX(const std::string& secondary_address) {
+   CA2W wide(secondary_address.c_str());
+   LPCTSTR aparm = wide.m_psz;
    int res = this->Connect( aparm, port );
    // error processing for any error types
    this->PostProcessError(res);
@@ -89,12 +90,36 @@ void ACustomSocket::OnAccept(int nErrorCode) {
       pComm->OnAccept();
 }
 
+void ACustomSocket::OnConnect(int nErrorCode) {
+   // SECONDARY - forward accept event to the Comm protocol handler after classifying error codes
+   ASSERT(pComm != NULL);
+   this->PostProcessError(0, nErrorCode);
+   if (this->status == acsUnknown)
+      TRACE(_T("CONNECT STATUS UNCLASSIFIED WSA ERROR - %d\n"), nErrorCode);
+   else
+      pComm->OnConnect();
+}
+
 acs_result ACustomSocket::ClassifyError(int error)
 {
    acs_result res;
    switch (error) {
    case WSAENETDOWN:
+   case WSAENETUNREACH:
       res = acsNetdown; // runtime: net is down
+      break;
+   case WSAEWOULDBLOCK:
+      res = acsExpected; // runtime: operation continues, special case
+      break;
+   case WSAETIMEDOUT:
+   case WSAECONNREFUSED:
+   case WSAEHOSTDOWN:
+   case WSAEHOSTUNREACH:
+   case WSAENETRESET:
+   case WSAECONNABORTED:
+   case WSAECONNRESET:
+   //case WSAECONNABORTED:
+      res = acsTerminate; // runtime: operation completed without success
       break;
    case WSAEMFILE:
    case WSAENOBUFS:
@@ -106,7 +131,13 @@ acs_result ACustomSocket::ClassifyError(int error)
    case WSAEPROTONOSUPPORT:
    case WSAEPROTOTYPE:
    case WSAESOCKTNOSUPPORT:
+   case WSASYSNOTREADY:
    case WSAEINVAL: // Create() error in args (address "" must be NULL)
+   case WSAEALREADY:
+   case WSAENOTSOCK:
+   case WSAEMSGSIZE:
+   case WSAEADDRINUSE:
+   case WSAEADDRNOTAVAIL:
        res = acsPgmerror; // programmer error, unexpected conditions
       break;
   default:
@@ -118,65 +149,28 @@ acs_result ACustomSocket::ClassifyError(int error)
 
 CString ACustomSocket::GetWindowsErrorString(int nErrorCode)
 {
-   // stolen from Microsoft OnConnect() sample handler TBD - needs work!
+   // stolen from article here: https://stackoverflow.com/questions/455434/how-should-i-use-formatmessage-properly-in-c
    CString result;
-   if (0 != nErrorCode)
-   {
-      switch(nErrorCode)
-      {
-         case WSAEADDRINUSE: 
-            result.Format(_T("The specified address is already in use.\n"));
-            break;
-         case WSAEADDRNOTAVAIL: 
-            result.Format(_T("The specified address is not available from ")
-            _T("the local machine.\n"));
-            break;
-         case WSAEAFNOSUPPORT: 
-            result.Format(_T("Addresses in the specified family cannot be ")
-            _T("used with this socket.\n"));
-            break;
-         case WSAECONNREFUSED: 
-            result.Format(_T("The attempt to connect was forcefully rejected.\n"));
-            break;
-         case WSAEDESTADDRREQ: 
-            result.Format(_T("A destination address is required.\n"));
-            break;
-         case WSAEFAULT: 
-            result.Format(_T("The lpSockAddrLen argument is incorrect.\n"));
-            break;
-         case WSAEINVAL: 
-            result.Format(_T("The socket is already bound to an address.\n"));
-            break;
-         case WSAEISCONN: 
-            result.Format(_T("The socket is already connected.\n"));
-            break;
-         case WSAEMFILE: 
-            result.Format(_T("No more file descriptors are available.\n"));
-            break;
-         case WSAENETUNREACH: 
-            result.Format(_T("The network cannot be reached from this host ")
-            _T("at this time.\n"));
-            break;
-         case WSAENOBUFS: 
-            result.Format(_T("No buffer space is available. The socket ")
-               _T("cannot be connected.\n"));
-            break;
-         case WSAENOTCONN: 
-            result.Format(_T("The socket is not connected.\n"));
-            break;
-         case WSAENOTSOCK: 
-            result.Format(_T("The descriptor is a file, not a socket.\n"));
-            break;
-         case WSAETIMEDOUT: 
-            result.Format(_T("The attempt to connect timed out without ")
-               _T("establishing a connection. \n"));
-            break;
-         default:
-            TCHAR szError[256];
-            _stprintf_s(szError, _T("OnConnect error: %d"), nErrorCode);
-            result.Format(szError);
-            break;
-      }
-   }
+   TCHAR *err;
+   DWORD errCode = nErrorCode;
+   if (!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+      NULL,
+      errCode,
+      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
+      (LPTSTR) &err,
+      0,
+      NULL))
+      return "";
+
+   //TRACE("ERROR: %s: %s", msg, err);
+   //TCHAR buffer[1024];
+   //_sntprintf_s(buffer, sizeof(buffer), _T("ERROR: %s: %s\n"), msg, err);
+   result = err;
+   LocalFree(err);
    return result;
+}
+
+CString ACustomSocket::getLastErrorString() const
+{
+   return this->GetWindowsErrorString(this->wsaError);
 }

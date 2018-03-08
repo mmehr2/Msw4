@@ -329,7 +329,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;libjingle.lib;crypt32.lib;libexpatMT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;libjingle.lib;crypt32.lib;libexpatMT.lib;rpcrt4.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\DebugU/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>.\DebugU;.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\pubnub\c-core\windows;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -1434,6 +1434,7 @@ echo. &gt;&gt;HTMLDefines.h
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">hlp\HTMLDefines.h;%(Outputs)</Outputs>
     </CustomBuild>
+    <ClInclude Include="RemoteCommon.h" />
     <ClInclude Include="RichEditScrollCtrl.h" />
     <ClInclude Include="RTFField.h" />
     <ClInclude Include="RtfHelper.h" />

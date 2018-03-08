@@ -22,6 +22,8 @@ Loaded Modules:
  WINMM.dll,6.1.7601,C:\Windows\system32\WINMM.dll
  CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
  MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
+ WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
+ NSI.dll,6.1.7601,C:\Windows\syswow64\NSI.dll
  MSIMG32.dll,6.1.7600,C:\Windows\system32\MSIMG32.dll
  COMDLG32.dll,6.1.7601,C:\Windows\syswow64\COMDLG32.dll
  SHLWAPI.dll,6.1.7601,C:\Windows\syswow64\SHLWAPI.dll
@@ -30,8 +32,6 @@ Loaded Modules:
  WINSPOOL.DRV,6.1.7601,C:\Windows\system32\WINSPOOL.DRV
  oledlg.dll,6.1.7600,C:\Windows\system32\oledlg.dll
  WSOCK32.dll,6.1.7600,C:\Windows\system32\WSOCK32.dll
- WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
- NSI.dll,6.1.7601,C:\Windows\syswow64\NSI.dll
  IPHLPAPI.DLL,6.1.7601,C:\Windows\system32\IPHLPAPI.DLL
  WINNSI.DLL,6.1.7601,C:\Windows\system32\WINNSI.DLL
  VERSION.dll,6.1.7600,C:\Windows\system32\VERSION.dll

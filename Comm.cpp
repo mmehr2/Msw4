@@ -44,7 +44,7 @@
 #ifdef REM_PUB
 #include "PubnubComm.h"
 static APubnubComm* fRemote = NULL; // don't use it directly, we can change the implementation class later; try to keep the API pure, devoid of Pubnub-isms
-typedef ACommClassImplType APubnubComm;
+typedef APubnubComm ACommClassImplType;
 #endif
 
 // MLM: Custom
@@ -157,7 +157,7 @@ bool AComm::IsOnline() const {
 } 
 
 void AComm::Connect(LPCTSTR username, LPCTSTR password) {
-   ASSERT(username && *username && password);
+   //ASSERT(username && *username && password);
 
    this->Disconnect();
 
@@ -223,20 +223,20 @@ bool AComm::StartChat(LPCTSTR target) {
    // end the current one, if it exists
    this->EndChat();
 
-   //char buffer[kMaxJid] = {0};
-   //VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
+   char buffer[kMaxJid] = {0}; // this is actually an IP address now for TEST version
+   VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
    //buzz::Jid jid(buffer);
    //TRACE("M1\n");
    //fImpl->fChat = fImpl->fChatSession->CreateChat(jid, false);
    //TRACE("M2\n");
    //fImpl->fChat->SendMessage("", "MSW is your master", XmppChat::CHAT_STATE_ACTIVE);
    //TRACE("M3\n");
-   const char * addressVM = "192.168.1.136";
-   const char * addressDell = "192.168.1.136";
-   if (fRemote->Initialize(ConnectionType::kPrimary)) {
+   //const char * addressVM = "192.168.1.237";
+   //const char * addressDell = "192.168.1.136";
+   if (fRemote->Initialize(kPrimary)) {
       // convert this end to Primary
      fIsMaster = true;
-     if (fRemote->OpenLink(addressVM)) {
+     if (fRemote->OpenLink(buffer)) {
          // SECONDARY ADDRESS FOR TESTING
          TRACE("SUCCESSFULLY CONVERTED TO PRIMARY MODE. LINK CONNECTED!\n");
          this->SetState(kChatting);

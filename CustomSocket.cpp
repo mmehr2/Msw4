@@ -12,6 +12,9 @@
 ACustomSocket::ACustomSocket(ACustomComm* pCC)
    : pComm(pCC)
    , status(acsOK)
+   , address("")
+   , port(0)
+   , wsaError(0)
 {
 }
 
@@ -25,46 +28,47 @@ ACustomSocket::~ACustomSocket()
 void ACustomSocket::Configure(int _port, const std::string& _address)
 {
    port = _port;
-   address = _address.c_str();
+   address = _address;
+   CString adr = CA2T(_address.c_str());
    long flags = (/*FD_OOB |*/ FD_CLOSE);
-   const char* descr;
-   LPCTSTR addrParam = NULL;
    if (pComm->isPrimary()) {
       flags |= FD_READ | FD_WRITE | FD_CONNECT; // the primary Connector socket: reads, writes, connects
-      std::wstring addrW(_address.begin(), _address.end());
-      TRACE("Configuring Primary Connector socket for address %s:%d...", _address.c_str(), port);
-      addrParam = addrW.c_str();
+      TRACE(_T("Configuring Primary Connector socket for address %s:%d...\n"), (LPCTSTR)adr, port);
    } else {
       flags |= FD_ACCEPT; // the secondary Listener socket just accepts
       // NOTE: (the secondary Connector is auto-configured by the base class during OnAccept() when a new connection request comes in)
-      TRACE("Configuring Secondary Listener for port %d", port);
+      TRACE(_T("Configuring Secondary Listener for port %d ..."), port);
    }
-   int res = this->Create((UINT)port, SOCK_STREAM, flags, addrParam);
+   LPCTSTR addr_param = adr == "" ? NULL : (LPCTSTR)adr;
+   int res = this->Create((UINT)port, SOCK_STREAM, flags, addr_param);
    // if none, continue
    if (0 != res) {
       // to assure non-blocking mode, set it up here
       res = this->AsyncSelect(flags);
       if (0 != res) {
          status = acsOK;
-         TRACE("OK!\n");
+         TRACE(_T(" AsyncSelect listener OK!\n"));
+      } else {
+         TRACE(_T(" AsyncSelect listener FAILED!\n"));
       }
    }
    // error processing for any error types
    this->PostProcessError(res);
 }
 
-void ACustomSocket::PostProcessError(int res)
+void ACustomSocket::PostProcessError(int res, int wsaCode)
 {
    if (0 == res) {
       // error: save and classify it
-      int wsaError = ::GetLastError();
-      status = ACustomSocket::ClassifyError(wsaError);
-      TRACE("Socket Config Error: type=%d, code=%d\n", status, wsaError); // TBD: better strings needed here
+      this->wsaError = wsaCode != -1 ? wsaCode : (::GetLastError());
+      this->status = ACustomSocket::ClassifyError(wsaError);
+      TRACE(_T("Socket Config Error: type=%d, code=%d\n"), status, wsaError); // TBD: better strings needed here
    }
 }
 
 void ACustomSocket::ConnectX() {
-   int res = this->Connect( address.operator LPCWSTR(), port );
+   LPCTSTR aparm = (LPCTSTR)CA2T(address.c_str());
+   int res = this->Connect( aparm, port );
    // error processing for any error types
    this->PostProcessError(res);
 }
@@ -73,6 +77,16 @@ void ACustomSocket::ListenX() {
    int res = this->Listen( 1 ); // set queue backlog here
    // error processing for any error types
    this->PostProcessError(res);
+}
+
+void ACustomSocket::OnAccept(int nErrorCode) {
+   // SECONDARY - forward accept event to the Comm protocol handler after classifying error codes
+   ASSERT(pComm != NULL);
+   this->PostProcessError(0, nErrorCode);
+   if (this->status == acsUnknown)
+      TRACE(_T("ACCEPT STATUS UNCLASSIFIED WSA ERROR - %d\n"), nErrorCode);
+   else
+      pComm->OnAccept();
 }
 
 acs_result ACustomSocket::ClassifyError(int error)
@@ -92,8 +106,11 @@ acs_result ACustomSocket::ClassifyError(int error)
    case WSAEPROTONOSUPPORT:
    case WSAEPROTOTYPE:
    case WSAESOCKTNOSUPPORT:
-   default:
-      res = acsPgmerror; // programmer error, unexpected conditions
+   case WSAEINVAL: // Create() error in args (address "" must be NULL)
+       res = acsPgmerror; // programmer error, unexpected conditions
+      break;
+  default:
+      res = acsUnknown; // classification failed at this level
       break;
    }
    return res;

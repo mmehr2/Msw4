@@ -14,14 +14,16 @@ enum acs_result {
    acsPgmerror, // programming errors that shouldn't be encountered (VERIFY please)
    acsNetdown, // the network is down WSAENETDOWN
    acsResources, // no resources type: WSAEMFILE, WSAENOBUFS
+   acsUnknown, // none of the above (useful for chaining, don't give this to protocol)
 };
 
 class ACustomSocket : public CAsyncSocket
 {
    ACustomComm* pComm;
    acs_result status;
-   CString address;
+   std::string address;
    int port;
+   int wsaError;
 public:
    ACustomSocket(ACustomComm* pCC);
    virtual ~ACustomSocket();
@@ -47,9 +49,15 @@ public:
    // utility function: get Windows error description for logging from WSA* code
    static CString GetWindowsErrorString(int wsaError);
 
+protected:
+   virtual void OnAccept(int nErrorCode); // SECONDARY: ready to call Accept() with new connection
+   //virtual void OnConnect(int nErrorCode); // PRIMARY: completed conection, OK or not, call GetLastError() to evaluate
+   //virtual void OnReceive(int nErrorCode); // SECONDARY: data available for retrieval by Receive()
+   //virtual void OnSend(int nErrorCode); // PRIMARY: buffer space is available to fill using Send() [continuation]
+
 private:
    // Helper Functions
-   void PostProcessError(int res); // classify and set status
+   void PostProcessError(int res, int wsaCode = (-1)); // classify and set status
 };
 
 

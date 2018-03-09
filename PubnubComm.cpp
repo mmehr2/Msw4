@@ -3,39 +3,50 @@
 
 #include "Comm.h"
 
-//#define PUBNUB_THREADSAFETY
-#define PUBNUB_USE_EXTERN_C 1
-#include "pubnub.hpp"
-#include <iostream>
-#include <functional>
+#define PUBNUB_CALLBACK_API
+extern "C" {
+#include "pubnub_callback.h"
+}
+//#include <iostream>
+#include <string>
 
 #pragma comment (lib, "pubnub_callback")
 //#pragma comment (lib, "pubnub_sync")
 
+static const std::string channel_separator = "-"; // avoid Channel name disallowed characters
+static const std::string app_name = "Msw"; // prefix for all channel names by convention
+
+PNChannelInfo::PNChannelInfo() 
+   : key("demo")
+   , pContext(nullptr)
+   , channelName("")
+   , pConnection(nullptr)
+{
+}
 
 APubnubComm::APubnubComm(AComm* pComm) 
-   : fParent(NULL)
+   : fParent(nullptr)
    , fComm(pComm)
    , fConnection(kNotSet)
    , fLinked(kDisconnected)
-   , pubkey("")
-   , subkey("")
-   , pPCPublic(NULL)
-   , publicChannelName("")
-   , pPCChat(NULL)
-   , chatChannelName("")
-//   , pConnecter(NULL)
-//   , pConversation(NULL)
+   , customerName("")
 {
-   std::string pubkey = "demo", subkey = "demo";
+   //std::string pubkey = "demo", subkey = "demo";
    // get these from persistent storage
    char buffer[1024];
-   DWORD res = ::GetPrivateProfileStringA("MSW_Pubnub", "Pubkey", "demo", buffer, sizeof(buffer), "msw.ini");
-   TRACE("PUBKEY returned %d: %s\n", res, buffer);
-   this->pubkey = buffer;
+   DWORD res;
+   res = ::GetPrivateProfileStringA("MSW_Pubnub", "Pubkey", "demo", buffer, sizeof(buffer), "msw.ini");
+   TRACE("CONFIG: Pubkey returned %d: %s\n", res, buffer);
+   this->remote.key = buffer;
    res = ::GetPrivateProfileStringA("MSW_Pubnub", "Subkey", "demo", buffer, sizeof(buffer), "msw.ini");
-   TRACE("SUBKEY returned %d: %s\n", res, buffer);
-   this->subkey = buffer;
+   TRACE("CONFIG: Subkey returned %d: %s\n", res, buffer);
+   this->local.key = buffer;
+   res = ::GetPrivateProfileStringA("MSW_Pubnub", "CompanyName", "", buffer, sizeof(buffer), "msw.ini");
+   TRACE("CONFIG: CompanyName returned %d: %s\n", res, buffer);
+   this->customerName = buffer;
+   res = ::GetPrivateProfileStringA("MSW_Pubnub", "DeviceName", "", buffer, sizeof(buffer), "msw.ini");
+   TRACE("CONFIG: DeviceName returned %d: %s\n", res, buffer);
+   this->local.channelName = this->MakeChannelName(buffer);
 }
 
 
@@ -49,20 +60,27 @@ void APubnubComm::SetParent(HWND parent)
    fParent = parent;
 }
 
-bool APubnubComm::Initialize(bool as_primary, const char* publicName)
+std::string APubnubComm::MakeChannelName( const std::string& deviceName )
+{
+   std::string result;
+   result += app_name;
+   result += channel_separator;
+   result += this->customerName;
+   result += channel_separator;
+   result += deviceName;
+   return result;
+}
+
+bool APubnubComm::Initialize(bool as_primary, const char* localName)
 {
    this->Deinitialize();
 
    bool result = true;
    fConnection = as_primary ? kPrimary : kSecondary;
-   // PRIMARY: only needs to publish during scrolling
-   // SECONDARY: only needs to subscribe during scrolling
-   // to send the script file? we'll look into it... for now just use existing text (agreed upon in advance)
-   TRACE("SET UP LINK TO PUBNUB... AS %s\n", this->isPrimary() ? "PRIMARY" : "SECONDARY");
+   local.channelName = this->MakeChannelName(localName);
 
-   pubnub::context pb(pubkey, subkey);
-   TRACE("TEST PUBSUB is listening to channel %s!\n", publicName);
-   publicChannelName = publicName;
+   TRACE("%s IS NOW LISTENING TO %s ON CHANNEL %s\n", 
+      this->isPrimary() ? "PRIMARY" : "SECONDARY", localName, local.channelName.c_str());
 
    return result; // started sequence successfully
 }
@@ -72,14 +90,15 @@ void APubnubComm::Deinitialize()
    if (fLinked == kDisconnected)
       return;
 
-   TRACE("SHUTTING DOWN LINK TO PUBNUB... AS %s\n", this->isPrimary() ? "PRIMARY" : "SECONDARY");
+   TRACE("%s IS SHUTTING DOWN LOCAL LINK TO PUBNUB CHANNEL %s", this->isPrimary() ? "PRIMARY" : "SECONDARY", local.channelName.c_str());
    // TBD - call unsubscribe here?
    // remove conversation if in use
-   if (!chatChannelName.empty())
-      TRACE("REMOVING PRIVATE CONVERSATION %s\n", chatChannelName.c_str());
-//   delete pConversation;
-//   pConversation = NULL;
-   chatChannelName = "";
+   if (!remote.channelName.empty())
+      TRACE(",\n AND SHUTTING DOWN REMOTE LINK TO CHANNEL %s", remote.channelName.c_str());
+//   delete remote.pConnection;
+//   remote.pConnection = nullptr;
+   remote.channelName = "";
+   TRACE("\n");
    // remove context here ??
    fLinked = kDisconnected;
 }
@@ -87,26 +106,37 @@ void APubnubComm::Deinitialize()
 bool APubnubComm::OpenLink(const char * address)
 {
    bool result = true;
-   TRACE("OPENING LISTENER TO SECONDARY OVER PUBNUB... AS PRIMARY\n");
+   this->remote.channelName = this->MakeChannelName(address);
+   TRACE("%s IS OPENING LINK TO SECONDARY %s ON PUBNUB CHANNEL %s\n"
+      , this->isPrimary() ? "PRIMARY" : "SECONDARY", address, this->remote.channelName.c_str());
+   // TBD: make it so
    return result; // started sequence successfully
 }
 
 bool APubnubComm::CloseLink()
 {
    bool result = true;
-   TRACE("CLOSE LINK TO SECONDARY OVER PUBNUB... AS PRIMARY\n");
+   TRACE("%s IS CLOSING LINK TO SECONDARY ON PUBNUB CHANNEL %s\n"
+      , this->isPrimary() ? "PRIMARY" : "SECONDARY", this->remote.channelName.c_str());
+   // TBD: make it so
    return result; // started sequence successfully
 }
 
 void APubnubComm::SendCommand(const char * message)
 {
-   bool result = true;
-   TRACE("SENDING MESSAGE %s\n", message);
+   //bool result = true;
+   TRACE("SENDING MESSAGE %s\n", message); // DEBUGGING
+   // TBD: publish message to remote.channelName and set up callback
+   // PRIMARY: will send commands
+   // SECONDARY: will send any responses
 }
 
 void APubnubComm::OnMessage(const char * message)
 {
-   bool result = true;
-   TRACE("RECEIVED MESSAGE %s\n", message);
+   //bool result = true;
+   TRACE("RECEIVED MESSAGE %s\n", message); // DEBUGGING
+   // this is the callback for messages received on local.channelName
+   // PRIMARY: will receive any responses
+   // SECONDARY: will receive commands
 }
 

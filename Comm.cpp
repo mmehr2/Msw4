@@ -38,7 +38,7 @@
 #include "talk/examples/login/jingleinfotask.h"
 #pragma warning (pop)
 
-#define REM_CUSTOM
+#define REM_PUB
 
 // MLM: Pubnub
 #ifdef REM_PUB
@@ -168,14 +168,14 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    this->SetState(kConnecting);
    fUsername = username;
    fPassword = password;
-   fThread = ::AfxBeginThread(Connect, this);
+   //fThread = ::AfxBeginThread(Connect, this);
 
    CT2A ascii(username); // convert from wide to narrow chars
    std::string local_addr = ascii.m_psz;
-   int port = _tstoi(password);
+   //int port = _tstoi(password);
    //char buffer[128];
    //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
-   fRemote->Initialize(kSecondary, ascii.m_psz, port); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
+   fRemote->Initialize(kSecondary, ascii.m_psz); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
    if (fRemote->isSecondary()) {
       // SECONDARY: configure and set up the listener too
       fRemote->OpenLink("");
@@ -185,35 +185,35 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
 UINT AComm::Connect(LPVOID param) {
    AComm* pThis = reinterpret_cast<AComm*>(param);
 
-   char buffer[kMaxJid] = {0};
-   VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fUsername) < sizeof(buffer));
-   pThis->fImpl->fJid = buzz::Jid(buffer);
-   buzz::XmppClientSettings xcs;
-   xcs.set_user(pThis->fImpl->fJid.node());
-   xcs.set_resource("MSW");
-   xcs.set_host(pThis->fImpl->fJid.domain());
-   xcs.set_use_tls(false); // MLM - no TLS for now
+   //char buffer[kMaxJid] = {0};
+   //VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fUsername) < sizeof(buffer));
+   //pThis->fImpl->fJid = buzz::Jid(buffer);
+   //buzz::XmppClientSettings xcs;
+   //xcs.set_user(pThis->fImpl->fJid.node());
+   //xcs.set_resource("MSW");
+   //xcs.set_host(pThis->fImpl->fJid.domain());
+   //xcs.set_use_tls(false); // MLM - no TLS for now
 
-   VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fPassword) < sizeof(buffer));
-   talk_base::InsecureCryptStringImpl pass;
-   pass.password() = buffer;
-   xcs.set_pass(talk_base::CryptString(pass));
-   xcs.set_server(talk_base::SocketAddress(talk_server, talk_server_port));
-   TRACE("MLM: Connection to talk server will be through %s:%d\n", talk_server, talk_server_port);
+   //VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fPassword) < sizeof(buffer));
+   //talk_base::InsecureCryptStringImpl pass;
+   //pass.password() = buffer;
+   //xcs.set_pass(talk_base::CryptString(pass));
+   //xcs.set_server(talk_base::SocketAddress(talk_server, talk_server_port));
+   //TRACE("MLM: Connection to talk server will be through %s:%d\n", talk_server, talk_server_port);
 
-   talk_base::PhysicalSocketServer ss;
-   talk_base::Thread main_thread(&ss);
-   talk_base::ThreadManager::SetCurrent(&main_thread);
+   //talk_base::PhysicalSocketServer ss;
+   //talk_base::Thread main_thread(&ss);
+   //talk_base::ThreadManager::SetCurrent(&main_thread);
 
-   XmppPump pump;
-   pThis->fImpl->fClient = pump.client();
-   pump.client()->SignalLogInput.connect(&debug_log_, &DebugLog::Input);
-   pump.client()->SignalLogOutput.connect(&debug_log_, &DebugLog::Output);
-   pump.client()->SignalStateChange.connect(pThis->fImpl, &ACommImpl::OnStateChange);
+   //XmppPump pump;
+   //pThis->fImpl->fClient = pump.client();
+   //pump.client()->SignalLogInput.connect(&debug_log_, &DebugLog::Input);
+   //pump.client()->SignalLogOutput.connect(&debug_log_, &DebugLog::Output);
+   //pump.client()->SignalStateChange.connect(pThis->fImpl, &ACommImpl::OnStateChange);
 
-   pump.DoLogin(xcs, new XmppSocket(false), NULL);
-   main_thread.Run();
-   pump.DoDisconnect();
+   //pump.DoLogin(xcs, new XmppSocket(false), NULL);
+   //main_thread.Run();
+   //pump.DoDisconnect();
 
    return 0;
 }
@@ -242,7 +242,7 @@ bool AComm::StartChat(LPCTSTR target) {
    //TRACE("M3\n");
    //const char * addressVM = "192.168.1.237";
    //const char * addressDell = "192.168.1.136";
-   if (fRemote->Initialize(kPrimary)) {
+   if (fRemote->Initialize(kPrimary, "")) {
       // convert this end to Primary
      fIsMaster = true;
      if (fRemote->OpenLink(buffer)) {
@@ -252,7 +252,7 @@ bool AComm::StartChat(LPCTSTR target) {
       }
       else {
          TRACE("CANNOT OPEN LINK IN PRIMARY MODE.\n");
-         this->SetState(kConnected);
+         this->SetState(kIdle);
       }
    }
    else {
@@ -292,13 +292,14 @@ bool AComm::SendCommand(Command cmd, int param1, int param2) {
 }
 
 bool AComm::SendCommand(Command cmd, const std::string& param) {
-   TRACE("R>%c%s\n", cmd, param.c_str()); // send these to gRemote
-   if (NULL != fImpl->fChatSession) {
+   TRACE("R>%c%s\n", cmd, param.c_str()); // send these to fRemote
+   //if (NULL != fImpl->fChatSession) {
       char buffer[32] = {0};
       VERIFY(::sprintf_s(buffer, _countof(buffer), "%c%s", cmd, param.c_str()) < mCountOf(buffer));
-      fImpl->fChatSession->SendChatMessage("", buffer, XmppChat::CHAT_STATE_ACTIVE);
+      //fImpl->fChatSession->SendChatMessage("", buffer, XmppChat::CHAT_STATE_ACTIVE);
+      fRemote->SendCommand(buffer);
       return true;
-   }
+   //}
    return false;
 }
 

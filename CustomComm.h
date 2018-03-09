@@ -1,5 +1,6 @@
 #pragma once
 
+#include <afx.h> // for HWND
 #include "RemoteCommon.h" // in common between protocols, for use by AComm public interface
 #include <string>
 

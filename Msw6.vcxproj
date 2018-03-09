@@ -307,7 +307,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS; _REMOTE;PUBNUB_THREADSAFE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
@@ -637,10 +637,10 @@
   <ItemGroup>
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat.cc" />
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat_session_client.cc" />
-    <ClCompile Include="CustomSocket.cpp" />
-    <ClCompile Include="PubnubComm.cpp">
+    <ClCompile Include="CustomSocket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="PubnubComm.cpp" />
     <ClCompile Include="Caption.cpp" />
     <ClCompile Include="childfrm.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">Disabled</Optimization>
@@ -678,7 +678,9 @@
     </ClCompile>
     <ClCompile Include="cntritem.cpp" />
     <ClCompile Include="Comm.cpp" />
-    <ClCompile Include="CustomComm.cpp" />
+    <ClCompile Include="CustomComm.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="RegGen\CRCGenerator.cpp" />
     <ClCompile Include="doctype.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='DebugUReg|Win32'">Disabled</Optimization>

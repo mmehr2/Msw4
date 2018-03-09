@@ -1,9 +1,24 @@
 #pragma once
 
-#include <afx.h>
+#include <afx.h> // for HWND
 #include "RemoteCommon.h"
+#include <string>
 
 class AComm;
+namespace pubnub {
+   class context;
+   class futres;
+};
+
+//struct InitInfo {
+//   ConnectionType fContype;
+//   std::string config_name;
+//
+//   InitInfo()
+//      : fContype(fSecondary)
+//      , config_name("")
+//   {}
+//};
 
 class APubnubComm
 {
@@ -11,6 +26,14 @@ class APubnubComm
    HWND fParent;
    ConnectionType fConnection;
    ConnectionStatus fLinked;
+   std::string pubkey;
+   std::string subkey;
+   pubnub::context * pPCPublic;
+   std::string publicChannelName; // "MSW.cname.dvcname" or ""
+   pubnub::context * pPCChat;
+   std::string chatChannelName; // "MSW.cname.dvcname.primaryname" or ""
+//   pubnub::futres * pConnecter; // !=0 when awaiting input on reception channel
+//   pubnub::futres * pConversation; // !=0 when awaiting input on chat channel (MSW.cname.dvcname.primaryname)
 public:
    APubnubComm(AComm* pComm);
    ~APubnubComm(void);
@@ -32,7 +55,7 @@ public:
 
    // Will set up the connection to either publish or subscribe
    // returns false if immediate errors
-   bool Initialize(ConnectionType conn_type);
+   bool Initialize(bool as_primary, const char* publicName);
    void Deinitialize();
 
   // PRIMARY: will open up a link to a particular SECONDARY
@@ -46,10 +69,10 @@ public:
    bool CloseLink();
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
-   void SendMessage(const char* message);
+   void SendCommand(const char* message);
 
    // SECONDARY: called to dispatch any received message from the interface to the parent window
-   void OnMessage(const char* message);
+   static void OnMessage(const char* message);
 
 };
 

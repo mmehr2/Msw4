@@ -20,8 +20,6 @@ Loaded Modules:
  DEVOBJ.dll,6.1.7601,C:\Windows\syswow64\DEVOBJ.dll
  PSAPI.DLL,6.1.7600,C:\Windows\syswow64\PSAPI.DLL
  WINMM.dll,6.1.7601,C:\Windows\system32\WINMM.dll
- CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
- MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
  NSI.dll,6.1.7601,C:\Windows\syswow64\NSI.dll
  MSIMG32.dll,6.1.7600,C:\Windows\system32\MSIMG32.dll
@@ -31,7 +29,6 @@ Loaded Modules:
  SHELL32.dll,6.1.7601,C:\Windows\syswow64\SHELL32.dll
  WINSPOOL.DRV,6.1.7601,C:\Windows\system32\WINSPOOL.DRV
  oledlg.dll,6.1.7600,C:\Windows\system32\oledlg.dll
- WSOCK32.dll,6.1.7600,C:\Windows\system32\WSOCK32.dll
  IPHLPAPI.DLL,6.1.7601,C:\Windows\system32\IPHLPAPI.DLL
  WINNSI.DLL,6.1.7601,C:\Windows\system32\WINNSI.DLL
  VERSION.dll,6.1.7600,C:\Windows\system32\VERSION.dll
@@ -46,13 +43,14 @@ Loaded Modules:
  profapi.dll,6.1.7600,C:\Windows\syswow64\profapi.dll
  MPR.dll,6.1.7600,C:\Windows\system32\MPR.dll
  WINTRUST.dll,6.1.7601,C:\Windows\syswow64\WINTRUST.dll
+ CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
+ MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  uxtheme.dll,6.1.7600,C:\Windows\system32\uxtheme.dll
  dwmapi.dll,6.1.7601,C:\Windows\system32\dwmapi.dll
  RICHED20.DLL,5.31.23,C:\Windows\system32\RICHED20.DLL
- mswsock.dll,6.1.7601,C:\Windows\system32\mswsock.dll
- wshtcpip.dll,6.1.7600,C:\Windows\System32\wshtcpip.dll
  CLBCatQ.DLL,2001.12.8530,C:\Windows\syswow64\CLBCatQ.DLL
  PolarSpellChecker.dll,5.0.0,C:\Program Files (x86)\MagicScroll\PolarSpellChecker.dll
  SXS.DLL,6.1.7601,C:\Windows\system32\SXS.DLL
  propsys.dll,7.0.7601,C:\Windows\system32\propsys.dll
  ntmarta.dll,6.1.7600,C:\Windows\system32\ntmarta.dll
+ WLDAP32.dll,6.1.7601,C:\Windows\syswow64\WLDAP32.dll

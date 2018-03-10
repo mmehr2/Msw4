@@ -53,4 +53,3 @@ Loaded Modules:
  SXS.DLL,6.1.7601,C:\Windows\system32\SXS.DLL
  propsys.dll,7.0.7601,C:\Windows\system32\propsys.dll
  ntmarta.dll,6.1.7600,C:\Windows\system32\ntmarta.dll
- WLDAP32.dll,6.1.7601,C:\Windows\syswow64\WLDAP32.dll

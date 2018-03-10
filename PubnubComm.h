@@ -59,9 +59,11 @@ class APubnubComm
    std::string customerName;
 
    // inbound pubnub channel info
+   // unless not configured the first time, this should always remain open
    PNChannelInfo local;
 
    // outbound channel info
+   // this is only opened by Primary for chat with a particular Secondary
    PNChannelInfo remote;
 
    // no need to copy or assign - singleton
@@ -73,6 +75,10 @@ class APubnubComm
    static std::string JSONify( const std::string& input );
    static std::string UnJSONify( const std::string& input );
    const char* GetConnectionName() const;
+   const char* GetConnectionTypeName() const;
+   const char* GetConnectionStateName() const;
+   bool ConnectHelper(PNChannelInfo& pChannel);
+   bool DisconnectHelper(PNChannelInfo& pChannel);
 
 public:
    APubnubComm(AComm* pComm);
@@ -84,19 +90,19 @@ public:
    void SetParent(HWND parent);
 
    // is this a PRIMARY, SECONDARY, or we haven't decided
-   bool isPrimary() { return fConnection == kPrimary; }
-   bool isSecondary() { return fConnection == kSecondary; }
-   bool isSet() { return fConnection != kNotSet; }
+   bool isPrimary() const { return fConnection == kPrimary; }
+   bool isSecondary() const { return fConnection == kSecondary; }
+   bool isSet() const { return fConnection != kNotSet; }
 
    // is the remote link connected? it's a process...
-   bool isConnected() { return fLinked == kConnected; }
-   bool isDisconnected() { return fLinked == kDisconnected; }
-   bool isConnecting() { return fLinked == kConnecting; }
+   bool isConnected() const { return fLinked == kConnected; }
+   bool isDisconnected() const { return fLinked == kDisconnected; }
+   bool isConnecting() const { return fLinked == kConnecting; }
 
-   // Will set up the connection to either publish or subscribe
+   // Will set up the the local channel link
    // returns false if immediate errors
    bool Initialize(bool as_primary, const char* publicName);
-   void Deinitialize();
+   bool Deinitialize();
 
   // PRIMARY: will open up a link to a particular SECONDARY
    // . PRIMARY - will set up a communications socket

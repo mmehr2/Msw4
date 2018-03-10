@@ -175,15 +175,11 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //int port = _tstoi(password);
    //char buffer[128];
    //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
-   fRemote->Initialize(kSecondary, ascii.m_psz); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
-   if (fRemote->isSecondary()) {
-      // SECONDARY: configure and set up the listener too
-      fRemote->OpenLink("");
-   }
+   fRemote->Initialize(false, ascii.m_psz); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
 }
 
-UINT AComm::Connect(LPVOID param) {
-   AComm* pThis = reinterpret_cast<AComm*>(param);
+UINT AComm::Connect(LPVOID /*param*/) {
+   //AComm* pThis = reinterpret_cast<AComm*>(param);
 
    //char buffer[kMaxJid] = {0};
    //VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fUsername) < sizeof(buffer));
@@ -234,14 +230,7 @@ bool AComm::StartChat(LPCTSTR target) {
 
    char buffer[kMaxJid] = {0}; // this is actually an IP address now for TEST version
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
-   //buzz::Jid jid(buffer);
-   //TRACE("M1\n");
-   //fImpl->fChat = fImpl->fChatSession->CreateChat(jid, false);
-   //TRACE("M2\n");
-   //fImpl->fChat->SendMessage("", "MSW is your master", XmppChat::CHAT_STATE_ACTIVE);
-   //TRACE("M3\n");
-   //const char * addressVM = "192.168.1.237";
-   //const char * addressDell = "192.168.1.136";
+
    if (fRemote->Initialize(kPrimary, "")) {
       // convert this end to Primary
      fIsMaster = true;

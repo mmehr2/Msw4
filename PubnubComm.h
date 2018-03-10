@@ -95,14 +95,14 @@ public:
    bool isSet() const { return fConnection != kNotSet; }
 
    // is the remote link connected? it's a process...
-   bool isConnected() const { return fLinked == kConnected; }
    bool isDisconnected() const { return fLinked == kDisconnected; }
-   bool isConnecting() const { return fLinked == kConnecting; }
-
+   bool isConnected() const { return fLinked >= kConnected; }
+   bool isConversing() const { return fLinked >= kChatting; }
+ 
    // Will set up the the local channel link
    // returns false if immediate errors
    bool Initialize(bool as_primary, const char* publicName);
-   bool Deinitialize();
+   void Deinitialize();
 
   // PRIMARY: will open up a link to a particular SECONDARY
    // . PRIMARY - will set up a communications socket
@@ -112,7 +112,7 @@ public:
    // Will delete any secondary listener socket, then configure a connection using the given address, customary protocol port
    // State machine operation may also add a round trip string exchange test
    bool OpenLink(const char * address);
-   bool CloseLink();
+   void CloseLink();
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
    void SendCommand(const char* message);

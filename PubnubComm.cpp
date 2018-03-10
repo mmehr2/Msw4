@@ -114,16 +114,15 @@ bool APubnubComm::Initialize(bool as_primary, const char* localName_)
    return result; // started sequence successfully
 }
 
-bool APubnubComm::Deinitialize()
+void APubnubComm::Deinitialize()
 {
-   if (fLinked == kDisconnected)
-      return true;
-
-   bool result = true;
+   if (fLinked == kDisconnected) {
+      return;
+   }
 
    if (local.channelName.empty()) {
       TRACE("%s HAS NO LOCAL LINK TO SHUT DOWN.\n", this->GetConnectionTypeName());
-      return false;
+      return;
    }
 
    // shut down any remote link first
@@ -133,7 +132,6 @@ bool APubnubComm::Deinitialize()
    // TBD - make it so 
    // just don't lose the local channel name - it will be replaced if needed by a new one, else use old one
    fLinked = kDisconnected;
-   return result;
 }
 
 bool APubnubComm::OpenLink(const char * address)
@@ -147,21 +145,29 @@ bool APubnubComm::OpenLink(const char * address)
 
    // TBD: make it so
 
+   fLinked = kChatting;
    return result; // started sequence successfully
 }
 
-bool APubnubComm::CloseLink()
+void APubnubComm::CloseLink()
 {
-   bool result = true;
-
-   if (fLinked == kDisconnected) {
-      return result;
+   if (fLinked < kChatting) {
+      return; // already closed
    }
+
+   if (remote.channelName.empty()) {
+      TRACE("%s HAS NO REMOTE LINK TO SHUT DOWN.\n", this->GetConnectionTypeName());
+      return;
+   }
+
+   // shut down any higher states here
+
    TRACE("%s IS CLOSING LINK TO SECONDARY ON PUBNUB CHANNEL %s\n", 
       this->GetConnectionTypeName(), this->remote.channelName.c_str());
+
    // TBD: make it so
-   return result; // started sequence successfully
-}
+   fLinked = kConnected;
+ }
 
 void APubnubComm::SendCommand(const char * message)
 {

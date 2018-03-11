@@ -68,13 +68,14 @@ class APubnubComm
 
    // helpers
    std::string MakeChannelName( const std::string& deviceName );
-   static std::string JSONify( const std::string& input );
-   static std::string UnJSONify( const std::string& input );
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
    bool ConnectHelper(PNChannelInfo* pChannel);
    bool DisconnectHelper(PNChannelInfo* pChannel);
+   // NOTE: 'safe' commands do not contain any escapable JSON string characters or non-ASCII chars
+   static std::string JSONify( const std::string& input, bool is_safe=true );
+   static std::string UnJSONify( const std::string& input );
 
 public:
    APubnubComm(AComm* pComm);

@@ -40,15 +40,10 @@ IN THIS VERSION:
 
 */
 
-
-struct PNChannelInfo {
-   std::string key;
-   void * pContext;
-   std::string channelName;
-   void * pConnection; //?? what waits for data??
-
-   PNChannelInfo();
-};
+class PNChannelInfo; // fwd.ref
+extern "C" {
+#include "pubnub_api_types.h"
+}
 
 class APubnubComm
 {
@@ -57,14 +52,15 @@ class APubnubComm
    ConnectionType fConnection; // Primary or Secondary
    ConnectionStatus fLinked; // disconnected, connected, or in transition
    std::string customerName;
+   //pubnub_t* pContext;
 
    // inbound pubnub channel info
    // unless not configured the first time, this should always remain open
-   PNChannelInfo local;
+   PNChannelInfo* pLocal;
 
    // outbound channel info
    // this is only opened by Primary for chat with a particular Secondary
-   PNChannelInfo remote;
+   PNChannelInfo* pRemote;
 
    // no need to copy or assign - singleton
    APubnubComm(const APubnubComm&);
@@ -77,8 +73,8 @@ class APubnubComm
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
-   bool ConnectHelper(PNChannelInfo& pChannel);
-   bool DisconnectHelper(PNChannelInfo& pChannel);
+   bool ConnectHelper(PNChannelInfo* pChannel);
+   bool DisconnectHelper(PNChannelInfo* pChannel);
 
 public:
    APubnubComm(AComm* pComm);
@@ -88,6 +84,8 @@ public:
       notifications.
      */
    void SetParent(HWND parent);
+
+   bool ChangeMode(ConnectionType kT);
 
    // is this a PRIMARY, SECONDARY, or we haven't decided
    bool isPrimary() const { return fConnection == kPrimary; }

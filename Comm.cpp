@@ -231,7 +231,7 @@ bool AComm::StartChat(LPCTSTR target) {
    char buffer[kMaxJid] = {0}; // this is actually an IP address now for TEST version
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
 
-   if (fRemote->Initialize(kPrimary, "")) {
+   if (fRemote->ChangeMode(kPrimary)) {
       // convert this end to Primary
      fIsMaster = true;
      if (fRemote->OpenLink(buffer)) {

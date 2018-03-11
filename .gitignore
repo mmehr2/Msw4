@@ -21,6 +21,8 @@ _UpgradeReport_*/
 
 # Own conventions
 *.lnk
+./Magic*.txt
+*.rtf
 
 # Editor left-overs, misc
 *.bak

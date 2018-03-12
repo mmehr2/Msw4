@@ -21,6 +21,26 @@ static const std::string app_name = "MSW"; // prefix for all channel names by co
    void pn_callback(pubnub_t* pn, pubnub_trans t, pubnub_res res, void* pData);
 //}
 
+// helper to return the system thread ID
+DWORD GetThreadID()
+{
+   DWORD thrID = ::GetCurrentThreadId();
+   return thrID;
+}
+
+//// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
+//void pn_printf(char* fmt, ...)
+//{
+//   char buffer[10240];
+//
+//    va_list args;
+//    va_start(args,fmt);
+//    vsprintf(buffer,fmt,args);
+//    va_end(args);
+//
+//    TRACE("%s\n", buffer);
+//}
+
 class PNChannelInfo {
 public:
    std::string key;
@@ -28,7 +48,7 @@ public:
    std::string channelName;
    bool is_remote;
    pubnub_t * pContext;
-   //void * pConnection; //?? what waits for data??
+   APubnubComm * pService;
    std::string op_msg;
 
    PNChannelInfo(/*pubnub_t * pC*/);
@@ -38,6 +58,7 @@ public:
    bool DeInit();
 
    bool Send(const std::string& message);
+   void OnMessage(const char* data);
 
    const char* GetTypeName();
 private:
@@ -51,7 +72,8 @@ PNChannelInfo::PNChannelInfo(/*pubnub_t * pC*/)
    , channelName("")
    , is_remote(false)
    , pContext(nullptr)
-   //, pConnection(nullptr)
+   , pService(nullptr)
+   , op_msg("")
 {
 }
 
@@ -76,13 +98,13 @@ bool PNChannelInfo::Init(bool is_publisher)
       pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
    res = pubnub_register_callback(pContext, &pn_callback, (void*) this);
    if (res != PNR_OK)
-      return false; // error reporting needed!
+      return false;
    // start to listen on this channel if local
    if (!is_remote)
    {
       res = pubnub_subscribe(pContext, this->channelName.c_str(), NULL);
       if (res != PNR_STARTED)
-         return false; // error reporting needed!
+         return false;
    }
    return true;
 }
@@ -101,6 +123,15 @@ bool PNChannelInfo::Send(const std::string& message)
    return true;
 }
 
+
+void PNChannelInfo::OnMessage(const char* data)
+{
+   // coming in on the subscriber thread
+   if (pService) {
+      // critical section code here? kick it upstairs
+      pService->OnMessage(data);
+   }
+}
 
 bool PNChannelInfo::DeInit()
 {
@@ -376,7 +407,7 @@ void APubnubComm::SendCommand(const char * message)
 void APubnubComm::OnMessage(const char * message)
 {
    //bool result = true;
-   TRACE("RECEIVED MESSAGE %s\n", message); // DEBUGGING
+   TRACE("RECEIVED MESSAGE ON THREAD 0x%X:%s\n", GetThreadID(), message); // DEBUGGING
    // this is the callback for messages received on pLocal->channelName
    // PRIMARY: will receive any responses
    // SECONDARY: will receive commands
@@ -470,50 +501,52 @@ const char* GetResultName(pubnub_res res)
    return result;
 }
 
-// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
-void pn_printf(char* fmt, ...)
-{
-   char buffer[10240];
-
-    va_list args;
-    va_start(args,fmt);
-    vsprintf(buffer,fmt,args);
-    va_end(args);
-
-    TRACE("%s\n", buffer);
-}
-
-// helper to return the global MFC thread ID, if the caller is running on that thread
-DWORD GetThreadIDEx()
-{
-   CWinThread* pThread = ::AfxGetThread();
-   DWORD thrID = 0;
-   if (pThread)
-      thrID = pThread->m_nThreadID;
-   return thrID;
-}
-
-void pn_callback(pubnub_t* pn, pubnub_trans t, pubnub_res res, void* pData)
+void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
 {
    // General debugging on the callback for now
-   PNChannelInfo* pChannel = static_cast<PNChannelInfo*>(pData);
-   const char* cname = pChannel ? (pChannel->channelName.c_str()) : "NONE";
+   PNChannelInfo* pChannel = static_cast<PNChannelInfo*>(pData); // cannot be nullptr
+   const char* cname = pChannel->channelName.c_str();// "NONE";
    std::string op;
-   if (res != PNR_OK && t == PBTT_PUBLISH && pChannel) {
-      op = pubnub_last_publish_result(pChannel->pContext);
+   const char *data = "";
+   int ctr = 0;
+   std::string sep = "";
+   switch (trans) {
+   case PBTT_SUBSCRIBE:
+      // get all the data if OK
+      while (nullptr != (data = pubnub_get(pn)))
+      {
+         // dispatch the received data
+         // Q4V: is each one always delivered intact? or is it broken up? why multiples?
+#ifndef SINGLE_DELIVERY_PER_SUB
+         pChannel->OnMessage(data);
+#endif
+         std::string sd(data);
+         op += sd + sep;
+         ++ctr;
+         sep = "; ";
+      }
+#ifdef SINGLE_DELIVERY_PER_SUB
+      pChannel->OnMessage(op.c_str());
+#endif
+      op = "{" + op + "}";
+      break;
+   case PBTT_PUBLISH:
+      op = pubnub_last_publish_result(pn);
       pChannel->op_msg += op;
-      op = "\t..." + op; // has its own endl
+      break;
+   default:
+      break;
    }
    TRACE("@*@_CB> %s IN %s ON: %s (T=%X)\n%s", 
-      GetResultName(res), GetTransactionName(t), cname, GetThreadIDEx(), op.c_str());
-   pChannel = nullptr; // DEBUG BREAKS CAN GO HERE
+      GetResultName(res), GetTransactionName(trans), cname, GetThreadID(), op.c_str());
+   pChannel = nullptr; // DEBUG -- BREAKS CAN GO HERE
 }
 
 bool APubnubComm::ConnectHelper(PNChannelInfo* pChannel)
 {
    bool result = false;
 
-   TRACE(_T("CONNHELP: Current Thread ID = 0x%X\n"), GetThreadIDEx());
+   TRACE(_T("CONNHELP: Current Thread ID = 0x%X\n"), GetThreadID());
 
    // need a valid one here - setup with proper key and channel name
    ASSERT(pChannel != nullptr);
@@ -535,7 +568,7 @@ bool APubnubComm::DisconnectHelper(PNChannelInfo* pChannel)
    ASSERT(pChannel != nullptr);
 
    LPVOID pCtx = (LPVOID)pChannel->pContext; // before it goes away!
-   TRACE(_T("DISCONNHELP: Current Thread ID = 0x%X, CTX=%X\n"), GetThreadIDEx(), pCtx);
+   TRACE(_T("DISCONNHELP: Current Thread ID = 0x%X, CTX=%X\n"), GetThreadID(), pCtx);
 
    if (pChannel->DeInit())
    {

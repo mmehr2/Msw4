@@ -637,6 +637,7 @@
   <ItemGroup>
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat.cc" />
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat_session_client.cc" />
+    <ClCompile Include="ChannelInfo.cpp" />
     <ClCompile Include="CustomSocket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -1316,6 +1317,7 @@
     <ResourceCompile Include="Msw.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChannelInfo.h" />
     <ClInclude Include="CustomSocket.h" />
     <ClInclude Include="PubnubComm.h" />
     <ClInclude Include="bookmark.h" />

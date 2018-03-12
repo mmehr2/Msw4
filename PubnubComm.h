@@ -45,6 +45,22 @@ extern "C" {
 #include "pubnub_api_types.h"
 }
 
+// instantiate this to enter a critical section with auto-leave on destruction (exception, leave function, etc.)
+class RAII_CriticalSection
+{
+   LPCRITICAL_SECTION pcs;
+public:
+   RAII_CriticalSection(LPCRITICAL_SECTION pCS)
+      : pcs(pCS)
+   {
+      ::EnterCriticalSection(pcs);
+   }
+   ~RAII_CriticalSection()
+   {
+      ::LeaveCriticalSection(pcs);
+   }
+};
+
 class APubnubComm
 {
    AComm* fComm;
@@ -53,6 +69,7 @@ class APubnubComm
    ConnectionStatus fLinked; // disconnected, connected, or in transition
    std::string customerName;
    //pubnub_t* pContext;
+   CRITICAL_SECTION cs; // protect multiple-access writers from >1 thread
 
    // inbound pubnub channel info
    // unless not configured the first time, this should always remain open
@@ -73,9 +90,6 @@ class APubnubComm
    const char* GetConnectionStateName() const;
    bool ConnectHelper(PNChannelInfo* pChannel);
    bool DisconnectHelper(PNChannelInfo* pChannel);
-   // NOTE: 'safe' commands do not contain any escapable JSON string characters or non-ASCII chars
-   static std::string JSONify( const std::string& input, bool is_safe=true );
-   static std::string UnJSONify( const std::string& input );
 
 public:
    APubnubComm(AComm* pComm);

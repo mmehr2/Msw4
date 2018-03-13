@@ -130,7 +130,7 @@ std::string PNChannelInfo::UnJSONify( const std::string& input )
    {
       // verify 1st and last chars are ok
       bool t1 = (input.find(jsonPrefix) == 0);
-      bool t2 = (input.rfind(jsonSuffix) == input.length());
+      bool t2 = (input.rfind(jsonSuffix) == input.length() - 1);
       if (t1 && t2)
          result = std::string( input.begin() + 1, input.end() - 1 );
    }

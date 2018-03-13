@@ -32,6 +32,54 @@ static const std::string app_name = "MSW"; // prefix for all channel names by co
 //    TRACE("%s\n", buffer);
 //}
 
+static LPCTSTR GetFullPathOfExeFile()
+{
+   const int BSIZE = 8192;
+   // NOTE: For a discussion of Unicode path name length, which could theoretically exceed 32K WCHARs,
+   //   see https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+   // The macro MAX_PATH is only 260 and is inadequate on today's drives (Microsoft, pay attention!)
+   static TCHAR buffer[BSIZE];
+   buffer[0] = '\0'; // in case call fails
+   DWORD res = ::GetModuleFileName( NULL, buffer, BSIZE);
+   // res == 0 if failure, otherwise # of TCHARs copied
+   return buffer;
+}
+
+static LPCTSTR GetIniFilePath()
+{
+   // NOTE: Full Unicode support required here
+   LPCTSTR fpath = GetFullPathOfExeFile();
+   LPCTSTR bslash = wcsrchr(fpath, '\\');
+   bslash++; // include the backslash
+   // end the string there (still sitting in original static buffer)
+   LPTSTR nullspot = const_cast<LPTSTR>(bslash);
+   nullspot[0] = '\0';
+   return fpath;
+}
+
+LPCTSTR GetRemoteIniValue( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+{
+   // NOTE: The params are TCHAR-style because file paths can include Unicode
+   std::wstring iniFilePath = GetIniFilePath();
+   iniFilePath += _T("msw.ini");
+   LPCTSTR ini_path = iniFilePath.c_str();
+   static TCHAR buffer[1024];
+   DWORD res;
+   LPCTSTR secName = _T("MSW_Pubnub");
+   buffer[0] = '\0';
+   res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), ini_path);
+   TRACE(_T("CONFIG: %s returned %d: %s\n"), keyName, res, buffer);
+   return buffer;
+}
+
+const char* GetRemoteIniValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+{
+   LPCTSTR buffer = GetRemoteIniValue(keyName, defValue);
+   CT2A ascii(buffer);
+   static std::string s;
+   s = ascii.m_psz; // remember lifetime issues, but use assignment
+   return s.c_str();
+}
 
 APubnubComm::APubnubComm(AComm* pComm) 
    : fParent(nullptr)
@@ -53,23 +101,19 @@ APubnubComm::APubnubComm(AComm* pComm)
    // get these from persistent storage
    // NOTE: by using PrivateProfile, I can guarantee a file will be found (in the Windows directory, since I don't specify the full path)
    // Otherwise, Windows prefers that you use the registry, which is much harder for the customer to edit when configuring their own accounts.
-   char buffer[1024];
-   DWORD res;
-   res = ::GetPrivateProfileStringA("MSW_Pubnub", "Pubkey", "demo", buffer, sizeof(buffer), "msw.ini");
-   TRACE("CONFIG: Pubkey returned %d: %s\n", res, buffer);
-   this->pRemote->key = buffer;
-   res = ::GetPrivateProfileStringA("MSW_Pubnub", "Subkey", "demo", buffer, sizeof(buffer), "msw.ini");
-   TRACE("CONFIG: Subkey returned %d: %s\n", res, buffer);
-   this->pLocal->key = buffer;
+   LPCTSTR keyname_pub = _T("Pubkey");
+   LPCTSTR keyname_sub = _T("Subkey");
+   LPCTSTR default_pnkey = _T("demo");
+   LPCTSTR keyname_company = _T("CompanyName");
+   LPCTSTR keyname_device = _T("DeviceName");
+   this->pRemote->key = GetRemoteIniValueA(keyname_pub, default_pnkey);
+   this->pLocal->key = GetRemoteIniValueA(keyname_sub, default_pnkey);
    // fix for publish "Invalid subscribe key" error
    this->pRemote->key2 = this->pLocal->key;
-   // load the company/customer and device IDs
-   res = ::GetPrivateProfileStringA("MSW_Pubnub", "CompanyName", "", buffer, sizeof(buffer), "msw.ini");
-   TRACE("CONFIG: CompanyName returned %d: %s\n", res, buffer);
-   this->customerName = buffer;
-   res = ::GetPrivateProfileStringA("MSW_Pubnub", "DeviceName", "", buffer, sizeof(buffer), "msw.ini");
-   TRACE("CONFIG: DeviceName returned %d: %s\n", res, buffer);
-   this->pLocal->channelName = this->MakeChannelName(buffer);
+   // load the company/customer and device IDs (could be Unicode here - what does CT2A do with it?)
+   this->customerName = GetRemoteIniValueA(keyname_company);
+   const char* device_name = GetRemoteIniValueA(keyname_device);
+   this->pLocal->channelName = this->MakeChannelName(device_name);
 }
 
 
@@ -349,4 +393,15 @@ void APubnubComm::OnMessage(const char * message)
       /*c*/ case AComm::kCueMarker:       ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
       /*f*/ case AComm::kFrameInterval:   AScrollDialog::gMinFrameInterval = arg1; break;
    }
+}
+
+extern void TRACE_LAST_ERROR();
+#include "utils.h"
+
+void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
+{
+   DWORD err = GetLastError();
+   CString etext = Utils::GetErrorText(err);
+   CT2A ascii(etext);
+   TRACE(("At %s line %d, err=%s\n"), f, ln, ascii.m_psz);
 }

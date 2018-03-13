@@ -641,6 +641,7 @@
     <ClCompile Include="CustomSocket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="PubnubCallback.cpp" />
     <ClCompile Include="PubnubComm.cpp" />
     <ClCompile Include="Caption.cpp" />
     <ClCompile Include="childfrm.cpp">

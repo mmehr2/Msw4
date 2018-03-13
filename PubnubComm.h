@@ -133,5 +133,12 @@ public:
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);
 
+   // FOR INTERNAL USE BY ANYONE WISHING TO SHARE DATA ACCESS
+   LPCRITICAL_SECTION GetCS() { return &cs; }
+
+   // chat code taken from old implementation by Steve Cox
+   void SendCmd(WPARAM cmd, int param) {::PostMessage(fParent, WM_COMMAND, MAKEWPARAM(cmd, param), 0);}
+   void SendMsg(UINT msg, WPARAM wParam=0, LPARAM lParam=0) {::PostMessage(fParent, msg, wParam, lParam);}
+
 };
 

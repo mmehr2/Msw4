@@ -9,8 +9,10 @@ extern "C" {
    void pn_printf(char* fmt, ...);
 }
 
-// fwd.ref to free function used as callback API target
-void pn_callback(pubnub_t* pn, pubnub_trans t, pubnub_res res, void* pData);
+// fwd.ref to free functions used in callback API target
+extern void pn_callback(pubnub_t* pn, pubnub_trans t, pubnub_res res, void* pData);
+extern const char* GetPubnubTransactionName(pubnub_trans t);
+extern const char* GetPubnubResultName(pubnub_res res);
 
 class PNChannelInfo {
 public:
@@ -23,17 +25,18 @@ public:
    std::string op_msg;
    bool init_sub_pending; // requires first sub for time token (see C SDK docs for subscribe() and elsewhere)
 
-   PNChannelInfo(/*pubnub_t * pC*/);
+   PNChannelInfo(APubnubComm *pSvc);
    ~PNChannelInfo();
 
    bool Init(bool is_primary);
    bool DeInit();
 
-   bool Send(const std::string& message);
-   bool Listen();
-   void OnMessage(const char* data);
+   // NOTE: in this simple class, none of its data is modified by these routines
+   bool Send(const char* data) const;
+   bool Listen() const;
+   void OnMessage(const char* data) const;
 
-   const char* GetTypeName();
+   const char* GetTypeName() const;
    // NOTE: 'safe' commands do not contain any escapable JSON string characters or non-ASCII chars
    static std::string JSONify( const std::string& input, bool is_safe=true );
    static std::string UnJSONify( const std::string& input );

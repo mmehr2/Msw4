@@ -43,11 +43,11 @@ APubnubComm::APubnubComm(AComm* pComm)
    , pRemote(nullptr)
    //, pContext(nullptr)
 {
-   pLocal = new PNChannelInfo();
-   pRemote = new PNChannelInfo();
-
    ::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    // spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
+
+   pLocal = new PNChannelInfo(this);
+   pRemote = new PNChannelInfo(this);
 
    //std::string pubkey = "demo", subkey = "demo";
    // get these from persistent storage
@@ -269,7 +269,44 @@ void APubnubComm::CloseLink()
 
       fLinked = kConnected;
    }
- }
+}
+
+bool APubnubComm::ConnectHelper(PNChannelInfo* pChannel)
+{
+   bool result = false;
+
+   TRACE(_T("CONNHELP: Current Thread ID = 0x%X\n"), ::GetCurrentThreadId());
+
+   // need a valid one here - setup with proper key and channel name
+   ASSERT(pChannel != nullptr);
+
+   bool is_send = pChannel == this->pRemote;
+   if (pChannel->Init(is_send))
+   {
+      TRACE("CH> NEW %s CHANNEL %X\n", pChannel->GetTypeName(), (LPVOID)pChannel->pContext);
+      result = true;
+   }
+
+   return result;
+}
+
+bool APubnubComm::DisconnectHelper(PNChannelInfo* pChannel)
+{
+   bool result = false;
+
+   ASSERT(pChannel != nullptr);
+
+   LPVOID pCtx = (LPVOID)pChannel->pContext; // before it goes away!
+   TRACE(_T("DISCONNHELP: Current Thread ID = 0x%X, CTX=%X\n"), ::GetCurrentThreadId(), pCtx);
+
+   if (pChannel->DeInit())
+   {
+      TRACE("CH> DELETED %s CHANNEL %X\n", pChannel->GetTypeName(), pCtx);
+      result = true;
+   }
+
+   return result;
+}
 
 void APubnubComm::SendCommand(const char * message)
 {
@@ -278,13 +315,17 @@ void APubnubComm::SendCommand(const char * message)
    // TBD: publish message to pRemote->channelName and set up callback
    // PRIMARY: will send commands
    // SECONDARY: will send any responses
-   std::string msg = PNChannelInfo::JSONify(message);
+   std::string msg = (message);
    TRACE("SENDING MESSAGE %s:", msg.c_str()); // DEBUGGING
-   if (false == pRemote->Send(msg)) {
+   if (false == pRemote->Send(message)) {
       TRACE(pRemote->op_msg.c_str());
    }
    TRACE("\n");
 }
+
+#include "Msw.h"
+#include "RtfHelper.h"
+#include "ScrollDialog.h"
 
 void APubnubComm::OnMessage(const char * message)
 {
@@ -293,4 +334,19 @@ void APubnubComm::OnMessage(const char * message)
    // this is the callback for messages received on pLocal->channelName
    // PRIMARY: will receive any responses
    // SECONDARY: will receive commands
+   std::string s = message;
+   const char command = s[0];
+   const long arg1 = (s[0]) ? ::atoi(&s[1]) : 0;
+   const char* comma = strchr(s.c_str(), ',');
+   const long arg2 = comma ? ::atoi(&comma[1]) : 0;
+   switch (command) {
+      /*g*/ case AComm::kScroll:          this->SendCmd(rCmdToggleScrollMode, arg1); break;
+      /*t*/ case AComm::kTimer:           this->SendCmd(((AComm::kReset == arg1) ? rCmdTimerReset : rCmdToggleTimer), arg1); break;
+      /*s*/ case AComm::kScrollSpeed:     this->SendMsg(AMswApp::sSetScrollSpeedMsg, arg1); break;
+      /*p*/ case AComm::kScrollPos:       this->SendMsg(AMswApp::sSetScrollPosMsg, arg1); break;
+      /*g*/ case AComm::kScrollPosSync:   this->SendMsg(AMswApp::sSetScrollPosSyncMsg, arg1); break;
+      /*m*/ case AComm::kScrollMargins:   theApp.SetScrollMargins(arg1, arg2); break;
+      /*c*/ case AComm::kCueMarker:       ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
+      /*f*/ case AComm::kFrameInterval:   AScrollDialog::gMinFrameInterval = arg1; break;
+   }
 }

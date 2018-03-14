@@ -40,7 +40,7 @@ static LPCTSTR GetFullPathOfExeFile()
    // The macro MAX_PATH is only 260 and is inadequate on today's drives (Microsoft, pay attention!)
    static TCHAR buffer[BSIZE];
    buffer[0] = '\0'; // in case call fails
-   DWORD res = ::GetModuleFileName( NULL, buffer, BSIZE);
+   /*DWORD res =*/ ::GetModuleFileName( NULL, buffer, BSIZE);
    // res == 0 if failure, otherwise # of TCHARs copied
    return buffer;
 }
@@ -91,8 +91,8 @@ APubnubComm::APubnubComm(AComm* pComm)
    , pRemote(nullptr)
    //, pContext(nullptr)
 {
-   ::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
-   // spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
+   //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
+   //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
 
    pLocal = new PNChannelInfo(this);
    pRemote = new PNChannelInfo(this);
@@ -124,7 +124,7 @@ APubnubComm::~APubnubComm(void)
    pRemote = nullptr;
    delete pLocal;
    pLocal = nullptr;
-   ::DeleteCriticalSection(&cs);
+   //::DeleteCriticalSection(&cs);
 }
 
 void APubnubComm::SetParent(HWND parent)
@@ -395,7 +395,6 @@ void APubnubComm::OnMessage(const char * message)
    }
 }
 
-extern void TRACE_LAST_ERROR();
 #include "utils.h"
 
 void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
@@ -405,3 +404,4 @@ void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
    CT2A ascii(etext);
    TRACE(("At %s line %d, err=%s\n"), f, ln, ascii.m_psz);
 }
+

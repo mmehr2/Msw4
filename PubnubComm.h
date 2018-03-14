@@ -40,26 +40,12 @@ IN THIS VERSION:
 
 */
 
-class PNChannelInfo; // fwd.ref
+#include "PubMessageQueue.h"
+
+class PNChannelInfo; // fwd.refs
 extern "C" {
 #include "pubnub_api_types.h"
 }
-
-// instantiate this to enter a critical section with auto-leave on destruction (exception, leave function, etc.)
-class RAII_CriticalSection
-{
-   LPCRITICAL_SECTION pcs;
-public:
-   RAII_CriticalSection(LPCRITICAL_SECTION pCS)
-      : pcs(pCS)
-   {
-      ::EnterCriticalSection(pcs);
-   }
-   ~RAII_CriticalSection()
-   {
-      ::LeaveCriticalSection(pcs);
-   }
-};
 
 class APubnubComm
 {
@@ -68,8 +54,6 @@ class APubnubComm
    ConnectionType fConnection; // Primary or Secondary
    ConnectionStatus fLinked; // disconnected, connected, or in transition
    std::string customerName;
-   //pubnub_t* pContext;
-   CRITICAL_SECTION cs; // protect multiple-access writers from >1 thread
 
    // inbound pubnub channel info
    // unless not configured the first time, this should always remain open
@@ -134,7 +118,7 @@ public:
    void OnMessage(const char* message);
 
    // FOR INTERNAL USE BY ANYONE WISHING TO SHARE DATA ACCESS
-   LPCRITICAL_SECTION GetCS() { return &cs; }
+   //LPCRITICAL_SECTION GetCS() { return &cs; }
 
    // chat code taken from old implementation by Steve Cox
    void SendCmd(WPARAM cmd, int param) {::PostMessage(fParent, WM_COMMAND, MAKEWPARAM(cmd, param), 0);}

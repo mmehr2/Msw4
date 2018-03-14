@@ -168,7 +168,7 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    this->SetState(kConnecting);
    fUsername = username;
    fPassword = password;
-   //fThread = ::AfxBeginThread(Connect, this);
+   fThread = ::AfxBeginThread(Connect, this);
 
    CT2A ascii(username); // convert from wide to narrow chars
    std::string local_addr = ascii.m_psz;
@@ -178,9 +178,10 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    fRemote->Initialize(false, ascii.m_psz); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
 }
 
-UINT AComm::Connect(LPVOID /*param*/) {
-   //AComm* pThis = reinterpret_cast<AComm*>(param);
+UINT AComm::Connect(LPVOID param) {
+   AComm* pThis = reinterpret_cast<AComm*>(param);
 
+   //fRemote->PublishQueueThreadFunction(fRemote);
    //char buffer[kMaxJid] = {0};
    //VERIFY(sprintf_s(buffer, sizeof(buffer), "%S", pThis->fUsername) < sizeof(buffer));
    //pThis->fImpl->fJid = buzz::Jid(buffer);

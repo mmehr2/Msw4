@@ -1,11 +1,13 @@
 #include "stdafx.h"
 #include "PubnubComm.h"
 #include "ChannelInfo.h"
+#include "RAII_CriticalSection.h"
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
+#include "pubnub_timers.h"
 }
 
 PNChannelInfo::PNChannelInfo(APubnubComm *pSvc) 
@@ -17,6 +19,7 @@ PNChannelInfo::PNChannelInfo(APubnubComm *pSvc)
    , pService(pSvc)
    , op_msg("")
    , init_sub_pending(true)
+   , pQueue(nullptr)
 {
 }
 
@@ -52,6 +55,9 @@ bool PNChannelInfo::Init(bool is_publisher)
       // if local, we kick off the first subscribe automatically (gets a time token)
       init_sub_pending = true; // makes sure we do a "real" subscribe too
       return Listen();
+   } else {
+      // if remote, we need to fire up the publisher queueing mechanism for the channel
+      pQueue = new PubMessageQueue();
    }
    return true;
 }
@@ -63,25 +69,72 @@ bool PNChannelInfo::Listen(void) const
    res = pubnub_subscribe(pContext, this->channelName.c_str(), NULL);
    if (res != PNR_STARTED)
       return false;
+   int msec = pubnub_transaction_timeout_get(pContext);
+   TRACE("LISTENING FOR %1.3lf sec\n", msec/1000.0);
    return true;
 }
 
 bool PNChannelInfo::Send(const char*message) const
 {
-   pubnub_res res;
-   //this->op_msg = "";
    if (pContext == nullptr)
       return false;
    std::string msg = PNChannelInfo::JSONify(message);
-   RAII_CriticalSection(pService->GetCS());
-   res = pubnub_publish(pContext, this->channelName.c_str(), msg.c_str());
+   // if the message queue is in BUSY state, it means we should send there (huh?)
+   if (this->pQueue->isBusy())
+   {
+      return pQueue->postData(msg.c_str());
+   } else {
+      this->pQueue->setBusy(true);
+      return this->SendBare(msg.c_str());
+   }
+}
+
+bool PNChannelInfo::SendBare(const char*message) const
+{
+   pubnub_res res;
+
+   //RAII_CriticalSection acs(pService->GetCS());
+   res = pubnub_publish(pContext, this->channelName.c_str(), message);
    if (res != PNR_STARTED) {
-      //this->op_msg += pubnub_last_publish_result(pContext);
       return false; // error reporting at higher level
    }
+   //// IDEALLY (from website):
+   //for (i = 0; i < my_retry_limit; ++i) {
+   //    res = pubnub_publish(pbp, chan, msg);
+   //    if (res != PNR_STARTED) {
+   //        printf("pubnub_publish() returned unexpected: %d\n", res);
+   //        pubnub_free(pbp);
+   //        return -1;
+   //    }
+ 
+   //    res = pubnub_await(pbp);
+   //    switch (pubnub_should_retry(res)) {
+   //        case pbccFalse:
+   //        break;
+   //        case pbccTrue:
+   //            printf("Publishing failed with code: %d ('%s')\nRetrying...\n", res, pubnub_res_2_string(res));
+   //        continue;
+   //        case pbccNotSet:
+   //            puts("Publish failed, but we decided not to retry");
+   //        break;
+   //    }
+ 
+   //    break;
+   //}
    return true;
 }
 
+void PNChannelInfo::ContinuePublishing()
+{
+   // if the queue has more items, 
+   if (pQueue->isBusy()) {
+      // request to publish the next one
+      pQueue->postPublishRequest(this);
+   } else {
+      // otherwise we're done and it's back to direct publishing mode
+      pQueue->setBusy(false);
+   }
+}
 
 void PNChannelInfo::OnMessage(const char* data) const
 {
@@ -100,6 +153,8 @@ bool PNChannelInfo::DeInit()
       pubnub_free(pContext);
       pContext = nullptr;
    }
+   delete pQueue;
+   pQueue = nullptr;
    return true;
 }
 

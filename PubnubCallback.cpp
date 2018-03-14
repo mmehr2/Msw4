@@ -1,14 +1,16 @@
 #include "stdafx.h"
-#include "PubnubComm.h"
+//#include "PubnubComm.h"
 #include "ChannelInfo.h"
+#include "RAII_CriticalSection.h"
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
+#include "pubnub_helper.h"
 }
 
-// PUBNUB IMPLEMENTATION
+// PUBNUB IMPLEMENTATION (ASSOCIATED WITH PNChannelInfo CLASS)
 
 const char* GetPubnubTransactionName(pubnub_trans t)
 {
@@ -102,13 +104,14 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    PNChannelInfo* pChannel = static_cast<PNChannelInfo*>(pData); // cannot be nullptr
 
    // since we are arriving on an independent library thread, protect access here
-   RAII_CriticalSection(pChannel->pService->GetCS());
+   //RAII_CriticalSection(pChannel->GetCS());
    
    const char* cname = pChannel->channelName.c_str();// "NONE";
    std::string op;
    const char *data = "";
    int msgctr = 0;
    std::string sep = "";
+   bool continue_publish = false;
    switch (trans) {
    case PBTT_SUBSCRIBE:
       if (res != PNR_OK) {
@@ -143,13 +146,18 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
       break;
    case PBTT_PUBLISH:
       op = pubnub_last_publish_result(pn);
+      op += pubnub_res_2_string(res);
       pChannel->op_msg = op;
+      // TBD: eventually implement retry loop here
+      continue_publish = true;
       break;
    default:
       break;
    }
    TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d)\n", 
       GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), msgctr);
+   if (continue_publish)
+      pChannel->ContinuePublishing();
    pChannel = nullptr; // DEBUG -- BREAKS CAN GO HERE
 }
 

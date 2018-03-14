@@ -641,6 +641,7 @@
     <ClCompile Include="CustomSocket.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="PubMessageQueue.cpp" />
     <ClCompile Include="PubnubCallback.cpp" />
     <ClCompile Include="PubnubComm.cpp" />
     <ClCompile Include="Caption.cpp" />
@@ -1320,6 +1321,7 @@
   <ItemGroup>
     <ClInclude Include="ChannelInfo.h" />
     <ClInclude Include="CustomSocket.h" />
+    <ClInclude Include="PubMessageQueue.h" />
     <ClInclude Include="PubnubComm.h" />
     <ClInclude Include="bookmark.h" />
     <ClInclude Include="Caption.h" />
@@ -1329,6 +1331,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DemoU|Win32'">true</ExcludedFromBuild>
     </CustomBuildStep>
     <ClInclude Include="CustomComm.h" />
+    <ClInclude Include="RAII_CriticalSection.h" />
     <ClInclude Include="RegGen\CRCGenerator.h" />
     <ClInclude Include="doctype.h" />
     <ClInclude Include="helpids.h" />

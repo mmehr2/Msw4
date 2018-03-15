@@ -98,30 +98,13 @@ bool PNChannelInfo::SendBare(const char*message) const
    if (res != PNR_STARTED) {
       return false; // error reporting at higher level
    }
-   //// IDEALLY (from website):
-   //for (i = 0; i < my_retry_limit; ++i) {
-   //    res = pubnub_publish(pbp, chan, msg);
-   //    if (res != PNR_STARTED) {
-   //        printf("pubnub_publish() returned unexpected: %d\n", res);
-   //        pubnub_free(pbp);
-   //        return -1;
-   //    }
- 
-   //    res = pubnub_await(pbp);
-   //    switch (pubnub_should_retry(res)) {
-   //        case pbccFalse:
-   //        break;
-   //        case pbccTrue:
-   //            printf("Publishing failed with code: %d ('%s')\nRetrying...\n", res, pubnub_res_2_string(res));
-   //        continue;
-   //        case pbccNotSet:
-   //            puts("Publish failed, but we decided not to retry");
-   //        break;
-   //    }
- 
-   //    break;
-   //}
    return true;
+}
+
+void PNChannelInfo::PublishRetry()
+{
+   // request to publish the next one
+   pQueue->postPublishRetryRequest(this);
 }
 
 void PNChannelInfo::ContinuePublishing()

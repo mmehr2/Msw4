@@ -30,10 +30,11 @@ public:
 
    bool postData(const char* data); // used by client class
    bool postPublishRequest(PNChannelInfo* pDest) const; // used by callback routine from Pubnub
+   bool postPublishRetryRequest(PNChannelInfo* pDest) const; // used by callback routine from Pubnub
 
 private:
    void saveCommand(const char* data); // used by private thread
-   void sendNextCommand(PNChannelInfo* pWhere); // used by private thread
+   void sendNextCommand(PNChannelInfo* pWhere, bool retry); // used by private thread
 
    enum {
       PQ_FIRST_MSG = WM_USER + 16023,
@@ -43,6 +44,7 @@ private:
          // WPARAM: unused
          // LPARAM: pubnub_t* ptr to context to publish to
       PQ_SEND_MSG,
+      PQ_SEND_MSG_RETRY,
       PQ_LAST_MSG
    };
    void postMessage(UINT msgnum, const char* data = NULL) const; // used by main thread

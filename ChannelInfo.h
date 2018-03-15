@@ -34,8 +34,9 @@ public:
    bool Init(bool is_primary);
    bool DeInit();
    void ContinuePublishing(); // for use by pubnub callback function
+   void PublishRetry(); // for use by pubnub callback function
 
-   // NOTE: in this simple class, none of its data is modified by these routines
+   // NOTE:(WRONG!!) in this simple class, none of its data is modified by these routines
    bool Send(const char* data) const;
    bool SendBare(const char* data) const; // for use by msg.queue (impl.detail)
    bool Listen() const;

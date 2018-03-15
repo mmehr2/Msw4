@@ -104,6 +104,13 @@ bool PubMessageQueue::postPublishRequest(PNChannelInfo* pDest) const
    return true;
 }
 
+bool PubMessageQueue::postPublishRetryRequest(PNChannelInfo* pDest) const
+{
+   TRACE("PQ: Posting pub.retry req.s\n");
+   this->postMessage(PQ_SEND_MSG_RETRY, (LPCSTR)(LPVOID)pDest);
+   return true;
+}
+
 void PubMessageQueue::saveCommand(const char* command)
 {
    RAII_CriticalSection rcs(&this->cs);
@@ -112,22 +119,51 @@ void PubMessageQueue::saveCommand(const char* command)
    TRACE("PQ: Queueing cmd %s\n", command);
 }
 
-void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere)
+void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
 {
    std::string command;
+   bool do_send = false;
+   bool do_done = false;
+   const char* cmdstr = "";
+   command = "";
    RAII_CriticalSection rcs(&this->cs);
-   if (this->thePQ.empty()) {
+   if (!this->thePQ.empty()) {
+         if (retry) {
+         // non-empty queue, retry request
+         // get the current one to send from the queue
+         command = this->thePQ.front();
+//         TRACE("PQXX> %s\n", command.c_str());
+         do_send = true;
+      } else {
+         // non-empty queue, normal request
+         // get the current one to send from the queue, if any
+         command = this->thePQ.front();
+         //TRACE("PQXX1> %s\n", command.c_str());
+         this->thePQ.pop_front();
+         //TRACE("PQXX2> %s\n", command.c_str());
+         do_send = true;
+      }
+   } else if (retry) {
+      // empty queue, retry request
+      // ERROR
+//      TRACE("PQ: RETRY REQUEST ON EMPTY QUEUE!\n");
+   } else {
+      // empty queue, normal request
+//      TRACE("PQ: RETRY REQUEST ON EMPTY QUEUE!\n");
+      do_done = true;
+   }
+   cmdstr = command.c_str();
+   if (cmdstr == "")
+      do_send = false;
+   else
+      TRACE("PQ: %s: Sending cmd %s to pci=%X\n", retry ? "RETRY" : "POP", cmdstr, pWhere);
+   // send the message to pubnub (but don't do the public version)
+   if (do_send) {
+      pWhere->SendBare(cmdstr);
+   } else if (do_done) {
       // no more queued msgs - signal OK to go direct
       setBusy(false);
       TRACE("PQ: EMPTY - BUSY = OFF\n");
-   } else {
-      // get the next one to send from the queue
-      const char* command = this->thePQ.front().c_str();
-      // pop it
-      this->thePQ.pop_front();
-      TRACE("PQ: POP: Sending cmd %s to pci=%X\n", command, pWhere);
-      // send the message to pubnub (but don't do the public version)
-      pWhere->SendBare(command);
    }
 }
 
@@ -153,7 +189,12 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere)
 
       case PQ_SEND_MSG:
          // publish next string from the queue
-         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam );
+         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, false );
+         break;
+
+      case PQ_SEND_MSG_RETRY:
+         // publish next string from the queue
+         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, true );
          break;
 
       }

@@ -98,6 +98,7 @@ const char* GetPubnubResultName(pubnub_res res)
    return result;
 }
 
+int continue_publish = 1;
 void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
 {
    // General debugging on the callback for now
@@ -111,9 +112,10 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    const char *data = "";
    int msgctr = 0;
    std::string sep = "";
-   bool continue_publish = false;
+   //continue_publish = 1; // retry state
    switch (trans) {
    case PBTT_SUBSCRIBE:
+      continue_publish = 0;
       if (res != PNR_OK) {
          // check for errors:
          // TIMEOUT - listen again
@@ -148,15 +150,34 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
       op = pubnub_last_publish_result(pn);
       op += pubnub_res_2_string(res);
       pChannel->op_msg = op;
-      // TBD: eventually implement retry loop here
-      continue_publish = true;
+      // implement retry loop here
+      if (res == PNR_OK) {
+         TRACE("Publish succeeded (c=%d), moving on...\n", continue_publish);
+         continue_publish = 1;
+      } else {
+         switch (pubnub_should_retry(res)) {
+         case pbccFalse:
+            TRACE("Publish failed UNEXPLAINED, but we decided not to retry\n");
+            continue_publish = 1;
+            break;
+         case pbccTrue:
+            TRACE("Publishing failed with code: %d ('%s')\nRetrying...\n", res, pubnub_res_2_string(res));
+            continue_publish++;
+         case pbccNotSet:
+            TRACE("Publish failed, but we decided not to retry\n");
+            continue_publish = 1;
+            break;
+         }
+      }
       break;
    default:
       break;
    }
    TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d)\n", 
       GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), msgctr);
-   if (continue_publish)
+   if (continue_publish >= 2)
+      pChannel->PublishRetry();
+   else if (continue_publish == 1)
       pChannel->ContinuePublishing();
    pChannel = nullptr; // DEBUG -- BREAKS CAN GO HERE
 }

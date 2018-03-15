@@ -145,14 +145,34 @@ bool APubnubComm::ChangeMode(ConnectionType ct) {
    return result;
 }
 
+#include <algorithm>
+static std::string faulty = ".,:*/\\";
+static char replacement = '=';
+char replace_invalid(char input)
+{
+   std::string::size_type n;
+   char result = input;
+   n = faulty.find(input);
+   if (n != std::string::npos)
+      result = replacement; // invalid char WAS found, sub something else
+   return result;
+}
+
+std::string RemoveInvalidCharacters( std::string& s )
+{
+   std::transform(s.begin(), s.end(), s.begin(), replace_invalid);
+   return s;
+}
+
 std::string APubnubComm::MakeChannelName( const std::string& deviceName )
 {
    std::string result;
    result += app_name;
    result += channel_separator;
-   result += this->customerName;
+   result += (this->customerName);
    result += channel_separator;
    result += deviceName;
+   RemoveInvalidCharacters(result);
    return result;
 }
 

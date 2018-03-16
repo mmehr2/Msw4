@@ -8,6 +8,7 @@ extern "C" {
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
 #include "pubnub_timers.h" // getting the last time token
+#include "pubnub_blocking_io.h" // setting non blocking io (not needed maybe?)
 }
 
 PNChannelInfo::PNChannelInfo(APubnubComm *pSvc) 
@@ -36,6 +37,16 @@ const char* PNChannelInfo::GetTypeName() const
       return "LOCAL";
 }
 
+#define NEWLIMS
+#ifdef NEWLIMS
+#undef max
+#include <limits>
+static const int MAXINT = std::numeric_limits<int>().max();
+#else
+#include <climits>
+static const int MAXINT = INT_MAX;
+#endif
+
 bool PNChannelInfo::Init(bool is_publisher)
 {
    pubnub_res res;
@@ -48,14 +59,19 @@ bool PNChannelInfo::Init(bool is_publisher)
    else
       pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
    res = pubnub_register_callback(pContext, &pn_callback, (void*) this);
+   pubnub_set_non_blocking_io(pContext);
    if (res != PNR_OK)
       return false;
    if (!is_remote)
    {
+      const int tmout_msec = /*PUBNUB_DEFAULT_SUBSCRIBE_TIMEOUT*/MAXINT; // or, 24.855 days for 32-bit int
+      pubnub_set_transaction_timeout(pContext, tmout_msec);
       // if local, we kick off the first subscribe automatically (gets a time token)
       init_sub_pending = true; // makes sure we do a "real" subscribe too
+         // NOTE: not needed, just handle empty responses (this is the time token under the hood)
       return Listen();
    } else {
+      pubnub_set_transaction_timeout(pContext, PUBNUB_DEFAULT_NON_SUBSCRIBE_TIMEOUT);
       // if remote, we need to fire up the publisher queueing mechanism for the channel
       pQueue = new PubMessageQueue();
    }

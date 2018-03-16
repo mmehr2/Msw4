@@ -7,7 +7,7 @@
 extern "C" {
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
-#include "pubnub_timers.h"
+#include "pubnub_timers.h" // getting the last time token
 }
 
 PNChannelInfo::PNChannelInfo(APubnubComm *pSvc) 
@@ -82,7 +82,7 @@ bool PNChannelInfo::Send(const char*message) const
    // if the message queue is in BUSY state, it means we should send there (huh?)
    if (this->pQueue->isBusy())
    {
-      return pQueue->postData(msg.c_str());
+      return pQueue->push(msg.c_str());
    } else {
       this->pQueue->setBusy(true);
       return this->SendBare(msg.c_str());
@@ -104,7 +104,7 @@ bool PNChannelInfo::SendBare(const char*message) const
 void PNChannelInfo::PublishRetry()
 {
    // request to publish the next one
-   pQueue->postPublishRetryRequest(this);
+   pQueue->get_publish(this);
 }
 
 void PNChannelInfo::ContinuePublishing()
@@ -112,7 +112,7 @@ void PNChannelInfo::ContinuePublishing()
    // if the queue has more items, 
    if (pQueue->isBusy()) {
       // request to publish the next one
-      pQueue->postPublishRequest(this);
+      pQueue->pop_publish(this);
    } else {
       // otherwise we're done and it's back to direct publishing mode
       pQueue->setBusy(false);

@@ -283,13 +283,13 @@ bool AComm::SendCommand(Command cmd, int param1, int param2) {
 
 bool AComm::SendCommand(Command cmd, const std::string& param) {
    TRACE("R>%c%s\n", cmd, param.c_str()); // send these to fRemote
-   //if (NULL != fImpl->fChatSession) {
+   if (fRemote->isConversing()) {
       char buffer[32] = {0};
       VERIFY(::sprintf_s(buffer, _countof(buffer), "%c%s", cmd, param.c_str()) < mCountOf(buffer));
       //fImpl->fChatSession->SendChatMessage("", buffer, XmppChat::CHAT_STATE_ACTIVE);
       fRemote->SendCommand(buffer);
       return true;
-   //}
+   }
    return false;
 }
 

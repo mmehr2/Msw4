@@ -29,48 +29,97 @@ This can be done by the publish mechanism looping until PostThreadMessage() succ
 However if there's a delay, this implies using a Ping message at channel connection time to make sure this is done once.
 Subsequent calls should succeed on the first try. This is a Windows issue, NOT a Pubnub one.
 
+BIG ISSUE: Scrolling is a Modal Dialog and only dispatches Window Messages (see the ::DispatchMessage() call in the middle of ScrollDialog.cpp).
+If we use PostThreadMessage(), we need a thread-specific hook.
+(See here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644946(v=vs.85).aspx:
+   "Messages sent by PostThreadMessage are not associated with a window. As a general rule, messages that are not 
+   associated with a window cannot be dispatched by the DispatchMessage function. Therefore, if the recipient thread 
+   is in a modal loop (as used by MessageBox or DialogBox), the messages will be lost. To intercept thread messages 
+   while in a modal loop, use a thread-specific hook.")
+Check out the T-S Hook... dire warnings about slowing the system down, CBT_* stuff, needs a separate DLL, etc.
+We would use a WH_MSGFILTER hook, and it needs to be called by CallMsgFilter() in the ScrollDialog's modal loop. Check the bottom of 
+   this page: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644959(v=vs.85).aspx
+
+   What if we use a hidden window instead? Less fuss, is it easy? Well, we need a better version of AfxBeginThread, more stack space, ...
+   And if we use SendMessage and variants, see discussions here also: https://blogs.msdn.microsoft.com/oldnewthing/20110304-00/?p=11303
+   But, all we really want to do is PostMessage() so we should be good.. but don't get tempted! ;)
+Sooo, hidden windows and making this a GUI thread... not really a good idea either!
+   See discussion here: https://stackoverflow.com/questions/17340285/can-i-have-multiple-gui-threads-in-mfc
+But the best way seems to be to add ONE message to the main app, process it during the Scroll Dialog (only?), and pack up the PQ_* code 
+   in the WPARAM of that message. Then the Scroll Dialog handler must call the PQ::ThreadFunction with the for/GetMessage() removed.
+   OR - we only do it this way during scrolling for those commands that happen during scrolling. The idea is to prevent the Callback thread 
+   from Pubnub from directly executing this code (BUT WHY??)
+      OK Explore the idea: CB() already is coming in asynchronously on another thread while the UI thread is doing its thing, so prob is
+      running on another core.. why not have it do what it does best? Well, sync with data that the UI thread might use, for one.
+      Would there be anything here that the UI thread would use? PRIMARY: more publishing, SECONDARY: more subscribe responses ... this is
+      already covered, we ultimately do PostMessage() there. So why not for the PQ_ funcs here? Because we should just do the work locally.
+      On the CB thread, just pop the queue and publish the next or same message. No fussing with Windows, already busy on the UI thread, 
+      except that PRIMARY UI will ultimately be posting messages to the queue too.
+      SCENARIO:
+         >UI thread calls gComm->SendMessage() -- leads to the code that will PublishOrDefer(), mostly will defer (hit the queue, put msg)
+         >CB comes in with reply OK, decides to Publish, hits the queue to get the next msg, so yeah, sync/protect the queue!
+DECISION: OK, let's not use any messages here, just realize that the CB (pn_callback) thread will empty the PQ on the PRIMARY while the
+   GUI thread is filling it, classic case. And on any modern processor with >1 core, these will be on separate cores too. Can we guarantee it?
+   One more thought process, follow here: https://stackoverflow.com/questions/663958/how-to-control-which-core-a-process-runs-on
+   So, we can't control which actual core we will run on, we can only hope that other apps will be shut off, but Windows services abound 
+   so there is never a dedicated machine any more. Add another thread to the mix and deal with what you get, whether it's timeslicing or 
+   multicore execution. All handled by the CRITICAL_SECTION code under the hood for us.
+
+   Double-check that VC2010's std::deque is thread-safe though...
+   Maps are discussed here: https://stackoverflow.com/questions/17601722/stl-map-implementation-in-visual-c-2010-and-thread-safety
+   Looking for the deque - found this: https://blogs.msdn.microsoft.com/nativeconcurrency/2009/11/23/the-concurrent_queue-container-in-vs2010/
+   So, Intel had a complicated implementation to do producer/consumer properly - try NOT to throw exceptions, but concurrent safety seems 
+      very difficult. (Calls ScheduleTask internally? Needs custom debug visualizers? Oi!) And the simple std::queue class has not a clue!
+   I think the complexity is due to making the object lockless (more performant) - the simple locked deque should be tried first.
+UPDATED DECISION:
+   OK I get it, protection at this level is too fine-grained.
+   We don't need this class at all! Put the CS back into the ChannelInfo, along with the deque.
+   One operation for the UI thread to push new messages onto the PQ OR the Net (PublishOrDefer)
+   One operation for the CB thread to decide how to deferred-publish - using PublishPQ or PublishPQ_Retry
+   They are atomic ops due to the CS, and the ONLY things that should be used by the callers.
+   Internally, all the rest is fine.
 */
 extern "C" static UINT InternalThreadFunction(LPVOID param); // fwd.ref
 
 PubMessageQueue::PubMessageQueue()
-   : pThread(nullptr)
-   , busy_flag(false)
+   : /*pThread(nullptr)
+   , */busy_flag(false)
 {
    ::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    // spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
-   // set up the queueing mechanism - create a thread for private queueing, no UI required
-   pThread = ::AfxBeginThread(InternalThreadFunction, this);
-   if (!pThread) {
-      TRACE("UNABLE TO CREATE PRIVATE THREAD FOR PUBLISH QUEUEING!\n");
-      TRACE_LAST_ERROR(__FILE__, __LINE__ - 1);
-   }
+   //// set up the queueing mechanism - create a thread for private queueing, no UI required
+   //pThread = ::AfxBeginThread(InternalThreadFunction, this);
+   //if (!pThread) {
+   //   TRACE("UNABLE TO CREATE PRIVATE THREAD FOR PUBLISH QUEUEING!\n");
+   //   TRACE_LAST_ERROR(__FILE__, __LINE__ - 1);
+   //}
 }
 
-extern "C" static UINT InternalThreadFunction(LPVOID param)
-{
-   // interface to Win API needs to be extern "C"; just call the class function here
-   PubMessageQueue* pComm = reinterpret_cast<PubMessageQueue*>(param);
-   PubMessageQueue::threadFunction(pComm);
-   return 0;
-}
+//extern "C" static UINT InternalThreadFunction(LPVOID param)
+//{
+//   // interface to Win API needs to be extern "C"; just call the class function here
+//   PubMessageQueue* pComm = reinterpret_cast<PubMessageQueue*>(param);
+//   PubMessageQueue::threadFunction(pComm);
+//   return 0;
+//}
 
 PubMessageQueue::~PubMessageQueue()
 {
-   delete pThread;
-   pThread = nullptr;
+   //delete pThread;
+   //pThread = nullptr;
 
    ::DeleteCriticalSection(&cs);
 }
 
-void PubMessageQueue::init()
-{
-   // clear the queue (or wait until all messages are sent??)
-   this->thePQ.clear();
-}
-
-void PubMessageQueue::deinit()
-{
-}
+//void PubMessageQueue::init()
+//{
+//   // clear the queue (or wait until all messages are sent??)
+//   //this->thePQ.clear();
+//}
+//
+//void PubMessageQueue::deinit()
+//{
+//}
 
 void PubMessageQueue::setBusy(bool newValue)
 {
@@ -84,40 +133,32 @@ bool PubMessageQueue::isBusy()
    return this->busy_flag;
 }
 
-bool PubMessageQueue::postData(const char* msg)
+bool PubMessageQueue::push(const char* msg)
 {
-   TRACE("PQ: Posting cmd %s\n", msg);
+   //TRACE("PQ: Posting cmd %s\n", msg);
 
-   //// we lied temporarily - just save a working copy since the original goes away
-   //PubMessageQueue* pThis = const_cast<PubMessageQueue*>(this);
-   //pThis->msg_being_posted = std::string(msg);
-
-   //this->postMessage(PQ_SAVE_MSG, msg);
-   this->saveCommand(msg);
-   return true;
-}
-
-bool PubMessageQueue::postPublishRequest(PNChannelInfo* pDest) const
-{
-   TRACE("PQ: Posting pub.req.s\n");
-   this->postMessage(PQ_SEND_MSG, (LPCSTR)(LPVOID)pDest);
-   return true;
-}
-
-bool PubMessageQueue::postPublishRetryRequest(PNChannelInfo* pDest) const
-{
-   TRACE("PQ: Posting pub.retry req.s\n");
-   this->postMessage(PQ_SEND_MSG_RETRY, (LPCSTR)(LPVOID)pDest);
-   return true;
-}
-
-void PubMessageQueue::saveCommand(const char* command)
-{
    RAII_CriticalSection rcs(&this->cs);
-   std::string s(command); // copies the original
+   std::string s(msg); // copies the original
    this->thePQ.push_back(s);
-   TRACE("PQ: Queueing cmd %s\n", command);
+   TRACE("PQ: Queueing cmd %s\n", msg);
+   return true;
 }
+
+bool PubMessageQueue::pop_publish(PNChannelInfo* pDest)
+{
+   this->sendNextCommand(pDest, false);
+   return true;
+}
+
+bool PubMessageQueue::get_publish(PNChannelInfo* pDest)
+{
+   this->sendNextCommand(pDest, true);
+   return true;
+}
+
+//void PubMessageQueue::saveCommand(const char* command)
+//{
+//}
 
 void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
 {
@@ -152,8 +193,13 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
 //      TRACE("PQ: RETRY REQUEST ON EMPTY QUEUE!\n");
       do_done = true;
    }
+//   return command;
+//}
+//
+//void adapter(PNChannelInfo* pWhere)
+//{
    cmdstr = command.c_str();
-   if (cmdstr == "")
+   if (command.empty())
       do_send = false;
    else
       TRACE("PQ: %s: Sending cmd %s to pci=%X\n", retry ? "RETRY" : "POP", cmdstr, pWhere);
@@ -162,56 +208,56 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
       pWhere->SendBare(cmdstr);
    } else if (do_done) {
       // no more queued msgs - signal OK to go direct
-      setBusy(false);
+      this->setBusy(false);
       TRACE("PQ: EMPTY - BUSY = OFF\n");
    }
 }
-
-// this is the private thread function called by the AComm object
-// Its job is to block and wait until a message is posted, then wake up and handle it
-// Supported messages:
-//    PQ_SAVE_MSG - queues up a command string to be sent later (includes JSONification)
-//    PQ_SEND_MSG - unqueues the first command string remaining and publishes it
-/*static*/ void PubMessageQueue::threadFunction(PubMessageQueue* pComm)
-{
-   MSG msg;
-
-   for (;;)
-   {
-      ::GetMessageA(&msg, NULL, PubMessageQueue::PQ_FIRST_MSG, PubMessageQueue::PQ_LAST_MSG); 
-         // NOTE: this blocks thread until there's a msg in the queue
-      switch (msg.message) {
-
-      case PQ_SAVE_MSG:
-         // save a string to the queue
-         pComm->saveCommand( (LPCSTR)msg.lParam );
-         break;
-
-      case PQ_SEND_MSG:
-         // publish next string from the queue
-         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, false );
-         break;
-
-      case PQ_SEND_MSG_RETRY:
-         // publish next string from the queue
-         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, true );
-         break;
-
-      }
-   }
-}
-
-void PubMessageQueue::postMessage(UINT msgnum, const char* data) const
-{
-   if (pThread == nullptr)
-   {
-      TRACE("NO PRIVATE THREAD AVAILABLE FOR PUBLISH QUEUEING!\n");
-      return;
-   }
-   // NOTE: loops until success - should only take at most 2 tries (1st sets up the msg.queue for the app)
-   // see here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644946(v=vs.85).aspx
-   while ( !::PostThreadMessageA(this->pThread->m_nThreadID, msgnum, (WPARAM)0, (LPARAM)data) ) {
-      ::Sleep(0);
-   }
-}
-
+//
+//// this is the private thread function called by the AComm object
+//// Its job is to block and wait until a message is posted, then wake up and handle it
+//// Supported messages:
+////    PQ_SAVE_MSG - queues up a command string to be sent later (includes JSONification)
+////    PQ_SEND_MSG - unqueues the first command string remaining and publishes it
+///*static*/ void PubMessageQueue::threadFunction(PubMessageQueue* pComm)
+//{
+//   MSG msg;
+//
+//   for (;;)
+//   {
+//      ::GetMessageA(&msg, NULL, PubMessageQueue::PQ_FIRST_MSG, PubMessageQueue::PQ_LAST_MSG); 
+//         // NOTE: this blocks thread until there's a msg in the queue
+//      switch (msg.message) {
+//
+//      case PQ_SAVE_MSG:
+//         // save a string to the queue
+//         pComm->saveCommand( (LPCSTR)msg.lParam );
+//         break;
+//
+//      case PQ_SEND_MSG:
+//         // publish next string from the queue
+//         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, false );
+//         break;
+//
+//      case PQ_SEND_MSG_RETRY:
+//         // publish next string from the queue
+//         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, true );
+//         break;
+//
+//      }
+//   }
+//}
+//
+//void PubMessageQueue::postMessage(UINT msgnum, const char* data) const
+//{
+//   if (pThread == nullptr)
+//   {
+//      TRACE("NO PRIVATE THREAD AVAILABLE FOR PUBLISH QUEUEING!\n");
+//      return;
+//   }
+//   // NOTE: loops until success - should only take at most 2 tries (1st sets up the msg.queue for the app)
+//   // see here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644946(v=vs.85).aspx
+//   while ( !::PostThreadMessageA(this->pThread->m_nThreadID, msgnum, (WPARAM)0, (LPARAM)data) ) {
+//      ::Sleep(0);
+//   }
+//}
+//

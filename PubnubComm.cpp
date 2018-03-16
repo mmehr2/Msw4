@@ -360,8 +360,13 @@ bool APubnubComm::DisconnectHelper(PNChannelInfo* pChannel)
 
    ASSERT(pChannel != nullptr);
 
+#ifdef _DEBUG
    LPVOID pCtx = (LPVOID)pChannel->pContext; // before it goes away!
    TRACE(_T("DISCONNHELP: Current Thread ID = 0x%X, CTX=%X\n"), ::GetCurrentThreadId(), pCtx);
+#else
+   LPVOID pCtx = nullptr;
+   pCtx = (LPVOID)1;
+#endif
 
    if (pChannel->DeInit())
    {
@@ -415,6 +420,7 @@ void APubnubComm::OnMessage(const char * message)
    }
 }
 
+#ifdef _DEBUG
 #include "utils.h"
 
 void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
@@ -424,4 +430,7 @@ void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
    CT2A ascii(etext);
    TRACE(("At %s line %d, err=%s\n"), f, ln, ascii.m_psz);
 }
+#else
+void TRACE_LAST_ERROR(LPCSTR , DWORD ) { }
+#endif
 

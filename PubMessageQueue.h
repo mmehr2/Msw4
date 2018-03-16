@@ -37,7 +37,9 @@ private:
    void sendNextCommand(PNChannelInfo* pWhere, bool retry); // used by private thread
 
    enum {
-      PQ_FIRST_MSG = WM_USER + 16023,
+      PQ_FIRST_MSG = WM_APP + 0x1023, // NOTE: MUST be in range WM_APP to WM_APP+0x3FFF
+      // (See discussion here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644930(v=vs.85).aspx)
+      // It turns out many BUTTON, EDIT, LISTBOX, and COMBOBOX controls use messages in the WM_USER range.
          // WPARAM: unused
          // LPARAM: const char* ptr to command string to send
       PQ_SAVE_MSG = PQ_FIRST_MSG,

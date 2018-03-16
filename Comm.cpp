@@ -179,7 +179,7 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
 }
 
 UINT AComm::Connect(LPVOID param) {
-   AComm* pThis = reinterpret_cast<AComm*>(param);
+   //AComm* pThis = reinterpret_cast<AComm*>(param);
 
    //fRemote->PublishQueueThreadFunction(fRemote);
    //char buffer[kMaxJid] = {0};

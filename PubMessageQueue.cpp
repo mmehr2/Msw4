@@ -78,65 +78,41 @@ UPDATED DECISION:
    One operation for the CB thread to decide how to deferred-publish - using PublishPQ or PublishPQ_Retry
    They are atomic ops due to the CS, and the ONLY things that should be used by the callers.
    Internally, all the rest is fine.
+UPDATE: It's fine, this is the difference in PNChannelInfo for publishing (other can be specialized for subscribing, maybe?)
 */
-extern "C" static UINT InternalThreadFunction(LPVOID param); // fwd.ref
 
-PubMessageQueue::PubMessageQueue()
-   : /*pThread(nullptr)
-   , */busy_flag(false)
+/*
+
+WARNING - THIS CLASS IS NOT THREAD-SAFE!
+Intended to be used as a private inner class by PNChannelInfo, it will eventually be subsumed there.
+
+*/
+
+PNChannelPublishQueueing::PNChannelPublishQueueing()
+   : busy_flag(false)
+   , last_timetoken("")
 {
    ::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    // spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
-   //// set up the queueing mechanism - create a thread for private queueing, no UI required
-   //pThread = ::AfxBeginThread(InternalThreadFunction, this);
-   //if (!pThread) {
-   //   TRACE("UNABLE TO CREATE PRIVATE THREAD FOR PUBLISH QUEUEING!\n");
-   //   TRACE_LAST_ERROR(__FILE__, __LINE__ - 1);
-   //}
 }
 
-//extern "C" static UINT InternalThreadFunction(LPVOID param)
-//{
-//   // interface to Win API needs to be extern "C"; just call the class function here
-//   PubMessageQueue* pComm = reinterpret_cast<PubMessageQueue*>(param);
-//   PubMessageQueue::threadFunction(pComm);
-//   return 0;
-//}
-
-PubMessageQueue::~PubMessageQueue()
+PNChannelPublishQueueing::~PNChannelPublishQueueing()
 {
-   //delete pThread;
-   //pThread = nullptr;
-
    ::DeleteCriticalSection(&cs);
 }
 
-//void PubMessageQueue::init()
-//{
-//   // clear the queue (or wait until all messages are sent??)
-//   //this->thePQ.clear();
-//}
-//
-//void PubMessageQueue::deinit()
-//{
-//}
-
-void PubMessageQueue::setBusy(bool newValue)
+void PNChannelPublishQueueing::setBusy(bool newValue)
 {
-   RAII_CriticalSection rcs(&this->cs);
    this->busy_flag = newValue;
 }
 
-bool PubMessageQueue::isBusy()
+bool PNChannelPublishQueueing::isBusy()
 {
-   RAII_CriticalSection rcs(&this->cs);
    return this->busy_flag;
 }
 
-bool PubMessageQueue::push(const char* msg)
+bool PNChannelPublishQueueing::push(const char* msg)
 {
-   //TRACE("PQ: Posting cmd %s\n", msg);
-
    RAII_CriticalSection rcs(&this->cs);
    std::string s(msg); // copies the original
    this->thePQ.push_back(s);
@@ -144,23 +120,25 @@ bool PubMessageQueue::push(const char* msg)
    return true;
 }
 
-bool PubMessageQueue::pop_publish(PNChannelInfo* pDest)
+bool PNChannelPublishQueueing::pop_publish(PNChannelInfo* pDest)
 {
    this->sendNextCommand(pDest, false);
    return true;
 }
 
-bool PubMessageQueue::get_publish(PNChannelInfo* pDest)
+bool PNChannelPublishQueueing::get_publish(PNChannelInfo* pDest)
 {
    this->sendNextCommand(pDest, true);
    return true;
 }
 
-//void PubMessageQueue::saveCommand(const char* command)
-//{
-//}
+bool PNChannelPublishQueueing::trigger_publish(PNChannelInfo* pDest)
+{
+   this->setBusy(true); // can't use the context again even tho the queue may be empty
+   return true;
+}
 
-void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
+void PNChannelPublishQueueing::sendNextCommand(PNChannelInfo* pWhere, bool retry)
 {
    std::string command;
    bool do_send = false;
@@ -168,6 +146,7 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
    const char* cmdstr = "";
    command = "";
    RAII_CriticalSection rcs(&this->cs);
+
    if (!this->thePQ.empty()) {
          if (retry) {
          // non-empty queue, retry request
@@ -186,6 +165,7 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
       }
    } else if (retry) {
       // empty queue, retry request
+      // this can happen in the trigger_publish() scenario if the queue is otherwise empty
       // ERROR
 //      TRACE("PQ: RETRY REQUEST ON EMPTY QUEUE!\n");
    } else {
@@ -193,11 +173,6 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
 //      TRACE("PQ: RETRY REQUEST ON EMPTY QUEUE!\n");
       do_done = true;
    }
-//   return command;
-//}
-//
-//void adapter(PNChannelInfo* pWhere)
-//{
    cmdstr = command.c_str();
    if (command.empty())
       do_send = false;
@@ -212,52 +187,3 @@ void PubMessageQueue::sendNextCommand(PNChannelInfo* pWhere, bool retry)
       TRACE("PQ: EMPTY - BUSY = OFF\n");
    }
 }
-//
-//// this is the private thread function called by the AComm object
-//// Its job is to block and wait until a message is posted, then wake up and handle it
-//// Supported messages:
-////    PQ_SAVE_MSG - queues up a command string to be sent later (includes JSONification)
-////    PQ_SEND_MSG - unqueues the first command string remaining and publishes it
-///*static*/ void PubMessageQueue::threadFunction(PubMessageQueue* pComm)
-//{
-//   MSG msg;
-//
-//   for (;;)
-//   {
-//      ::GetMessageA(&msg, NULL, PubMessageQueue::PQ_FIRST_MSG, PubMessageQueue::PQ_LAST_MSG); 
-//         // NOTE: this blocks thread until there's a msg in the queue
-//      switch (msg.message) {
-//
-//      case PQ_SAVE_MSG:
-//         // save a string to the queue
-//         pComm->saveCommand( (LPCSTR)msg.lParam );
-//         break;
-//
-//      case PQ_SEND_MSG:
-//         // publish next string from the queue
-//         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, false );
-//         break;
-//
-//      case PQ_SEND_MSG_RETRY:
-//         // publish next string from the queue
-//         pComm->sendNextCommand( (PNChannelInfo*)msg.lParam, true );
-//         break;
-//
-//      }
-//   }
-//}
-//
-//void PubMessageQueue::postMessage(UINT msgnum, const char* data) const
-//{
-//   if (pThread == nullptr)
-//   {
-//      TRACE("NO PRIVATE THREAD AVAILABLE FOR PUBLISH QUEUEING!\n");
-//      return;
-//   }
-//   // NOTE: loops until success - should only take at most 2 tries (1st sets up the msg.queue for the app)
-//   // see here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644946(v=vs.85).aspx
-//   while ( !::PostThreadMessageA(this->pThread->m_nThreadID, msgnum, (WPARAM)0, (LPARAM)data) ) {
-//      ::Sleep(0);
-//   }
-//}
-//

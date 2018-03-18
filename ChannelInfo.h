@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include <ctime>
 
 class APubnubComm;
-class PubMessageQueue;
+class PNChannelPublishQueueing;
 
 extern "C" {
 #include "pubnub_api_types.h"
@@ -15,6 +16,7 @@ extern void pn_callback(pubnub_t* pn, pubnub_trans t, pubnub_res res, void* pDat
 extern const char* GetPubnubTransactionName(pubnub_trans t);
 extern const char* GetPubnubResultName(pubnub_res res);
 extern void TRACE_LAST_ERROR(LPCSTR fname, DWORD line);
+extern time_t get_local_timestamp();
 
 class PNChannelInfo {
 public:
@@ -26,21 +28,25 @@ public:
    APubnubComm * pService;
    std::string op_msg;
    bool init_sub_pending; // requires first sub for time token (see C SDK docs for subscribe() and elsewhere)
-   PubMessageQueue* pQueue; // lightweight queueing for publish messages
+   PNChannelPublishQueueing* pQueue; // lightweight queueing for publish messages
 
    PNChannelInfo(APubnubComm *pSvc);
    ~PNChannelInfo();
 
    bool Init(bool is_primary);
    bool DeInit();
-   void ContinuePublishing(); // for use by pubnub callback function
-   void PublishRetry(); // for use by pubnub callback function
 
-   // NOTE:(WRONG!!) in this simple class, none of its data is modified by these routines
-   bool Send(const char* data) const;
-   bool SendBare(const char* data) const; // for use by msg.queue (impl.detail)
+   // for use by pubnub callback function (PROTECTED in case of UI thread usage)
+   void ContinuePublishing(); 
+   void PublishRetry();
+   bool SendBare(const char* data) const; // UNPROTECTED
+   std::string TimeToken(const char* data = nullptr); // UNPROTECTED
+
+   void OnMessage(const char* data) const; // for use by pubnub callback function (UNPROTECTED) (SUB)
+
+   // For use by PubnubComm client (ultimately UI thread)
+   bool Send(const char* data);
    bool Listen() const;
-   void OnMessage(const char* data) const;
 
    const char* GetTypeName() const;
    // NOTE: 'safe' commands do not contain any escapable JSON string characters or non-ASCII chars
@@ -49,4 +55,6 @@ public:
 private:
    PNChannelInfo(const PNChannelInfo& other);
    PNChannelInfo& operator=(const PNChannelInfo& other);
+
+   void SendOptTimeRequest();
 };

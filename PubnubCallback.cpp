@@ -25,6 +25,9 @@ const char* GetPubnubTransactionName(pubnub_trans t)
    case PBTT_PUBLISH:
       result = "PUBLISH";
       break;
+   case PBTT_TIME:
+      result = "TIME";
+      break;
    default:
       break;
    }
@@ -98,7 +101,38 @@ const char* GetPubnubResultName(pubnub_res res)
    return result;
 }
 
-int continue_publish = 1;
+// NOTE: Windows file times are based on Jan 1 1601 UTC, not Jan 1 1970
+static const int64_t conv1970from1601 = 116444736000000000LL;
+
+void TimetToFileTime( time_t t, LPFILETIME pft )
+{
+   // FT = (t * 10^7) + CF
+   LONGLONG xx = Int32x32To64(t, 10000000) + conv1970from1601;
+   pft->dwLowDateTime = (DWORD) xx;
+   pft->dwHighDateTime = xx >>32;
+}
+
+time_t FileTimetToTimetEx( FILETIME ft, time_t* t = NULL)
+{
+   // t = (FT - CF) / 10^7
+   time_t result = ((int64_t)ft.dwHighDateTime << 32LL) + ft.dwLowDateTime; // FT
+   result -= conv1970from1601;
+   //result /= 10000000LL;
+   if (t)
+      *t = result;
+   return result;
+}
+
+extern time_t get_local_timestamp()
+{
+   FILETIME ft;
+   ::GetSystemTimeAsFileTime(&ft);
+   time_t result = FileTimetToTimetEx(ft);
+   return result;
+}
+
+static int continue_publish = 1;
+
 void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
 {
    // General debugging on the callback for now
@@ -113,6 +147,7 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    int msgctr = 0;
    std::string sep = "";
    //continue_publish = 1; // retry state
+   const char* last_tmtoken = nullptr;
    switch (trans) {
    case PBTT_SUBSCRIBE:
       continue_publish = 0;
@@ -161,7 +196,7 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
             continue_publish = 1;
             break;
          case pbccTrue:
-            TRACE("Publishing failed with code: %d ('%s')\nRetrying...\n", res, pubnub_res_2_string(res));
+            TRACE("Publishing failed with code: %d ('%s')\nRetrying #%d...\n", res, pubnub_res_2_string(res), continue_publish);
             continue_publish++;
          case pbccNotSet:
             TRACE("Publish failed, but we decided not to retry\n");
@@ -170,11 +205,34 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
          }
       }
       break;
+   case PBTT_TIME:
+      continue_publish = 1;
+      if (res == PNR_OK)
+      {
+         last_tmtoken = pubnub_get(pn); // NOTE: this data does NOT seem to ever be saved in the context!
+         pChannel->TimeToken(last_tmtoken); // update it in the channel info
+      }
+      break;
    default:
       break;
    }
-   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d)\n", 
-      GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), msgctr);
+   if (last_tmtoken == nullptr) 
+      last_tmtoken = pubnub_last_time_token(pn);
+   std::string ltt = last_tmtoken;
+   if (pChannel->is_remote) {
+      ltt = pChannel->TimeToken();
+      last_tmtoken = ltt.c_str();
+   }
+   time_t pn_time = _atoi64(last_tmtoken);
+   time_t lts = get_local_timestamp();
+   static char lts_str[32];
+   time_t lts_secs = lts / 1e7;
+   ctime_s(lts_str, 32, &lts_secs);
+   lts_str[24] = '\0'; // get rid of that final CR
+   double td = difftime( pn_time, lts) / 1e7; // converted to sec
+   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d,cp=%d,t=%lld(%s),lt=%lld(%s),diff=%1.7lf)\n", 
+      GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), 
+      msgctr, continue_publish, pn_time, last_tmtoken, lts, lts_str, td);
    if (continue_publish >= 2)
       pChannel->PublishRetry();
    else if (continue_publish == 1)
@@ -182,165 +240,4 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    pChannel = nullptr; // DEBUG -- BREAKS CAN GO HERE
 }
 
-#ifdef EXTERN_JSON_ENCODE
-// Essential JSON from https://github.com/petehug/wjelement-cpp/blob/master/src/wjelement%2B%2B.cpp
-#pragma warning(push)
-#pragma warning(disable: 4245 4018 4996 )
-
-	size_t wjWUTF8CharSize(char *str, size_t length)
-	{
-		size_t			r	= -1;
-		unsigned char	test;
-		int				i;
-
-		if (!str || !length) {
-			return(0);
-		}
-
-		test = (unsigned char) *str;
-
-		if (!(test & 0x80)) {
-			/* ASCII */
-			return(1);
-		} else if ((test & 0xC0) == 0x80) {
-			/*
-				This is not a primary octet of a UTF8 char, but is valid as any
-				other octet of the UTf8 char.
-			*/
-			return(-1);
-		} else if ((test & 0xE0) == 0xC0) {
-			if (test == 0xC0 || test == 0xC1) {
-				/* redundant code point. */
-				return(-1);
-			}
-			r = 2;
-		} else if ((test & 0xF0) == 0xE0) {
-			r = 3;
-		} else if ((test & 0xF8) == 0xF0) {
-			if ((test & 0x07) >= 0x05) {
-				/* undefined character range. RFC 3629 */
-				return(-1);
-			}
-
-			r = 4;
-		} else {
-			/*
-				Originally there was room for (more 4,) 5 and 6 byte characters but
-				these where outlawed by RFC 3629.
-			*/
-			return(-1);
-		}
-
-		if (r > length) {
-			r = length;
-		}
-
-		for (i = 1; i < r; i++) {
-			if (((unsigned char)(str[i]) & 0xC0) != 0x80) {
-				/* This value is not valid as a non-primary UTF8 octet */
-				return(-1);
-			}
-		}
-
-		return(r);
-	}
-
-	std::string wjUTF8Encode(char *value)
-	{
-		size_t	length = strlen(value);
-		char		*next;
-		char		*v;
-		char		*e;
-		size_t	l;
-		char		esc[3];
-		std::string	str;
-
-		*(esc + 0) = '\\';
-		*(esc + 1) = '\0';
-		*(esc + 2) = '\0';
-
-		for (v = e = value; e < value + length; e++) {
-			switch (*e) {
-				case '\\':	*(esc + 1) = '\\';	break;
-				case '"':	*(esc + 1) = '"';	break;
-				case '\n':	*(esc + 1) = 'n';	break;
-				case '\b':	*(esc + 1) = 'b';	break;
-				case '\t':	*(esc + 1) = 't';	break;
-				case '\v':	*(esc + 1) = 'v';	break;
-				case '\f':	*(esc + 1) = 'f';	break;
-				case '\r':	*(esc + 1) = 'r';	break;
-
-				default:
-					l = wjWUTF8CharSize(e, length - (e - value));
-					
-					if (l > 1 || (l == 1 && *e >= '\x20'))
-					{
-						/*
-							*e is the primary octect of a multi-octet UTF8
-							character.  The remaining characters have been verified
-							as valid UTF8 and can be skipped.
-						*/
-						e += (l - 1);
-					} 
-					else if (l == 1)
-					{
-						/*
-							*e is valid UTF8 but is not a printable character, and will be escaped before
-							being sent, using the JSON-standard "\u00xx" form
-						*/
-						char	unicodeHex[sizeof("\\u0000")];
-						
-						next = v;
-						while(next < e)
-							str += *next++;
-
-						sprintf(unicodeHex, "\\u00%02x", (unsigned char) *e);
-						
-						str += unicodeHex;
-
-						v = e + 1;
-					}
-					else if (l < 0)
-					{
-						/*
-							*e is not valid UTF8 data, and must be escaped before
-							being sent. But JSON-standard does not give us a mechanism
-							so we chose "\xhh" format because of its almost universal comprehension.
-						*/
-						char	nonUnicodeHex[sizeof("\\x00")];
-
-						next = v;
-						while(next < e)
-							str += *next++;
-
-						sprintf(nonUnicodeHex, "\\x%02x", (unsigned char) *e);
-						
-						str += nonUnicodeHex;
-
-						v = e + 1;
-					}
-					continue;
-			}
-
-			next = v;
-			while(next < e)
-				str += *next++;
-
-			v = e + 1;
-
-			str += esc[0];
-			str += esc[1];
-
-			continue;
-		}
-
-		for (int j = 0; j < length - (v - value); j++)
-			str += *(v + j);
-
-		return str;
-	}
-///////// end of JSON encoder
-#pragma warning(pop)
-
-#endif //def EXTERN_JSON_ENCODE
 

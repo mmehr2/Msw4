@@ -2,6 +2,7 @@
 #include "PubnubComm.h"
 #include "ChannelInfo.h"
 #include "RAII_CriticalSection.h"
+#include <string>
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
@@ -22,6 +23,8 @@ PNChannelInfo::PNChannelInfo(APubnubComm *pSvc)
    , init_sub_pending(true)
    , pQueue(nullptr)
 {
+   //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
+   //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
 }
 
 PNChannelInfo::~PNChannelInfo() 
@@ -59,12 +62,13 @@ bool PNChannelInfo::Init(bool is_publisher)
    else
       pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
    res = pubnub_register_callback(pContext, &pn_callback, (void*) this);
-   pubnub_set_non_blocking_io(pContext);
+   // pubnub_set_non_blocking_io(pContext); // v2.3.2 does this for callback api anyway
    if (res != PNR_OK)
       return false;
    if (!is_remote)
    {
-      const int tmout_msec = /*PUBNUB_DEFAULT_SUBSCRIBE_TIMEOUT*/MAXINT; // or, 24.855 days for 32-bit int
+      //const float factor = 2.0; // try to find upper limit by searching (MAXINT doesn't work, is seemingly ignored)
+      const int tmout_msec = /*PUBNUB_DEFAULT_SUBSCRIBE_TIMEOUT*/MAXINT/*/factor*/; // or, 24.855 days for 32-bit int
       pubnub_set_transaction_timeout(pContext, tmout_msec);
       // if local, we kick off the first subscribe automatically (gets a time token)
       init_sub_pending = true; // makes sure we do a "real" subscribe too
@@ -73,10 +77,17 @@ bool PNChannelInfo::Init(bool is_publisher)
    } else {
       pubnub_set_transaction_timeout(pContext, PUBNUB_DEFAULT_NON_SUBSCRIBE_TIMEOUT);
       // if remote, we need to fire up the publisher queueing mechanism for the channel
-      pQueue = new PubMessageQueue();
+      pQueue = new PNChannelPublishQueueing();
    }
    return true;
 }
+
+//double tmtoken_2_secs(const char* tmtoken)
+//{
+//   std::string s = tmtoken;
+//   result = 0.0;
+//
+//}
 
 // start to listen on this channel if local
 bool PNChannelInfo::Listen(void) const
@@ -85,17 +96,22 @@ bool PNChannelInfo::Listen(void) const
    res = pubnub_subscribe(pContext, this->channelName.c_str(), NULL);
    if (res != PNR_STARTED)
       return false;
+   const char* last_tmtoken = pubnub_last_time_token(pContext);
    int msec = pubnub_transaction_timeout_get(pContext);
-   TRACE("LISTENING FOR %1.3lf sec\n", msec/1000.0);
+   TRACE("LISTENING FOR %1.3lf sec, last token=%s\n", msec/1000.0, last_tmtoken);
    return true;
 }
 
-bool PNChannelInfo::Send(const char*message) const
+bool PNChannelInfo::Send(const char*message)
 {
    if (pContext == nullptr)
       return false;
    std::string msg = PNChannelInfo::JSONify(message);
+
    // if the message queue is in BUSY state, it means we should send there (huh?)
+   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
+   this->SendOptTimeRequest();
+
    if (this->pQueue->isBusy())
    {
       return pQueue->push(msg.c_str());
@@ -109,7 +125,7 @@ bool PNChannelInfo::SendBare(const char*message) const
 {
    pubnub_res res;
 
-   //RAII_CriticalSection acs(pService->GetCS());
+   //RAII_CriticalSection acs(pService->GetCS()); // lock queued access
    res = pubnub_publish(pContext, this->channelName.c_str(), message);
    if (res != PNR_STARTED) {
       return false; // error reporting at higher level
@@ -119,12 +135,36 @@ bool PNChannelInfo::SendBare(const char*message) const
 
 void PNChannelInfo::PublishRetry()
 {
+   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
    // request to publish the next one
    pQueue->get_publish(this);
 }
 
+std::string PNChannelInfo::TimeToken(const char* input)
+{
+   // request to publish the next one
+   std::string result = pQueue->get_ttok();
+   if (input != nullptr)
+      pQueue->set_ttok(input);
+   return result;
+}
+
+void PNChannelInfo::SendOptTimeRequest()
+{
+   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
+   // if context has no time token, ask for one
+   // this should only happen on init() for the Remote (pub-only) side unless it fails to work
+   std::string tkn( this->pQueue->get_ttok() );
+   if ("" == tkn)
+   {
+      pubnub_time(this->pContext);
+      pQueue->setBusy(true); // can no longer use the context
+   }
+}
+
 void PNChannelInfo::ContinuePublishing()
 {
+   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
    // if the queue has more items, 
    if (pQueue->isBusy()) {
       // request to publish the next one

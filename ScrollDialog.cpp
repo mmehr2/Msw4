@@ -10,7 +10,6 @@
 #include <dbt.h>
 #include <math.h>
 #include <set>
-extern void TRACE_LAST_ERROR(LPCSTR f, DWORD ln); // MLM DEBUG ADDED
 
 static const BYTE fDeltaPixelsTable[] = {
    0,  1,  1,  1,  1,  
@@ -143,7 +142,6 @@ void AScrollDialog::DoDataExchange(CDataExchange* pDX)
 void AScrollDialog::ClipCursor()
 {  // shrink the clip area down to a vertical line
    VERIFY(::ClipCursor(fMouseRect));
-   TRACE_LAST_ERROR(__FILE__,__LINE__);
    this->SetCapture();
 
    ::SetCursor(theApp.fShowSpeed ? fCursor : NULL);

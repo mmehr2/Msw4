@@ -104,6 +104,14 @@ void SetRemoteIniValueA( LPCTSTR keyName, LPCSTR newValue )
    ::WritePrivateProfileStringW(secName, keyName, tcs.m_psz, GetRemoteIniFilePath());
 }
 
+#include "PubBufferTransfer.h"
+bool RunUnitTests()
+{
+   bool result = true;
+   result &= PNBufferTransfer::UnitTest();
+   return result;
+}
+
 APubnubComm::APubnubComm(AComm* pComm) 
    : fParent(nullptr)
    , fComm(pComm)
@@ -161,6 +169,7 @@ APubnubComm::APubnubComm(AComm* pComm)
    // emit build info
    TRACE("MSW Remote v0.1 built with Pubnub %s SDK v%s\n", pubnub_sdk_name(), pubnub_version());
    TRACE("Globally unique UUID for this device: %s\n", uuid.c_str());
+   TRACE("Unit tests %s\n", RunUnitTests() ? "PASSED" : "FAILED");
 }
 
 

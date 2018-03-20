@@ -132,6 +132,9 @@ extern time_t get_local_timestamp()
 }
 
 static int continue_publish = 1;
+static int callback_counter = 0;
+static int callback_counter_sub = 0;
+static int callback_counter_pub = 0;
 
 void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
 {
@@ -147,10 +150,12 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    int msgctr = 0;
    std::string sep = "";
    //continue_publish = 1; // retry state
+   callback_counter++;
    const char* last_tmtoken = nullptr;
    switch (trans) {
    case PBTT_SUBSCRIBE:
       continue_publish = 0;
+      callback_counter_sub++;
       if (res != PNR_OK) {
          // check for errors:
          // TIMEOUT - listen again
@@ -182,6 +187,7 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
       pChannel->Listen();
       break;
    case PBTT_PUBLISH:
+      callback_counter_pub++;
       op = pubnub_last_publish_result(pn);
       op += pubnub_res_2_string(res);
       pChannel->op_msg = op;
@@ -217,7 +223,7 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
       break;
    }
    if (last_tmtoken == nullptr) 
-      last_tmtoken = pubnub_last_time_token(pn);
+      last_tmtoken = pubnub_last_time_token(pn); // aseems to be vailable for sub transacs only
    std::string ltt = last_tmtoken;
    if (pChannel->is_remote) {
       ltt = pChannel->TimeToken();
@@ -230,9 +236,9 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    ctime_s(lts_str, 32, &lts_secs);
    lts_str[24] = '\0'; // get rid of that final CR
    double td = difftime( pn_time, lts) / 1e7; // converted to sec
-   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d,cp=%d,t=%lld(%s),lt=%lld(%s),diff=%1.7lf)\n", 
+   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d[H=%d/Hs=%d/Hp=%d],cp=%d,t=%s,lt=%s,diff=%1.7lf)\n", 
       GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), 
-      msgctr, continue_publish, pn_time, last_tmtoken, lts, lts_str, td);
+      msgctr, callback_counter, callback_counter_sub, callback_counter_pub, continue_publish, last_tmtoken, lts_str, td);
    if (continue_publish >= 2)
       pChannel->PublishRetry();
    else if (continue_publish == 1)

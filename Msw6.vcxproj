@@ -307,7 +307,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\pubnub\c-core\lib\base64;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS; _REMOTE;PUBNUB_THREADSAFE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>

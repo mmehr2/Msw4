@@ -44,9 +44,6 @@ void PNBufferTransfer::addBytes(const BYTE* pData, size_t countBytes)
 bool PNBufferTransfer::encodeBuffer()
 {
 
-   //const size_t ENC_LEN = pbbase64_encoded_length(chksize);
-   //const size_t ENC_BUFSZ = pbbase64_char_array_size_for_encoding(chksize);
-   //TRACE("PNBT:enc chunk encoded len=%uB, alloc=%uB\n", ENC_LEN, ENC_BUFSZ);
 
    return false;
 }
@@ -64,8 +61,8 @@ size_t PNBufferTransfer::split_buffer(size_t section_size)
    const size_t num_full_chunks = bsize / chksize;
    const size_t last_chunk_size = bsize % chksize;
    const size_t num_last_chunks = (last_chunk_size != 0);
-   TRACE("PNBT:encode will process %uB as %u chunks of %uB each and %d chunks of %uB\n",
-      bsize, num_full_chunks, chksize, num_last_chunks, last_chunk_size);
+   //TRACE("PNBT:encode will process %uB as %u chunks of %uB each and %d chunks of %uB\n",
+   //   bsize, num_full_chunks, chksize, num_last_chunks, last_chunk_size);
 
    const BYTE* const pBStart = &buffer[0];
    const BYTE* const pBEnd = pBStart + bsize;
@@ -77,14 +74,33 @@ size_t PNBufferTransfer::split_buffer(size_t section_size)
       if (i == num_full_chunks) {
          bufinc = last_chunk_size;
       }
-      TRACE("..PBNT:Encoding bytes from [%u] to [%u]\n", pB-pBStart, pB+bufinc-pBStart);
+      //TRACE("..PBNT:Encoding bytes from [%u] to [%u]\n", pB-pBStart, pB+bufinc-pBStart);
       chunks.push_back(pB);
-      // and now do that encoding
-      // then make and save a string out of the results
-      // push the string back onto the array
-   }
+  }
    chunks.push_back(pBEnd);
-   return chunks.size();
+   return chunks.size()-1; // don't count the end ptr, it's just there to make things easier
+}
+
+std::string PNBufferTransfer::getBufferSubstring(size_t n)
+{
+   std::string result;
+   // make sure n is in range first [0..sz)
+   if (n < chunks.size() - 1)
+   {
+      // and now do that encoding
+      const BYTE* pStart = chunks[n];
+      const BYTE* pEnd = chunks[n+1];
+      const size_t nBytes = pEnd - pStart;
+      const size_t ENC_BUFSZ = pbbase64_char_array_size_for_encoding(nBytes);
+      static char buf[MAX_MESSAGE]; // don't frag the heap, just use one maximally sized buffer
+      size_t nn = ENC_BUFSZ;
+      const pubnub_bymebl_t to_encode = { (uint8_t*)pStart, nBytes - 1 };
+      if (0 == pbbase64_encode_std(to_encode, buf, &nn)) {
+         //then make and save a string out of the results
+         result = buf;
+      }
+   }
+    return result;
 }
 
 /*static*/ bool PNBufferTransfer::UnitTest()
@@ -105,7 +121,7 @@ size_t PNBufferTransfer::split_buffer(size_t section_size)
          return false;
    }
 
-   int sizes[] = { 1, 2, 5, 7, 25, 29, 30, 31, 0, -13 };
+   int sizes[] = { 5, 1, 2, 7, 25, 29, 30, 31, 0, -13 };
    for (int j = 0; j != sizeof sizes/sizeof sizes[0]; ++j) 
    {
       int SPLIT_SIZE = sizes[j];
@@ -115,11 +131,18 @@ size_t PNBufferTransfer::split_buffer(size_t section_size)
             return false;
       }
       else if (SPLIT_SIZE < 0) {
-         if (num != 2) // acts like a HUGE number (unsigned), so one chunk ptr and the end ptr
+         if (num != 1) // acts like a HUGE number (unsigned), so one chunk ptr and the end ptr
             return false;
       }
-      else if (num != (sz / SPLIT_SIZE + 1 + ((sz % SPLIT_SIZE) ? 1 : 0)))
+      else if (num != (sz / SPLIT_SIZE + ((sz % SPLIT_SIZE) ? 1 : 0)))
          return false;
+   }
+
+   int x = test.split_buffer(sizes[0]);
+   std::vector<std::string> queue;
+   for (int k = 0; k < x; ++k) {
+      std::string s = test.getBufferSubstring(k);
+      queue.push_back(s);
    }
 
    return true;

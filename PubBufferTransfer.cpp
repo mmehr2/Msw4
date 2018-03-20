@@ -27,25 +27,35 @@ bool PNBufferTransfer::initForCoding(size_t cap)
    return true;
 }
 
-void PNBufferTransfer::addBytes(const BYTE* pData, size_t countBytes)
+bool PNBufferTransfer::initForDecoding(size_t num_blocks)
+{
+   int block_size = MAX_MESSAGE;
+   size_t cap = num_blocks * block_size;
+   // actually we need to use the smaller decoded length here
+   //cap = pbbase64_decoded_length(cap);
+   //cap += 10; // some extra bytes "just in case" - figure out if more is needed
+   buffer.clear();
+   buffer.reserve(cap);
+   return true;
+}
+
+void PNBufferTransfer::addSpaceForBytes(size_t countBytes)
 {
    // NOTE: assumes that capacity() is big enough
    size_t currentSize = buffer.size();
    size_t newSize = currentSize + countBytes;
    if (newSize < buffer.capacity())
    {
-      buffer_type::iterator currentEnd = buffer.end();
       buffer.resize(newSize);
-      memcpy( &(*currentEnd), pData, countBytes );
       //TRACE("PNBT cap=%uB, was %uB + %uB = %uB\n", buffer.capacity(), currentSize, countBytes, newSize );
    }
 }
 
-bool PNBufferTransfer::encodeBuffer()
+void PNBufferTransfer::addBytes(const BYTE* pData, size_t countBytes)
 {
-
-
-   return false;
+   buffer_type::iterator currentEnd = buffer.end();
+   this->addSpaceForBytes(countBytes);
+   memcpy( &(*currentEnd), pData, countBytes );
 }
 
 size_t PNBufferTransfer::split_buffer(size_t section_size)
@@ -98,9 +108,51 @@ std::string PNBufferTransfer::getBufferSubstring(size_t n)
       if (0 == pbbase64_encode_std(to_encode, buf, &nn)) {
          //then make and save a string out of the results
          result = buf;
+      } else {
+         // encoding error?
       }
    }
     return result;
+}
+
+void PNBufferTransfer::addCodedString( const std::string& chunk )
+{
+   if (!chunk.empty())
+   {
+      // decode the contents of the string into the next chunk of buffer space
+      // The following manipulations are needed to get a writable pointer to the buffer end (cannot normally de-reference this)
+      // We can only get away with this because we have reserved enough bytes for the entire script to fit
+      bool was_empty = buffer.empty();
+      if (was_empty)
+         buffer.push_back(' '); // adjust size to allow pointer to last BYTE to be dereferenced
+      buffer_type::iterator currentEnd = buffer.end() - 1;
+      BYTE* bufferStart = (&*currentEnd);
+      if (was_empty)
+         buffer.pop_back(); // make sure size is 0 again (there is no last BYTE, so no pointer adjustments)
+      else
+         bufferStart += 1; //point beyond the last BYTE (size adjustments wait until later when we know)
+      size_t countBytes = chunk.size();
+
+      size_t countBytesAdjusted = pbbase64_decoded_length(countBytes);
+      pubnub_bymebl_t to_decode = { (uint8_t*)bufferStart, countBytesAdjusted };
+      if (0 == pbbase64_decode_std(chunk.c_str(), countBytes - 1, &to_decode)) {
+         // this is successful, bytes are in place: save the start buffer pointer
+         chunks.push_back(bufferStart);
+         // actual number of bytes written is updated in countBytesAdjusted
+         // make the new buffer size reflect what was added
+         this->addSpaceForBytes(countBytesAdjusted);
+      } else {
+         // decoding error; with no size adjust, the next call will overwrite any used bytes
+         // what kind of errors happen here?
+      }
+   }
+}
+
+bool PNBufferTransfer::operator==( const PNBufferTransfer& other ) const
+{
+   if (this->buffer != other.buffer) return false;
+   //if (this->chunks != other.chunks) return false;
+   return true;
 }
 
 /*static*/ bool PNBufferTransfer::UnitTest()
@@ -138,12 +190,16 @@ std::string PNBufferTransfer::getBufferSubstring(size_t n)
          return false;
    }
 
-   int x = test.split_buffer(sizes[0]);
-   std::vector<std::string> queue;
+   int SPLIT_SIZE = sizes[0];
+   int x = test.split_buffer(SPLIT_SIZE);
+   PNBufferTransfer test2;
+   test2.initForDecoding(x);
    for (int k = 0; k < x; ++k) {
       std::string s = test.getBufferSubstring(k);
-      queue.push_back(s);
+      test2.addCodedString(s);
    }
+   if (!(test == test2))
+      return false;
 
    return true;
 }

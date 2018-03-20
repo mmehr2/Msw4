@@ -7,44 +7,61 @@
 
 /*
 File Encoder/Decoder Object
+
+The process of transfer, starting on the Sender end (PRIMARY), it will:
+   take bytes from the RichEdit control ,
+   split them into proper sized chunks for sending, limited by 32K- Pubnub message size,
+   kick off the transfer with a command including size of transmission (# of blocks),
+   then on the callback thread from the publish-OK, get the next string (encodes as it extracts)
+Then on the Receiving end (SECONDARY) it will:
+   interpret the number of blocks (by convention? send size too?) to set up the buffer capacity,
+   add each block as it is received, decode it, and add the bytes to the internal buffer,
+   in parallel, assemble the stack of chunk pointers (not needed?)
+   notify the UI code to transfer the new bytes into the RichEdit control
 */
 
 class PNBufferTransfer {
    typedef std::vector<BYTE> buffer_type;
    typedef std::vector<buffer_type::const_pointer> buffer_ptr_array;
+
    buffer_type buffer;
    buffer_ptr_array chunks;
+   
+   // helper
+   void addSpaceForBytes( size_t num_bytes );
 public:
    PNBufferTransfer();
    ~PNBufferTransfer();
 
-   // overall operations, return false if failure, store an error condition
+   // step 1 (send OR receive) - set up the buffer capacity
+   // sender - gets this from the size of the contents of the RichEdit control
    bool initForCoding(size_t cap);
-   bool initForDecoding(const char* filename);
+   // receiver - gets this from the file transfer start (F) command
+   bool initForDecoding(size_t num_blocks);
 
-   // step 1E/5D - file load to memory
-   // E-NOTE: creates memory buffer able to hold entire file + expansion capacity
-   bool loadFile(const char* filename);
-   // we actually need a more incremental function that can be called from the RichControl EDITSTREAM callbacks to load memory a bit at a time
+   // Step 2 load the input; sender gets from RichEdit control, receiver gets from subscribe callback
+   // sender - uses this function that can be called from RichEdit control EDITSTREAM callbacks
    void addBytes(const BYTE* pData, size_t countBytes);
+   // receiver - adds the next block to the internal buffer, decoding in the process
+   void addCodedString( const std::string& chunk );
 
-   bool saveBufferToFile(const char* filename);
-   // and the EDITSTREAM callback version is ... ?
-
-   // step 2E/4D - encode/decode BASE64 (with 4:3 buffer expansion/shrinkage)
-   bool encodeBuffer();
-   bool decodeBuffer();
-
-   // step 3E - split it into chunks, respecting the chunk size (after expansion)
-   // NOTE: this only generates an array of pointers into the internal buffer
+   // step 3 - incrementally produce or consume transfer blocks
+   // sender - needs block count up front; it gets this from splitting the buffer
    size_t split_buffer(size_t section_size); // returns # of chunks generated
-   std::string getBufferSubstring(size_t n); // adds any format padding (block count, number, checksum)
+   // receiver - creates internal buffer of decoded bytes from input strings
+   void decode(); // actually, I don't believe there is a need for this, unless it's an overall wrapup
 
-   // step 3D - assemble buffer one chunk at a time
-   void setTransferSize(size_t block_size, int num_blocks = 1); // ??taken from received format, no need to call
-   void addCodedString( const std::string& chunk ); // strips any format padding
+   // step 4 - extract results when done
+   // sender - gets the Nth block as a string to add to the publishing queue (PQ)
+   // the plan is to do the individual encoding here, since this will be called on the sub callback thread
+   std::string getBufferSubstring(size_t n);
+   // receiver - get the raw bytes incrementally (can be called from RichEdit control EDITSTREAM callback)
+   void getBytes(const BYTE* pData, size_t countBytes);
 
    friend static bool UnitTest();
    static bool UnitTest();
+
+   // useful for tests
+   bool operator==( const PNBufferTransfer& other ) const; // comparing just buffers for now
 
 };

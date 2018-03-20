@@ -58,17 +58,24 @@ static LPCTSTR GetIniFilePath()
    return fpath;
 }
 
-LPCTSTR GetRemoteIniValue( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+static LPCTSTR secName = _T("MSW_Pubnub");
+
+LPCTSTR GetRemoteIniFilePath()
 {
    // NOTE: The params are TCHAR-style because file paths can include Unicode
-   std::wstring iniFilePath = GetIniFilePath();
+   static std::wstring iniFilePath;
+   iniFilePath = GetIniFilePath();
    iniFilePath += _T("msw.ini");
    LPCTSTR ini_path = iniFilePath.c_str();
+   return ini_path;
+}
+
+LPCTSTR GetRemoteIniValue( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+{
    static TCHAR buffer[1024];
    DWORD res;
-   LPCTSTR secName = _T("MSW_Pubnub");
    buffer[0] = '\0';
-   res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), ini_path);
+   res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), GetRemoteIniFilePath());
    TRACE(_T("CONFIG: %s returned %d: %s\n"), keyName, res, buffer);
    return buffer;
 }
@@ -80,6 +87,21 @@ const char* GetRemoteIniValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") )
    static std::string s;
    s = ascii.m_psz; // remember lifetime issues, but use assignment
    return s.c_str();
+}
+
+void SetRemoteIniValue( LPCTSTR keyName, LPCTSTR newValue )
+{
+   DWORD res;
+   LPCTSTR secName = _T("MSW_Pubnub");
+   ::WritePrivateProfileStringW(secName, keyName, newValue, GetRemoteIniFilePath());
+}
+
+void SetRemoteIniValueA( LPCTSTR keyName, LPCSTR newValue )
+{
+   DWORD res;
+   LPCTSTR secName = _T("MSW_Pubnub");
+   CA2T tcs(newValue);
+   ::WritePrivateProfileStringW(secName, keyName, tcs.m_psz, GetRemoteIniFilePath());
 }
 
 APubnubComm::APubnubComm(AComm* pComm) 
@@ -107,17 +129,38 @@ APubnubComm::APubnubComm(AComm* pComm)
    LPCTSTR default_pnkey = _T("demo");
    LPCTSTR keyname_company = _T("CompanyName");
    LPCTSTR keyname_device = _T("DeviceName");
+   LPCTSTR keyname_device_uuid = _T("DeviceUUID");
    this->pRemote->key = GetRemoteIniValueA(keyname_pub, default_pnkey);
    this->pLocal->key = GetRemoteIniValueA(keyname_sub, default_pnkey);
    // fix for publish "Invalid subscribe key" error
    this->pRemote->key2 = this->pLocal->key;
-   // load the company/customer and device IDs (could be Unicode here - what does CT2A do with it?)
+   // load the company/customer and device names (could be Unicode here - what does CT2A do with it?)
    this->customerName = GetRemoteIniValueA(keyname_company);
    const char* device_name = GetRemoteIniValueA(keyname_device);
    this->pLocal->channelName = this->MakeChannelName(device_name);
 
+   // UUID: required for daily device tracking on PN network
+   std::string uuid = GetRemoteIniValueA(keyname_device_uuid);
+   if (uuid.empty())
+   {
+      // generate and save a new unique ID for this instance in both channels
+      struct Pubnub_UUID uuid_;
+      char* random_uuid = nullptr;
+      // docs and samples lied: v4 generator returns 0 if AOK, else -1 on error
+      if (0 == pubnub_generate_uuid_v4_random(&uuid_)) {
+         random_uuid = pubnub_uuid_to_string(&uuid_).uuid;
+         SetRemoteIniValueA(keyname_device_uuid, random_uuid);
+         uuid = random_uuid;
+      } else {
+         uuid = this->pLocal->channelName; // better than nothing? but might not be unique
+      }
+   }
+   this->pLocal->deviceUUID = uuid;
+   this->pRemote->deviceUUID = uuid;
+
    // emit build info
    TRACE("MSW Remote v0.1 built with Pubnub %s SDK v%s\n", pubnub_sdk_name(), pubnub_version());
+   TRACE("Globally unique UUID for this device: %s\n", uuid.c_str());
 }
 
 

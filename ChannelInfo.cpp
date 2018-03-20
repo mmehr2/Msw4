@@ -3,6 +3,7 @@
 #include "ChannelInfo.h"
 #include "RAII_CriticalSection.h"
 #include <string>
+#include "PubMessageQueue.h"
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
@@ -16,6 +17,7 @@ PNChannelInfo::PNChannelInfo(APubnubComm *pSvc)
    : key("demo")
    , key2("demo")
    , channelName("")
+   , deviceUUID("")
    , is_remote(false)
    , pContext(nullptr)
    , pService(pSvc)
@@ -70,6 +72,7 @@ bool PNChannelInfo::Init(bool is_publisher)
       } else {
          pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
       }
+      pubnub_set_uuid(pContext, deviceUUID.c_str());
       res = pubnub_register_callback(pContext, &pn_callback, (void*) this);
       if (res != PNR_OK)
          return false;

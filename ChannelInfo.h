@@ -23,6 +23,7 @@ public:
    std::string key;
    std::string key2;
    std::string channelName;
+   std::string deviceUUID;
    bool is_remote;
    pubnub_t * pContext;
    APubnubComm * pService;

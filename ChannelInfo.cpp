@@ -4,6 +4,7 @@
 #include "RAII_CriticalSection.h"
 #include <string>
 #include "PubMessageQueue.h"
+#include "PubBufferTransfer.h"
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
@@ -24,6 +25,7 @@ PNChannelInfo::PNChannelInfo(APubnubComm *pSvc)
    , op_msg("")
    , init_sub_pending(true)
    , pQueue(nullptr)
+   , pBuffer(nullptr)
 {
    //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
@@ -36,6 +38,8 @@ PNChannelInfo::~PNChannelInfo()
    pContext = nullptr;
    delete pQueue;
    pQueue = nullptr;
+   delete pBuffer;
+   pBuffer = nullptr;
 }
 
 const char* PNChannelInfo::GetTypeName() const
@@ -69,6 +73,8 @@ bool PNChannelInfo::Init(bool is_publisher)
          pubnub_init(pContext, key.c_str(), key2.c_str()); // remote publishes on this channel only
          // if remote, we need to fire up the publisher queueing mechanism for the channel
          pQueue = new PNChannelPublishQueueing();
+         // we also need a buffer transfer object for coding the script for transfer
+         pBuffer = new PNBufferTransfer();
       } else {
          pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
       }

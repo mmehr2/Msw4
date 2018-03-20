@@ -642,6 +642,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="PubBufferTransfer.cpp" />
     <ClCompile Include="PubMessageQueue.cpp" />
     <ClCompile Include="PubnubCallback.cpp" />
     <ClCompile Include="PubnubComm.cpp" />
@@ -1333,6 +1334,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DemoU|Win32'">true</ExcludedFromBuild>
     </CustomBuildStep>
     <ClInclude Include="CustomComm.h" />
+    <ClInclude Include="PubBufferTransfer.h" />
     <ClInclude Include="RAII_CriticalSection.h" />
     <ClInclude Include="RegGen\CRCGenerator.h" />
     <ClInclude Include="doctype.h" />

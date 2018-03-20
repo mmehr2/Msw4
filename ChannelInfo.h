@@ -5,6 +5,7 @@
 
 class APubnubComm;
 class PNChannelPublishQueueing;
+class PNBufferTransfer;
 
 extern "C" {
 #include "pubnub_api_types.h"
@@ -30,6 +31,7 @@ public:
    std::string op_msg;
    bool init_sub_pending; // requires first sub for time token (see C SDK docs for subscribe() and elsewhere)
    PNChannelPublishQueueing* pQueue; // lightweight queueing for publish messages
+   PNBufferTransfer* pBuffer; // bulk transfer interface
 
    PNChannelInfo(APubnubComm *pSvc);
    ~PNChannelInfo();

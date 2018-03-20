@@ -29,7 +29,11 @@ PNChannelInfo::PNChannelInfo(APubnubComm *pSvc)
 
 PNChannelInfo::~PNChannelInfo() 
 {
-   DeInit();
+   if (pContext)
+      pubnub_free(pContext);
+   pContext = nullptr;
+   delete pQueue;
+   pQueue = nullptr;
 }
 
 const char* PNChannelInfo::GetTypeName() const
@@ -53,31 +57,35 @@ static const int MAXINT = INT_MAX;
 bool PNChannelInfo::Init(bool is_publisher)
 {
    pubnub_res res;
-   if (pContext)
-      pubnub_free(pContext);
-   pContext = pubnub_alloc();
-   is_remote = is_publisher;
-   if (is_remote)
-      pubnub_init(pContext, key.c_str(), key2.c_str()); // remote publishes on this channel only
-   else
-      pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
-   res = pubnub_register_callback(pContext, &pn_callback, (void*) this);
-   // pubnub_set_non_blocking_io(pContext); // v2.3.2 does this for callback api anyway
-   if (res != PNR_OK)
-      return false;
+   this->is_remote = is_publisher;
+   bool is_first = (pContext==nullptr) ? true : false;
+   if (is_first)
+   {
+      //pubnub_free(pContext);
+      pContext = pubnub_alloc();
+      if (is_remote) {
+         pubnub_init(pContext, key.c_str(), key2.c_str()); // remote publishes on this channel only
+         // if remote, we need to fire up the publisher queueing mechanism for the channel
+         pQueue = new PNChannelPublishQueueing();
+      } else {
+         pubnub_init(pContext, "", key.c_str()); // local subscribes on this channel only
+      }
+      res = pubnub_register_callback(pContext, &pn_callback, (void*) this);
+      if (res != PNR_OK)
+         return false;
+   }
+   // for all calls after the first on a new context, set transaction timeouts and either listen (local) or return
    if (!is_remote)
    {
       //const float factor = 2.0; // try to find upper limit by searching (MAXINT doesn't work, is seemingly ignored)
       const int tmout_msec = /*PUBNUB_DEFAULT_SUBSCRIBE_TIMEOUT*/MAXINT/*/factor*/; // or, 24.855 days for 32-bit int
       pubnub_set_transaction_timeout(pContext, tmout_msec);
       // if local, we kick off the first subscribe automatically (gets a time token)
-      init_sub_pending = true; // makes sure we do a "real" subscribe too
+      this->init_sub_pending = true; // makes sure we do a "real" subscribe too
          // NOTE: not needed, just handle empty responses (this is the time token under the hood)
       return Listen();
    } else {
       pubnub_set_transaction_timeout(pContext, PUBNUB_DEFAULT_NON_SUBSCRIBE_TIMEOUT);
-      // if remote, we need to fire up the publisher queueing mechanism for the channel
-      pQueue = new PNChannelPublishQueueing();
    }
    return true;
 }
@@ -186,14 +194,11 @@ void PNChannelInfo::OnMessage(const char* data) const
    }
 }
 
+// the job of this should be to close any connection. We should not need to free the context here, just the dtor.
 bool PNChannelInfo::DeInit()
 {
-   if (pContext) {
-      pubnub_free(pContext);
-      pContext = nullptr;
-   }
-   delete pQueue;
-   pQueue = nullptr;
+   pubnub_cancel(pContext);
+   // set Comm state to kDeleting until the callback gets results
    return true;
 }
 

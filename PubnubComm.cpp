@@ -9,6 +9,7 @@ extern "C" {
 
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
+#include "pubnub_version.h"
 }
 //#include <iostream>
 #include <string>
@@ -114,6 +115,9 @@ APubnubComm::APubnubComm(AComm* pComm)
    this->customerName = GetRemoteIniValueA(keyname_company);
    const char* device_name = GetRemoteIniValueA(keyname_device);
    this->pLocal->channelName = this->MakeChannelName(device_name);
+
+   // emit build info
+   TRACE("MSW Remote v0.1 built with Pubnub %s SDK v%s\n", pubnub_sdk_name(), pubnub_version());
 }
 
 

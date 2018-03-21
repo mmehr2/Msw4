@@ -91,17 +91,14 @@ const char* GetRemoteIniValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") )
 
 void SetRemoteIniValue( LPCTSTR keyName, LPCTSTR newValue )
 {
-   DWORD res;
    LPCTSTR secName = _T("MSW_Pubnub");
    ::WritePrivateProfileStringW(secName, keyName, newValue, GetRemoteIniFilePath());
 }
 
 void SetRemoteIniValueA( LPCTSTR keyName, LPCSTR newValue )
 {
-   DWORD res;
-   LPCTSTR secName = _T("MSW_Pubnub");
    CA2T tcs(newValue);
-   ::WritePrivateProfileStringW(secName, keyName, tcs.m_psz, GetRemoteIniFilePath());
+   SetRemoteIniValue( keyName, tcs.m_psz);
 }
 
 #include "PubBufferTransfer.h"

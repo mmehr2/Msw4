@@ -21,14 +21,25 @@ Then on the Receiving end (SECONDARY) it will:
 */
 
 class PNBufferTransfer {
-   typedef std::vector<BYTE> buffer_type;
-   typedef std::vector<buffer_type::const_pointer> buffer_ptr_array;
+   typedef BYTE* buffer_type;
+   typedef std::vector<const BYTE*> buffer_ptr_array;
 
    buffer_type buffer;
+   size_t numUsed; // maintains "size" position to last used byte +1 (next open pos)
+   size_t bufferCapacity; // allocated max size
+
    buffer_ptr_array chunks;
    
    // helper
-   void addSpaceForBytes( size_t num_bytes );
+   void resize( size_t num_bytes );
+   void reserve( size_t num_bytes );
+   // buffer std::vector simulation routines
+   BYTE* begin() { return buffer; }
+   BYTE* end() { return buffer + numUsed; }
+   const BYTE* begin() const { return buffer; }
+   const BYTE* end() const { return buffer + numUsed; }
+   size_t size() const { return numUsed; }
+   size_t capacity() const { return bufferCapacity; }
 public:
    PNBufferTransfer();
    ~PNBufferTransfer();
@@ -37,7 +48,7 @@ public:
    // sender - gets this from the size of the contents of the RichEdit control
    bool initForCoding(size_t cap);
    // receiver - gets this from the file transfer start (F) command
-   bool initForDecoding(size_t num_blocks);
+   bool initForDecoding(size_t num_blocks, size_t block_size);
 
    // Step 2 load the input; sender gets from RichEdit control, receiver gets from subscribe callback
    // sender - uses this function that can be called from RichEdit control EDITSTREAM callbacks

@@ -45,9 +45,11 @@ obj/
 Obj/
 Debug/
 DebugU/
+DebugR/
 DebugUReg/
 Release/
 ReleaseU/
+ReleaseR/
 ReleaseUReg/
 DemoU/
 DemoReleaseU/

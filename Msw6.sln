@@ -10,11 +10,13 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		DebugR|Win32 = DebugR|Win32
 		DebugU|Win32 = DebugU|Win32
 		DebugUReg|Win32 = DebugUReg|Win32
 		DemoReleaseU|Win32 = DemoReleaseU|Win32
 		DemoU|Win32 = DemoU|Win32
 		Release|Win32 = Release|Win32
+		ReleaseR|Win32 = ReleaseR|Win32
 		ReleaseU|Win32 = ReleaseU|Win32
 		ReleaseUReg|Win32 = ReleaseUReg|Win32
 		Template|Win32 = Template|Win32
@@ -22,6 +24,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.Debug|Win32.ActiveCfg = Debug|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.Debug|Win32.Build.0 = Debug|Win32
+		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.DebugR|Win32.ActiveCfg = DebugR|Win32
+		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.DebugR|Win32.Build.0 = DebugR|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.DebugU|Win32.ActiveCfg = DebugU|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.DebugU|Win32.Build.0 = DebugU|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.DebugUReg|Win32.ActiveCfg = DebugUReg|Win32
@@ -32,6 +36,8 @@ Global
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.DemoU|Win32.Build.0 = DemoU|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.Release|Win32.ActiveCfg = Release|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.Release|Win32.Build.0 = Release|Win32
+		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.ReleaseR|Win32.ActiveCfg = ReleaseR|Win32
+		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.ReleaseR|Win32.Build.0 = ReleaseR|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.ReleaseU|Win32.ActiveCfg = ReleaseU|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.ReleaseU|Win32.Build.0 = ReleaseU|Win32
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.ReleaseUReg|Win32.ActiveCfg = ReleaseUReg|Win32
@@ -40,6 +46,8 @@ Global
 		{BE261909-9434-4F0F-A585-1F8EC0CE2B5A}.Template|Win32.Build.0 = Template|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Debug|Win32.Build.0 = Debug|Win32
+		{DC948D76-8503-490C-A07D-11044004FCE3}.DebugR|Win32.ActiveCfg = Debug|Win32
+		{DC948D76-8503-490C-A07D-11044004FCE3}.DebugR|Win32.Build.0 = Debug|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.DebugU|Win32.ActiveCfg = Debug|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.DebugU|Win32.Build.0 = Debug|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.DebugUReg|Win32.ActiveCfg = Debug|Win32
@@ -50,6 +58,8 @@ Global
 		{DC948D76-8503-490C-A07D-11044004FCE3}.DemoU|Win32.Build.0 = Debug|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Release|Win32.ActiveCfg = Release|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Release|Win32.Build.0 = Release|Win32
+		{DC948D76-8503-490C-A07D-11044004FCE3}.ReleaseR|Win32.ActiveCfg = Release|Win32
+		{DC948D76-8503-490C-A07D-11044004FCE3}.ReleaseR|Win32.Build.0 = Release|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.ReleaseU|Win32.ActiveCfg = Release|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.ReleaseU|Win32.Build.0 = Release|Win32
 		{DC948D76-8503-490C-A07D-11044004FCE3}.ReleaseUReg|Win32.ActiveCfg = Release|Win32
@@ -58,6 +68,8 @@ Global
 		{DC948D76-8503-490C-A07D-11044004FCE3}.Template|Win32.Build.0 = Release|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Debug|Win32.ActiveCfg = Debug|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Debug|Win32.Build.0 = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugR|Win32.ActiveCfg = Debug|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugR|Win32.Build.0 = Debug|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugU|Win32.ActiveCfg = Debug|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugU|Win32.Build.0 = Debug|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DebugUReg|Win32.ActiveCfg = Debug|Win32
@@ -68,6 +80,8 @@ Global
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.DemoU|Win32.Build.0 = Debug|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Release|Win32.ActiveCfg = Release|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.Release|Win32.Build.0 = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseR|Win32.ActiveCfg = Release|Win32
+		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseR|Win32.Build.0 = Release|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseU|Win32.ActiveCfg = Release|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseU|Win32.Build.0 = Release|Win32
 		{EACA36AD-6044-4180-A4F5-06E757B88DEB}.ReleaseUReg|Win32.ActiveCfg = Release|Win32

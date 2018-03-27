@@ -373,9 +373,9 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;libjingle.lib;crypt32.lib;libexpatMT.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\DebugU/MagicScroll.exe</OutputFile>
+      <OutputFile>.\$(Configuration)/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\DebugU;.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\$(Configuration);.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\DebugU/MagicScroll.pdb</ProgramDatabaseFile>
@@ -425,10 +425,10 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;libjingle.lib;crypt32.lib;libexpatMT.lib;rpcrt4.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\DebugU/MagicScroll.exe</OutputFile>
+      <AdditionalDependencies>SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;libjingle.lib;crypt32.lib;libexpatMT.lib;rpcrt4.lib;ws2_32.lib;openssl.lib;capi.lib;dasync.lib;padlock.lib;ossltest.lib;libssl32MTd.lib;libcrypto32MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\$(Configuration)/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\DebugU;.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\pubnub\c-core\openssl;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\$(Configuration);.\3rd Party\libjingle\talk\Debug;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\pubnub\c-core\openssl;C:\OpenSSL-Win32\lib;C:\OpenSSL-Win32\lib\VC;.\3rd Party\LibJingle\talk\third_party\expat\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\DebugU/MagicScroll.pdb</ProgramDatabaseFile>
@@ -491,9 +491,9 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>libjingle.lib;SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;crypt32.lib;libexpatMT.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\ReleaseU/MagicScroll.exe</OutputFile>
+      <OutputFile>.\$(Configuration)/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\ReleaseU;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;.\3rd Party\libjingle\talk\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\$(Configuration);.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\LibJingle\talk\third_party\expat\bin;.\3rd Party\libjingle\talk\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\ReleaseU/Msw6.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -529,7 +529,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;$(ProjectDir)3rd Party\pubnub\c-core\windows;$(ProjectDir)3rd Party\pubnub\c-core\cpp;$(ProjectDir)3rd Party\pubnub\c-core\core;$(ProjectDir)3rd Party\pubnub\c-core\core\c99;$(ProjectDir)3rd Party\libjingle;$(ProjectDir)3rd Party\SpeechSdk\Include;$(ProjectDir)3rd Party\pubnub\c-core\lib\base64;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS; _REMOTE;PUBNUB_THREADSAFE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -553,9 +553,9 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>libjingle.lib;SetupApi.lib;HtmlHelp.lib;Psapi.lib;Winmm.lib;secur32.lib;crypt32.lib;libexpatMT.lib;rpcrt4.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>.\ReleaseU/MagicScroll.exe</OutputFile>
+      <OutputFile>.\$(Configuration)/MagicScroll.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\ReleaseU;.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\pubnub\c-core\windows;.\3rd Party\LibJingle\talk\third_party\expat\bin;.\3rd Party\libjingle\talk\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\$(Configuration);.\3rd Party\SpeechSdk\Lib\i386;.\3rd Party\pubnub\c-core\windows;.\3rd Party\LibJingle\talk\third_party\expat\bin;.\3rd Party\libjingle\talk\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\ReleaseU/Msw6.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>

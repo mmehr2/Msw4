@@ -232,7 +232,7 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    time_t pn_time = _atoi64(last_tmtoken);
    time_t lts = get_local_timestamp();
    static char lts_str[32];
-   time_t lts_secs = lts / 1e7;
+   time_t lts_secs = lts / 10000000; // 1e7
    ctime_s(lts_str, 32, &lts_secs);
    lts_str[24] = '\0'; // get rid of that final CR
    double td = difftime( pn_time, lts) / 1e7; // converted to sec

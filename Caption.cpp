@@ -82,9 +82,9 @@ bool ACaption::BeginCaption(ARtfHelper& rtf) {
    DCB dcb = {0};
    ::GetCommState(fPort, &dcb);
    dcb.BaudRate = fBaudRate;
-   dcb.ByteSize = fByteSize;
-   dcb.Parity = fParity;
-   dcb.StopBits = fStopBits;
+   dcb.ByteSize = (BYTE)fByteSize;
+   dcb.Parity = (BYTE)fParity;
+   dcb.StopBits = (BYTE)fStopBits;
    if (::SetCommState(fPort, &dcb)) {
       this->ResetCaption(rtf);
       fLinePtr = fLineBuffer;
@@ -153,7 +153,7 @@ void ACaption::UpdateCaption(ARtfHelper& rtf) {
          
          for (int i = 0; i < CHAR_CHUNK; ++i) {
             int csize = 0;
-            unsigned char c = fRtf->GetCharAt(fCharPos, csize);
+            unsigned char c = (unsigned char)fRtf->GetCharAt(fCharPos, csize);
             if (0 == csize) {
                this->ResetCaption(*fRtf);
             } else if (1 == csize) {

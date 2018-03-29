@@ -126,7 +126,11 @@ static DebugLog debug_log_;
 
 AComm::AComm() :
    fState(kUnknown),
+#ifdef PRIMARY
+   fIsMaster(true),
+#else
    fIsMaster(false),
+#endif //def PRIMARY
    fThread(NULL)
 {
    fImpl = new ACommImpl(this);
@@ -142,6 +146,7 @@ AComm::~AComm() {
 
 bool AComm::IsOnline() const {
    bool online = false;
+   // MLM - not sure what this is doing; and does it work if there is a proxy server?
    DWORD dwTableSize = 0;
    ::GetIpForwardTable(NULL, &dwTableSize, FALSE);
    std::auto_ptr<BYTE> buffer = std::auto_ptr<BYTE>(new BYTE[dwTableSize]);
@@ -158,7 +163,7 @@ bool AComm::IsOnline() const {
 
 void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //ASSERT(username && *username && password);
-   this->Disconnect();
+   this->Disconnect(); // but this is asynchronous...
 
    if (!(username && *username && password)) {
       TRACE("CANNOT CONFIGURE IP ADDRESS AT STARTUP - USE REMOTE DIALOG TO CONFIGURE LOCAL ADDRESS.\n");
@@ -175,10 +180,10 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //int port = _tstoi(password);
    //char buffer[128];
    //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
-   fRemote->Initialize(false, ascii.m_psz); // TEST VERSION: on startup: act as SECONDARY until told otherwise (by UI RemoteDialog button)
+   fRemote->Initialize(ascii.m_psz);
 }
 
-UINT AComm::Connect(LPVOID param) {
+UINT AComm::Connect(LPVOID /*param*/) {
    //AComm* pThis = reinterpret_cast<AComm*>(param);
 
    //fRemote->PublishQueueThreadFunction(fRemote);
@@ -220,36 +225,27 @@ void AComm::Disconnect() {
       fThread->Delete();
       fThread = NULL;
    }
-   if (fRemote->isSet())
-      fRemote->Deinitialize();
+   fRemote->Deinitialize(); // but this is asynchronous ...
    this->SetState(kIdle);
 }
 
 bool AComm::StartChat(LPCTSTR target) {
+   ASSERT(this->IsMaster());
    // end the current one, if it exists
    this->EndChat();
 
    char buffer[kMaxJid] = {0}; // this is actually an IP address now for TEST version
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
 
-   if (fRemote->ChangeMode(kPrimary)) {
-      // convert this end to Primary
-     fIsMaster = true;
-     if (fRemote->OpenLink(buffer)) {
-         // SECONDARY ADDRESS FOR TESTING
-         TRACE("SUCCESSFULLY CONVERTED TO PRIMARY MODE. LINK CONNECTED!\n");
-         this->SetState(kChatting);
-      }
-      else {
-         TRACE("CANNOT OPEN LINK IN PRIMARY MODE.\n");
-         this->SetState(kIdle);
-      }
+   if (fRemote->OpenLink(buffer)) {
+      // SECONDARY ADDRESS
+      TRACE("SECONDARY LINK CONNECTED!\n");
+      this->SetState(kChatting);
    }
    else {
-      TRACE("CANNOT CONVERT FROM SECONDARY TO PRIMARY MODE.\n");
-      fIsMaster = false;
+      TRACE("CANNOT OPEN LINK TO SECONDARY.\n");
+      this->SetState(kIdle);
    }
-
 
    return true;
 }
@@ -261,7 +257,7 @@ void AComm::EndChat() {
    }
 
    fRemote->CloseLink();
-   //fIsMaster = false; // this shouldn't change, right? at least for our TEST version... one Connection request should be enough to change things around
+
    this->SetState(kConnected); // no longer chatting
 }
 

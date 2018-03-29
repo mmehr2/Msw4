@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "PubMessageQueue.h"
-#include "ChannelInfo.h"
+#include "SendChannel.h"
 //#include "PubnubComm.h"
 #include "RAII_CriticalSection.h"
 
@@ -78,13 +78,13 @@ UPDATED DECISION:
    One operation for the CB thread to decide how to deferred-publish - using PublishPQ or PublishPQ_Retry
    They are atomic ops due to the CS, and the ONLY things that should be used by the callers.
    Internally, all the rest is fine.
-UPDATE: It's fine, this is the difference in PNChannelInfo for publishing (other can be specialized for subscribing, maybe?)
+UPDATE: It's fine, this is the difference in SendChannel for publishing (other can be specialized for subscribing, maybe?)
 */
 
 /*
 
 WARNING - THIS CLASS IS NOT THREAD-SAFE!
-Intended to be used as a private inner class by PNChannelInfo, it will eventually be subsumed there.
+Intended to be used as a private inner class by SendChannel, it will eventually be subsumed there.
 
 */
 
@@ -120,25 +120,25 @@ bool PNChannelPublishQueueing::push(const char* msg)
    return true;
 }
 
-bool PNChannelPublishQueueing::pop_publish(PNChannelInfo* pDest)
+bool PNChannelPublishQueueing::pop_publish(SendChannel* pDest)
 {
    this->sendNextCommand(pDest, false);
    return true;
 }
 
-bool PNChannelPublishQueueing::get_publish(PNChannelInfo* pDest)
+bool PNChannelPublishQueueing::get_publish(SendChannel* pDest)
 {
    this->sendNextCommand(pDest, true);
    return true;
 }
 
-bool PNChannelPublishQueueing::trigger_publish(PNChannelInfo* pDest)
+bool PNChannelPublishQueueing::trigger_publish(SendChannel* /*pDest*/)
 {
    this->setBusy(true); // can't use the context again even tho the queue may be empty
    return true;
 }
 
-void PNChannelPublishQueueing::sendNextCommand(PNChannelInfo* pWhere, bool retry)
+void PNChannelPublishQueueing::sendNextCommand(SendChannel* pWhere, bool retry)
 {
    std::string command;
    bool do_send = false;

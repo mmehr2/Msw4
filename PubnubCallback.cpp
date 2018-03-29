@@ -1,6 +1,7 @@
 #include "stdafx.h"
-//#include "PubnubComm.h"
-#include "ChannelInfo.h"
+#include "PubnubCallback.h"
+#include "SendChannel.h"
+#include "ReceiveChannel.h"
 #include "RAII_CriticalSection.h"
 
 #define PUBNUB_CALLBACK_API
@@ -17,7 +18,7 @@ const char* GetPubnubTransactionName(pubnub_trans t)
    const char* result = "UNSUPPORTED";
    switch (t) {
    case PBTT_NONE:
-      result = "NO-OP";
+      result = "NONE";
       break;
    case PBTT_SUBSCRIBE:
       result = "SUBSCRIBE";
@@ -63,13 +64,13 @@ const char* GetPubnubResultName(pubnub_res res)
       result = "BAD-JSON-RCV";
       break;
    case PNR_CANCELLED:
-      result = "CANCEL";
+      result = "CANCELLED"; // normal cancellation return
       break;
    case PNR_STARTED:
-      result = "PLS-WAIT"; // normal
+      result = "PLS-WAIT"; // normal immediate transaction return
       break;
    case PNR_IN_PROGRESS:
-      result = "BUSY";
+      result = "BUSY"; // can't start another transaction while one is still in progress
       break;
    case PNR_RX_BUFF_NOT_EMPTY:
       result = "RX-NOTEMPTY";
@@ -123,7 +124,7 @@ time_t FileTimetToTimetEx( FILETIME ft, time_t* t = NULL)
    return result;
 }
 
-extern time_t get_local_timestamp()
+/*extern*/ time_t get_local_timestamp()
 {
    FILETIME ft;
    ::GetSystemTimeAsFileTime(&ft);
@@ -131,104 +132,14 @@ extern time_t get_local_timestamp()
    return result;
 }
 
-static int continue_publish = 1;
-static int callback_counter = 0;
-static int callback_counter_sub = 0;
-static int callback_counter_pub = 0;
-
-void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
+void ReportTimeDifference(const char* last_tmtoken, 
+   pubnub_trans trans, 
+   pubnub_res res, 
+   const std::string& op, 
+   const char* cname, int msgctr)
 {
-   // General debugging on the callback for now
-   PNChannelInfo* pChannel = static_cast<PNChannelInfo*>(pData); // cannot be nullptr
-
-   // since we are arriving on an independent library thread, protect access here
-   //RAII_CriticalSection(pChannel->GetCS());
-   
-   const char* cname = pChannel->channelName.c_str();// "NONE";
-   std::string op;
-   const char *data = "";
-   int msgctr = 0;
-   std::string sep = "";
-   //continue_publish = 1; // retry state
-   callback_counter++;
-   const char* last_tmtoken = nullptr;
-   switch (trans) {
-   case PBTT_SUBSCRIBE:
-      continue_publish = 0;
-      callback_counter_sub++;
-      if (res != PNR_OK) {
-         // check for errors:
-         // TIMEOUT - listen again
-         // disconnect
-         // other errors - notify an error handler, then listen again OR replace context?
-         break;
-      } else if (pChannel->init_sub_pending) {
-         // call Listen() again now that we have the initial time token for this context
-         pChannel->init_sub_pending = false;
-         pChannel->Listen();
-         break;
-      }
-      // get all the data if OK
-      while (nullptr != (data = pubnub_get(pn)))
-      {
-         // dispatch the received data
-         // after a reconnect, there might be several
-         pChannel->OnMessage(data);
-
-         // stats: accumulate a list and count of messages processed here
-         std::string sd(data);
-         op += sd + sep;
-         ++msgctr;
-         sep = "; ";
-      }
-      op = "Rx{" + op + "}";
-      // no more data to be read here (res is PNR_OK)
-      // then reopen an active subscribe() to start the next data transaction
-      pChannel->Listen();
-      break;
-   case PBTT_PUBLISH:
-      callback_counter_pub++;
-      op = pubnub_last_publish_result(pn);
-      op += pubnub_res_2_string(res);
-      pChannel->op_msg = op;
-      // implement retry loop here
-      if (res == PNR_OK) {
-         TRACE("Publish succeeded (c=%d), moving on...\n", continue_publish);
-         continue_publish = 1;
-      } else {
-         switch (pubnub_should_retry(res)) {
-         case pbccFalse:
-            TRACE("Publish failed UNEXPLAINED, but we decided not to retry\n");
-            continue_publish = 1;
-            break;
-         case pbccTrue:
-            TRACE("Publishing failed with code: %d ('%s')\nRetrying #%d...\n", res, pubnub_res_2_string(res), continue_publish);
-            continue_publish++;
-         case pbccNotSet:
-            TRACE("Publish failed, but we decided not to retry\n");
-            continue_publish = 1;
-            break;
-         }
-      }
-      break;
-   case PBTT_TIME:
-      continue_publish = 1;
-      if (res == PNR_OK)
-      {
-         last_tmtoken = pubnub_get(pn); // NOTE: this data does NOT seem to ever be saved in the context!
-         pChannel->TimeToken(last_tmtoken); // update it in the channel info
-      }
-      break;
-   default:
-      break;
-   }
-   if (last_tmtoken == nullptr) 
-      last_tmtoken = pubnub_last_time_token(pn); // aseems to be vailable for sub transacs only
+   // time difference reporting feature TBD- needs work!
    std::string ltt = last_tmtoken;
-   if (pChannel->is_remote) {
-      ltt = pChannel->TimeToken();
-      last_tmtoken = ltt.c_str();
-   }
    time_t pn_time = _atoi64(last_tmtoken);
    time_t lts = get_local_timestamp();
    static char lts_str[32];
@@ -236,14 +147,76 @@ void pn_callback(pubnub_t* pn, pubnub_trans trans, pubnub_res res, void* pData)
    ctime_s(lts_str, 32, &lts_secs);
    lts_str[24] = '\0'; // get rid of that final CR
    double td = difftime( pn_time, lts) / 1e7; // converted to sec
-   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d[H=%d/Hs=%d/Hp=%d],cp=%d,t=%s,lt=%s,diff=%1.7lf)\n", 
+   int cbCountTotal, cbCountSubs, cbCountPubs;
+   GetCallbackCounters(&cbCountTotal, &cbCountSubs, &cbCountPubs);
+   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d[H=%d/Hs=%d/Hp=%d],t=%s,lt=%s,diff=%1.7lf)\n", 
       GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), 
-      msgctr, callback_counter, callback_counter_sub, callback_counter_pub, continue_publish, last_tmtoken, lts_str, td);
-   if (continue_publish >= 2)
-      pChannel->PublishRetry();
-   else if (continue_publish == 1)
-      pChannel->ContinuePublishing();
-   pChannel = nullptr; // DEBUG -- BREAKS CAN GO HERE
+      msgctr, cbCountTotal, cbCountSubs, cbCountPubs, last_tmtoken, lts_str, td);
 }
 
+static int callback_counter = 0;
+static int callback_counter_sub = 0;
+static int callback_counter_pub = 0;
+static int callback_counter_time = 0;
+static int callback_counter_none = 0;
+
+void GetCallbackCounters(int* pTotal, int* pTotalSubs, int* pTotalPubs, int* pTotalTimes, int* pTotalNones)
+{
+   if (pTotal)
+      *pTotal = callback_counter;
+   if (pTotalSubs)
+      *pTotalSubs = callback_counter_sub;
+   if (pTotalPubs)
+      *pTotalPubs = callback_counter_pub;
+   if (pTotalTimes)
+      *pTotalTimes = callback_counter_time;
+   if (pTotalNones)
+      *pTotalNones = callback_counter_none;
+}
+
+void pn_callback(pubnub_t* /*pn_context*/, pubnub_trans trans, pubnub_res res, void* pData)
+{
+   // General debugging on the callback for now
+   //PNChannelInfo* pChannel = static_cast<PNChannelInfo*>(pData); // cannot be nullptr
+
+   // since we are arriving on an independent library thread, protect data used in these calls if needed
+   
+   callback_counter++;
+   switch (trans) {
+   case PBTT_SUBSCRIBE:
+      callback_counter_sub++;
+   {
+      // CUSTOM CALLBACK FOR SUBSCRIBERS
+      ReceiveChannel* pChannel = static_cast<ReceiveChannel*>(pData); // cannot be nullptr
+      pChannel->OnSubscribeCallback(res);
+   }
+      break;
+   case PBTT_PUBLISH:
+      callback_counter_pub++;
+      {
+         // CUSTOM CALLBACK FOR PUBLISHERS
+         SendChannel* pChannel = static_cast<SendChannel*>(pData); // cannot be nullptr
+         pChannel->OnPublishCallback(res);
+      }
+      break;
+   case PBTT_TIME:
+      callback_counter_time++;
+      {
+         // CUSTOM CALLBACK #2 FOR PUBLISHERS
+         SendChannel* pChannel = static_cast<SendChannel*>(pData); // cannot be nullptr
+         pChannel->OnTimeCallback(res);
+      }
+      break;
+   default:
+      {
+         // only real possibility here is a PBTT_NONE transaction
+         // when do these happen?
+         callback_counter_none++;
+         TRACE("Received a NONE transaction #%s, result = %d ('%s').\n", callback_counter_none, res, pubnub_res_2_string(res));
+      }
+      break;
+   }
+
+   //pChannel = nullptr; // DEBUG -- BREAKS CAN GO HERE
+}
 

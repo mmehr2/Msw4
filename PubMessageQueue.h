@@ -5,7 +5,7 @@
 
 #include <afx.h>
 
-class PNChannelInfo; // fwd.ref.
+class SendChannel; // fwd.ref.
 
 class PNChannelPublishQueueing {
 
@@ -27,15 +27,15 @@ public:
    bool isBusy(); // used by both threads
 
    bool push(const char* data); // used by client class
-   bool /*pop*/pop_publish(PNChannelInfo* pDest); // used by callback routine from Pubnub
-   bool /*get*/get_publish(PNChannelInfo* pDest); // used by callback routine from Pubnub
-   bool trigger_publish(PNChannelInfo* pDest); // used for pubnub_time() triggering and similar non-pubsub events
+   bool /*pop*/pop_publish(SendChannel* pDest); // used by callback routine from Pubnub
+   bool /*get*/get_publish(SendChannel* pDest); // used by callback routine from Pubnub
+   bool trigger_publish(SendChannel* pDest); // used for pubnub_time() triggering and similar non-pubsub events
 
    const char* get_ttok() const { return last_timetoken.c_str(); }
    void set_ttok(const char* tk) { last_timetoken = tk; }
    bool has_ttok() const { return last_timetoken.empty(); }
 
 private:
-   void sendNextCommand(PNChannelInfo* pWhere, bool retry); // used by private thread
+   void sendNextCommand(SendChannel* pWhere, bool retry); // used by private thread
 
 };

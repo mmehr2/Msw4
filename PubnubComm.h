@@ -1,11 +1,5 @@
 #pragma once
 
-#include <afx.h> // for HWND
-#include "RemoteCommon.h"
-#include <string>
-
-class AComm;
-
 /* OPERATIONAL SCHEME
 The class will maintain two channels for various purposes:
 1. THe local channel will be the one to use for the remote to talk back to this class on
@@ -40,9 +34,15 @@ IN THIS VERSION:
 
 */
 
-#include "PubMessageQueue.h"
+#include <afx.h> // for HWND
+#include "RemoteCommon.h"
+#include <string>
+#include "PubBufferTransfer.h"
 
-class PNChannelInfo; // fwd.refs
+class AComm; // fwd.refs
+class SendChannel;
+class ReceiveChannel;
+
 extern "C" {
 #include "pubnub_api_types.h"
 }
@@ -56,12 +56,17 @@ class APubnubComm
    std::string customerName;
 
    // inbound pubnub channel info
-   // unless not configured the first time, this should always remain open
-   PNChannelInfo* pLocal;
+   // mainly used by Secondary to listen for incoming Command messages
+   // Primary will only this to listen for Response messages, if we implement those
+   ReceiveChannel* pReceiver;
 
    // outbound channel info
-   // this is only opened by Primary for chat with a particular Secondary
-   PNChannelInfo* pRemote;
+   // this is mainly opened by Primary to send to a particular Secondary
+   // if we use Secondary response messages, it would be used for sending those
+   SendChannel* pSender;
+
+   // object to use for script transfers (Primary: sender, Secondary: receiver)
+   PNBufferTransfer* pBuffer; // bulk transfer interface
 
    // no need to copy or assign - singleton
    APubnubComm(const APubnubComm&);
@@ -72,8 +77,6 @@ class APubnubComm
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
-   bool ConnectHelper(PNChannelInfo* pChannel);
-   bool DisconnectHelper(PNChannelInfo* pChannel);
 
 public:
    APubnubComm(AComm* pComm);
@@ -84,31 +87,27 @@ public:
      */
    void SetParent(HWND parent);
 
-   bool ChangeMode(ConnectionType kT);
-
-   // is this a PRIMARY, SECONDARY, or we haven't decided
+   // is this a PRIMARY or a SECONDARY
    bool isPrimary() const { return fConnection == kPrimary; }
    bool isSecondary() const { return fConnection == kSecondary; }
-   bool isSet() const { return fConnection != kNotSet; }
-
+ 
    // is the remote link connected? it's a process...
    bool isDisconnected() const { return fLinked == kDisconnected; }
    bool isConnected() const { return fLinked >= kConnected; }
    bool isConversing() const { return fLinked >= kChatting; }
+
+   bool isBusy() const; // operation in progress, check back later
  
-   // Will set up the the local channel link
+   // Will set up the the channel link(s) to go online
+   // PRIMARY: no channel setup, just setup and verify connections and remember device name
+   // SECONDARY: will also setup receiver channel to listen on private device channel
    // returns false if immediate errors
-   bool Initialize(bool as_primary, const char* publicName);
+   bool Initialize(const char* deviceName);
    void Deinitialize();
 
-  // PRIMARY: will open up a link to a particular SECONDARY
-   // . PRIMARY - will set up a communications socket
-   // SECONDARY: will start the listening process
-   // . SECONDARY - will set up a listening socket
-   // TEST VERSION: this will actually cause a change into a PRIMARY operation
-   // Will delete any secondary listener socket, then configure a connection using the given address, customary protocol port
-   // State machine operation may also add a round trip string exchange test
-   bool OpenLink(const char * address);
+   // PRIMARY: will open up a link to a particular SECONDARY (may also configure receiver to listen for Responses)
+   // SECONDARY: needs to get a request for this over the link, to configure the sender channel where to send Responses
+   bool OpenLink(const char * remote_channel);
    void CloseLink();
 
    // PRIMARY: called to send a message via the interface to the SECONDARY

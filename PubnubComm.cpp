@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "PubnubComm.h"
-#include "ChannelInfo.h"
+#include "SendChannel.h"
+#include "ReceiveChannel.h"
 #include "Comm.h"
 
 #define PUBNUB_CALLBACK_API
@@ -110,20 +111,26 @@ bool RunUnitTests()
 }
 
 APubnubComm::APubnubComm(AComm* pComm) 
-   : fParent(nullptr)
-   , fComm(pComm)
+   : fComm(pComm)
+   , fParent(nullptr)
    , fConnection(kNotSet)
    , fLinked(kDisconnected)
    , customerName("")
-   , pLocal(nullptr)
-   , pRemote(nullptr)
-   //, pContext(nullptr)
+   , pReceiver(nullptr)
+   , pSender(nullptr)
+   , pBuffer(nullptr)
 {
    //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
 
-   pLocal = new PNChannelInfo(this);
-   pRemote = new PNChannelInfo(this);
+   // determine connection type from parent's fMaster flag
+   // NOTE: this will not change, unlike in early test code
+   fConnection = fComm->IsMaster() ? kPrimary : kSecondary;
+
+   pReceiver = new ReceiveChannel(this); // receiver
+   pSender = new SendChannel(this); // sender
+   // we also need a buffer transfer object for coding the script for transfer
+   pBuffer = new PNBufferTransfer();
 
    //std::string pubkey = "demo", subkey = "demo";
    // get these from persistent storage
@@ -135,14 +142,14 @@ APubnubComm::APubnubComm(AComm* pComm)
    LPCTSTR keyname_company = _T("CompanyName");
    LPCTSTR keyname_device = _T("DeviceName");
    LPCTSTR keyname_device_uuid = _T("DeviceUUID");
-   this->pRemote->key = GetRemoteIniValueA(keyname_pub, default_pnkey);
-   this->pLocal->key = GetRemoteIniValueA(keyname_sub, default_pnkey);
+   LPCSTR pkey = GetRemoteIniValueA(keyname_pub, default_pnkey);
+   LPCSTR skey = GetRemoteIniValueA(keyname_sub, default_pnkey);
    // fix for publish "Invalid subscribe key" error
-   this->pRemote->key2 = this->pLocal->key;
+   //this->pSender->key2 = this->pReceiver->key;
    // load the company/customer and device names (could be Unicode here - what does CT2A do with it?)
    this->customerName = GetRemoteIniValueA(keyname_company);
    const char* device_name = GetRemoteIniValueA(keyname_device);
-   this->pLocal->channelName = this->MakeChannelName(device_name);
+   std::string lchName = this->MakeChannelName(device_name);
 
    // UUID: required for daily device tracking on PN network
    std::string uuid = GetRemoteIniValueA(keyname_device_uuid);
@@ -157,11 +164,12 @@ APubnubComm::APubnubComm(AComm* pComm)
          SetRemoteIniValueA(keyname_device_uuid, random_uuid);
          uuid = random_uuid;
       } else {
-         uuid = this->pLocal->channelName; // better than nothing? but might not be unique
+         uuid = lchName; // better than nothing? but might not be unique
       }
    }
-   this->pLocal->deviceUUID = uuid;
-   this->pRemote->deviceUUID = uuid;
+   this->pReceiver->Setup(uuid, skey); // receiver only needs one key for listening
+   this->pReceiver->SetName(lchName);
+   this->pSender->Setup(uuid, pkey, skey); // sender needs both keys but channel name comes later (dynamic)
 
    // emit build info
    TRACE("MSW Remote v0.1 built with Pubnub %s SDK v%s\n", pubnub_sdk_name(), pubnub_version());
@@ -173,10 +181,12 @@ APubnubComm::APubnubComm(AComm* pComm)
 APubnubComm::~APubnubComm(void)
 {
    // shut down links too?!!?! but cannot fail or wait
-   delete pRemote;
-   pRemote = nullptr;
-   delete pLocal;
-   pLocal = nullptr;
+   delete pSender;
+   pSender = nullptr;
+   delete pReceiver;
+   pReceiver = nullptr;
+   delete pBuffer;
+   pBuffer = nullptr;
    //::DeleteCriticalSection(&cs);
 }
 
@@ -184,18 +194,6 @@ void APubnubComm::SetParent(HWND parent)
 {
    // SECONDARY: will forward all incoming messages to this window, after receipt of incoming data from Service
    fParent = parent;
-}
-
-bool APubnubComm::ChangeMode(ConnectionType ct) {
-   bool result = true;
-   if (this->isSet()) {
-      // any issues from switching between modes? check here
-      this->fConnection = kNotSet;
-   }
-   if (ct != kNoChange && ct != kNotSet) {
-      this->fConnection = ct;
-   }
-   return result;
 }
 
 #include <algorithm>
@@ -228,20 +226,20 @@ std::string APubnubComm::MakeChannelName( const std::string& deviceName )
    RemoveInvalidCharacters(result);
    return result;
 }
-
-const char* APubnubComm::GetConnectionName() const
-{
-   const char* result = "";
-   PNChannelInfo* pInfo = pLocal;
-   if (this->isPrimary())
-      pInfo = pRemote;
-   result = pInfo->channelName.c_str();
-   return result;
-}
+//
+//const char* APubnubComm::GetConnectionName() const
+//{
+//   const char* result = "";
+//   PNChannelInfo* pInfo = pReceiver;
+//   if (this->isPrimary())
+//      pInfo = pSender;
+//   result = pInfo->GetName();
+//   return result;
+//}
 
 const char* APubnubComm::GetConnectionTypeName() const
 {
-   const char* result = this->isPrimary() ? "PRIMARY" : this->isSecondary() ? "SECONDARY" : "UNCONFIGURED";
+   const char* result = this->isPrimary() ? "PRIMARY" : "SECONDARY";
    return result;
 }
 
@@ -262,10 +260,10 @@ const char* APubnubComm::GetConnectionStateName() const
       result = "SCROLLING";
       break;
    case kFileSending:
-      result = "FILE SEND";
+      result = "FILE SENDING";
       break;
    case kFileRcving:
-      result = "FILE RECEIVE";
+      result = "FILE RECEIVING";
       break;
    default:
       result = "UNKNOWN";
@@ -275,33 +273,40 @@ const char* APubnubComm::GetConnectionStateName() const
 }
 
 
-bool APubnubComm::Initialize(bool as_primary, const char* pLocalName_)
+bool APubnubComm::Initialize(const char* ourDeviceName_)
 {
    this->Deinitialize();
 
    bool result = true;
-   std::string pLocalName = pLocalName_;
-   fConnection = as_primary ? kPrimary : kSecondary;
-   if (!pLocalName.empty())
-      pLocal->channelName = this->MakeChannelName(pLocalName);
+   std::string ourDeviceName = ourDeviceName_ ? ourDeviceName_ : "";
+   // if we've been given a new name, change our channel name here
+   if (!ourDeviceName.empty())
+      pReceiver->SetName( this->MakeChannelName(ourDeviceName) );
+
+   if (this->isPrimary()) {
+      // TBD - connect up to proxy if needed using pSender
+      fLinked = kConnected;
+      TRACE("%s IS ONLINE AND READY.\n", this->GetConnectionTypeName());
+      return true;
+   }
    
-   if (pLocal->channelName.empty()) {
-      TRACE("%s IS UNCONFIGURED, UNABLE TO OPEN LOCAL CHANNEL LINK.\n");
+   if (pReceiver->isUnnamed()) {
+      TRACE("%s %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       return false;
    }
 
-   // TBD - make it so
-   if (!ConnectHelper(pLocal)) {
-      TRACE("%s IS UNABLE TO CONNECT TO %s ON CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pLocalName_, pLocal->channelName.c_str());
+   // set up receiver to listen on our private channel
+   //if (!ConnectHelper(pReceiver)) {
+   //   TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName());
 
-      result = false;
-   } else {
-      TRACE("%s IS NOW LISTENING TO %s ON CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pLocalName_, pLocal->channelName.c_str());
+   //   result = false;
+   //} else {
+   //   TRACE("%s IS NOW LISTENING TO %s ON CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName());
 
-      fLinked = kConnected; // TBD - move this to callback when known
-   }
+   //   fLinked = kConnected; // TBD - move this to callback when known
+   //}
    return result; // started sequence successfully
 }
 
@@ -311,50 +316,50 @@ void APubnubComm::Deinitialize()
       return;
    }
 
-   if (pLocal->channelName.empty()) {
+   if (pReceiver->isUnnamed()) {
       TRACE("%s HAS NO LOCAL LINK TO SHUT DOWN.\n", this->GetConnectionTypeName());
       return;
    }
 
-   // shut down any pRemote link first
+   // shut down any pSender link first
    this->CloseLink();
 
-   TRACE("%s IS SHUTTING DOWN LOCAL LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pLocal->channelName.c_str());
+   TRACE("%s IS SHUTTING DOWN LOCAL LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pReceiver->GetName());
    // make it so 
-   // just don't lose the pLocal channel name - it will be replaced if needed by a new one, else use old one
-   if (!DisconnectHelper(pLocal)) {
-      TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pLocal->channelName.c_str());
-      // TBD - but this really will cause problems! what are failure scenarios here?
-   } else {
-      TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pLocal->channelName.c_str());
+   //// just don't lose the pReceiver channel name - it will be replaced if needed by a new one, else use old one
+   //if (!DisconnectHelper(pReceiver)) {
+   //   TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), pReceiver->GetName());
+   //   // TBD - but this really will cause problems! what are failure scenarios here?
+   //} else {
+   //   TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), pReceiver->GetName());
 
-      fLinked = kDisconnected;
-   }
+   //   fLinked = kDisconnected;
+   //}
 }
 
-bool APubnubComm::OpenLink(const char * pRemoteName_)
+bool APubnubComm::OpenLink(const char * pSenderName_)
 {
    this->CloseLink();
 
    bool result = true;
-   this->pRemote->channelName = this->MakeChannelName(pRemoteName_);
+   this->pSender->SetName( this->MakeChannelName(pSenderName_) );
    TRACE("%s IS OPENING LINK TO SECONDARY %s ON PUBNUB CHANNEL %s\n", 
-      this->GetConnectionTypeName(), pRemoteName_, this->pRemote->channelName.c_str());
+      this->GetConnectionTypeName(), pSenderName_, this->pSender->GetName());
 
-   // TBD - move this to callback when known
-   if (!ConnectHelper(pRemote)) {
-      TRACE("%s IS UNABLE TO CONNECT TO %s ON CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pRemoteName_, pRemote->channelName.c_str());
+   //// TBD - move this to callback when known
+   //if (!ConnectHelper(pSender)) {
+   //   TRACE("%s IS UNABLE TO CONNECT TO %s ON CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), pSenderName_, pSender->GetName());
 
-      result = false;
-   } else {
-      TRACE("%s IS NOW READY TO SEND TO %s ON CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pRemoteName_, pRemote->channelName.c_str());
+   //   result = false;
+   //} else {
+   //   TRACE("%s IS NOW READY TO SEND TO %s ON CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), pSenderName_, pSender->GetName());
 
-      fLinked = kChatting;
-   }
+   //   fLinked = kChatting;
+   //}
 
    return result; // started sequence successfully
 }
@@ -365,7 +370,7 @@ void APubnubComm::CloseLink()
       return; // already closed
    }
 
-   if (pRemote->channelName.empty()) {
+   if (pSender->isUnnamed()) {
       TRACE("%s HAS NO REMOTE LINK TO SHUT DOWN.\n", this->GetConnectionTypeName());
       return;
    }
@@ -373,74 +378,32 @@ void APubnubComm::CloseLink()
    // shut down any higher states here
 
    TRACE("%s IS CLOSING LINK TO SECONDARY ON PUBNUB CHANNEL %s\n", 
-      this->GetConnectionTypeName(), this->pRemote->channelName.c_str());
+      this->GetConnectionTypeName(), this->pSender->GetName());
 
-   // TBD: make it so
-    if (!DisconnectHelper(pRemote)) {
-      TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pRemote->channelName.c_str());
-      // TBD - but this really will cause problems! what are failure scenarios here?
-   } else {
-      TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pRemote->channelName.c_str());
+   //// TBD: make it so
+   // if (!DisconnectHelper(pSender)) {
+   //   TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), pSender->GetName());
+   //   // TBD - but this really will cause problems! what are failure scenarios here?
+   //} else {
+   //   TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
+   //      this->GetConnectionTypeName(), pSender->GetName());
 
-      fLinked = kConnected;
-   }
-}
-
-bool APubnubComm::ConnectHelper(PNChannelInfo* pChannel)
-{
-   bool result = false;
-
-   TRACE(_T("CONNHELP: Current Thread ID = 0x%X\n"), ::GetCurrentThreadId());
-
-   // need a valid one here - setup with proper key and channel name
-   ASSERT(pChannel != nullptr);
-
-   bool is_send = pChannel == this->pRemote;
-   if (pChannel->Init(is_send))
-   {
-      TRACE("CH> NEW %s CHANNEL %X\n", pChannel->GetTypeName(), (LPVOID)pChannel->pContext);
-      result = true;
-   }
-
-   return result;
-}
-
-bool APubnubComm::DisconnectHelper(PNChannelInfo* pChannel)
-{
-   bool result = false;
-
-   ASSERT(pChannel != nullptr);
-
-#ifdef _DEBUG
-   LPVOID pCtx = (LPVOID)pChannel->pContext; // before it goes away!
-   TRACE(_T("DISCONNHELP: Current Thread ID = 0x%X, CTX=%X\n"), ::GetCurrentThreadId(), pCtx);
-#else
-   LPVOID pCtx = nullptr;
-   pCtx = (LPVOID)1;
-#endif
-
-   if (pChannel->DeInit())
-   {
-      TRACE("CH> DELETED %s CHANNEL %X\n", pChannel->GetTypeName(), pCtx);
-      result = true;
-   }
-
-   return result;
+   //   fLinked = kConnected;
+   //}
 }
 
 void APubnubComm::SendCommand(const char * message)
 {
    //bool result = true;
 
-   // TBD: publish message to pRemote->channelName and set up callback
+   // publish message to pSender->channelName and set up callback
    // PRIMARY: will send commands
    // SECONDARY: will send any responses
    std::string msg = (message);
    TRACE("SENDING MESSAGE %s:", msg.c_str()); // DEBUGGING
-   if (false == pRemote->Send(message)) {
-      TRACE(pRemote->op_msg.c_str());
+   if (false == pSender->Send(message)) {
+      TRACE(pSender->op_msg.c_str());
    }
    TRACE("\n");
 }
@@ -453,7 +416,7 @@ void APubnubComm::OnMessage(const char * message)
 {
    //bool result = true;
    TRACE("RECEIVED MESSAGE ON THREAD 0x%X:%s\n", ::GetCurrentThreadId(), message); // DEBUGGING
-   // this is the callback for messages received on pLocal->channelName
+   // this is the callback for messages received on pReceiver->channelName
    // PRIMARY: will receive any responses
    // SECONDARY: will receive commands
    std::string s = message;
@@ -478,7 +441,7 @@ void APubnubComm::OnMessage(const char * message)
 
 void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
 {
-   DWORD err = GetLastError();
+   DWORD err = ::GetLastError();
    CString etext = Utils::GetErrorText(err);
    CT2A ascii(etext);
    TRACE(("At %s line %d, err=%s\n"), f, ln, ascii.m_psz);

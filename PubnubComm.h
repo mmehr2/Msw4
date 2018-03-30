@@ -82,6 +82,9 @@ public:
    APubnubComm(AComm* pComm);
    ~APubnubComm(void);
 
+   // read and configure various option settings (called after registry access is initialized)
+   void Configure();
+
    /** set the handle of the window that will receive status
       notifications.
      */
@@ -105,7 +108,7 @@ public:
    bool Initialize(const char* deviceName);
    void Deinitialize();
 
-   // PRIMARY: will open up a link to a particular SECONDARY (may also configure receiver to listen for Responses)
+   // PRIMARY: will open up a sender link to a particular SECONDARY (may also configure receiver to listen for Responses)
    // SECONDARY: needs to get a request for this over the link, to configure the sender channel where to send Responses
    bool OpenLink(const char * remote_channel);
    void CloseLink();
@@ -115,9 +118,6 @@ public:
 
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);
-
-   // FOR INTERNAL USE BY ANYONE WISHING TO SHARE DATA ACCESS
-   //LPCRITICAL_SECTION GetCS() { return &cs; }
 
    // chat code taken from old implementation by Steve Cox
    void SendCmd(WPARAM cmd, int param) {::PostMessage(fParent, WM_COMMAND, MAKEWPARAM(cmd, param), 0);}

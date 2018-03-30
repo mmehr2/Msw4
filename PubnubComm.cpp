@@ -123,14 +123,22 @@ APubnubComm::APubnubComm(AComm* pComm)
    //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
 
-   // determine connection type from parent's fMaster flag
-   // NOTE: this will not change, unlike in early test code
-   fConnection = fComm->IsMaster() ? kPrimary : kSecondary;
-
    pReceiver = new ReceiveChannel(this); // receiver
    pSender = new SendChannel(this); // sender
    // we also need a buffer transfer object for coding the script for transfer
    pBuffer = new PNBufferTransfer();
+
+   // emit build info
+   TRACE("MSW Remote v0.1 built with Pubnub %s SDK v%s\n", pubnub_sdk_name(), pubnub_version());
+   TRACE("Unit tests %s\n", RunUnitTests() ? "PASSED" : "FAILED");
+}
+
+void APubnubComm::Configure()
+{
+   /// NOTE: this exists so it can be called after the App object's registry key is set
+   // determine connection type from parent's fMaster flag
+   // NOTE: this will not change, unlike in early test code
+   fConnection = fComm->IsMaster() ? kPrimary : kSecondary;
 
    //std::string pubkey = "demo", subkey = "demo";
    // get these from persistent storage
@@ -171,12 +179,8 @@ APubnubComm::APubnubComm(AComm* pComm)
    this->pReceiver->SetName(lchName);
    this->pSender->Setup(uuid, pkey, skey); // sender needs both keys but channel name comes later (dynamic)
 
-   // emit build info
-   TRACE("MSW Remote v0.1 built with Pubnub %s SDK v%s\n", pubnub_sdk_name(), pubnub_version());
    TRACE("Globally unique UUID for this device: %s\n", uuid.c_str());
-   TRACE("Unit tests %s\n", RunUnitTests() ? "PASSED" : "FAILED");
 }
-
 
 APubnubComm::~APubnubComm(void)
 {
@@ -226,20 +230,10 @@ std::string APubnubComm::MakeChannelName( const std::string& deviceName )
    RemoveInvalidCharacters(result);
    return result;
 }
-//
-//const char* APubnubComm::GetConnectionName() const
-//{
-//   const char* result = "";
-//   PNChannelInfo* pInfo = pReceiver;
-//   if (this->isPrimary())
-//      pInfo = pSender;
-//   result = pInfo->GetName();
-//   return result;
-//}
 
 const char* APubnubComm::GetConnectionTypeName() const
 {
-   const char* result = this->isPrimary() ? "PRIMARY" : "SECONDARY";
+   const char* result = this->isPrimary() ? "PRIMARY" : this->isPrimary() ? "SECONDARY" : "UNCONFIGURED";
    return result;
 }
 
@@ -275,6 +269,11 @@ const char* APubnubComm::GetConnectionStateName() const
 
 bool APubnubComm::Initialize(const char* ourDeviceName_)
 {
+   if (fConnection == kNotSet) {
+      TRACE("DEVICE IS %s, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName());
+      return false;
+   }
+
    this->Deinitialize();
 
    bool result = true;

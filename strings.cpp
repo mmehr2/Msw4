@@ -103,3 +103,5 @@ const TCHAR gStrComm[]          = _T("Comm");
 const TCHAR gStrCommUsername[]  = _T("Username");
 const TCHAR gStrCommPassword[]  = _T("Password");
 const TCHAR gStrCommSlave[]     = _T("Slave");
+const TCHAR gStrCommPrimary[]   = _T("Primary");
+// Pubnub settings

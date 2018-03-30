@@ -133,9 +133,20 @@ AComm::AComm() :
 #endif //def PRIMARY
    fThread(NULL)
 {
+
    fImpl = new ACommImpl(this);
    fRemote = new ACommClassImplType(this);
    this->SetState(kIdle);
+}
+
+bool AComm::ConfigureSettings() 
+{
+   // NOTE: is the call to theApp.SetRegistryKey() made already? are we relying on order of static initialization here? try not to..
+   // Maybe the comm object can be heap allocated by theApp.InitInstance()? otherwise we must set this flag from there
+   fIsMaster = TRUE == theApp.GetProfileInt(gStrComm, gStrCommPrimary, FALSE);
+   TRACE(_T("Derived PRIMARY flag %d from Registry Key %s\n"), fIsMaster, theApp.m_pszRegistryKey);
+   fRemote->Configure();
+   return true;
 }
 
 AComm::~AComm() {

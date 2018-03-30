@@ -751,7 +751,12 @@ void AMainFrame::OnPreferences()
 #ifdef _REMOTE
 void AMainFrame::OnRemote()
 {
-   ARemoteDlg().DoModal();
+   if (gComm.IsMaster())
+      ARemoteDlg().DoModal();
+   else {
+      //
+      TRACE("TBD - SECONDARY NEEDS DIALOG HERE...\n");
+   }
 }
 #endif // _REMOTE
 

@@ -106,5 +106,6 @@ extern const TCHAR gStrComm[];
 extern const TCHAR gStrCommUsername[];
 extern const TCHAR gStrCommPassword[];
 extern const TCHAR gStrCommSlave[];
+extern const TCHAR gStrCommPrimary[];
 
 #endif // hStrings

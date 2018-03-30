@@ -223,6 +223,7 @@ BOOL AMswApp::InitInstance()
 
 #ifdef _REMOTE
    // kick off remote communications
+   gComm.ConfigureSettings();
    gComm.SetParent(m_pMainWnd->m_hWnd);
    gComm.Connect(gComm.GetUsername(), gComm.GetPassword());
 #endif // _REMOTE

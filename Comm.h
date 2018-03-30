@@ -105,6 +105,7 @@ public:
      */
    bool Read();
    bool Write();
+   bool ConfigureSettings();
 
    CString GetUsername() const;
    void SetUsername(LPCTSTR username);

@@ -111,25 +111,6 @@ void ReceiveChannel::OnMessage(const char* data) const
    }
 }
 
-//const std::string jsonPrefix = "\"";
-//const std::string jsonSuffix = "\"";
-
-//std::string ReceiveChannel::JSONify( const std::string& input, bool is_safe )
-//{
-//   std::string result = input;
-//   // 1. escape any weird characters
-//   if (!is_safe)
-//   {
-//      //const size_t BUFLEN = 512;
-//      //char buffer[BUFLEN];
-//      //strncpy_s(buffer, input.length(), input.c_str(), BUFLEN);
-//      //result = wjUTF8Encode(buffer);
-//   }
-//   // 2. add JSON string prefix and suffix (simple mode) "<stripped-string>"
-//   result = jsonPrefix + result + jsonSuffix;
-//   return result;
-//}
-
 std::string ReceiveChannel::UnJSONify( const std::string& input )
 {
    std::string result = input;

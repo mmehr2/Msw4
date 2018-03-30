@@ -178,9 +178,6 @@ void SendChannel::ContinuePublishing()
    }
 }
 
-//const std::string jsonPrefix = "\"";
-//const std::string jsonSuffix = "\"";
-
 std::string SendChannel::JSONify( const std::string& input, bool is_safe )
 {
    std::string result = input;
@@ -196,22 +193,6 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
    result = remchannel::JSON_PREFIX + result + remchannel::JSON_PREFIX;
    return result;
 }
-//
-//std::string SendChannel::UnJSONify( const std::string& input )
-//{
-//   std::string result = input;
-//   // remove JSON string prefix and suffix
-//   if (input.length() > 2)
-//   {
-//      // verify 1st and last chars are ok
-//      bool t1 = (input.find(jsonPrefix) == 0);
-//      bool t2 = (input.rfind(jsonSuffix) == input.length() - 1);
-//      if (t1 && t2)
-//         result = std::string( input.begin() + 1, input.end() - 1 );
-//   }
-//   // now, do some magic decoding of UTF8 here (OOPS)
-//   return result;
-//}
 
 void SendChannel::OnPublishCallback(pubnub_res res)
 {

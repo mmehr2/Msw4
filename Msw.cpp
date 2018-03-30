@@ -225,7 +225,8 @@ BOOL AMswApp::InitInstance()
    // kick off remote communications
    gComm.ConfigureSettings();
    gComm.SetParent(m_pMainWnd->m_hWnd);
-   gComm.Connect(gComm.GetUsername(), gComm.GetPassword());
+   // MLM: For pubnub to save money - don't connect until login on RemoteDialog
+   //gComm.Connect(gComm.GetUsername(), gComm.GetPassword());
 #endif // _REMOTE
 
    // This code replaces the MFC created menus with 

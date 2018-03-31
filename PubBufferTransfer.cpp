@@ -23,18 +23,45 @@ PNBufferTransfer::~PNBufferTransfer()
 
 void PNBufferTransfer::reserve(size_t cap)
 {
-   try {
-      delete [] buffer;
-      numUsed = 0;
-      bufferCapacity = 0;
-      buffer = new BYTE[cap];
-      numUsed = 0;
-      bufferCapacity = cap;
+   // free any old buffer
+   delete [] buffer;
+   numUsed = 0;
+   bufferCapacity = 0;
+   buffer = nullptr;
+   // 
+   // we can probably do better than just fail if we run out of or fragment the heap
+   // even one static buffer (size of one 32kB msg block) as fall-back would allow operation
+   // This can operate in a loop, trying 1/2 the capacity each time until a) success or b) smaller than 32kb
+   for (size_t tent_cap = cap, i=1; tent_cap < MAX_MESSAGE; tent_cap /= 2, ++i)
+   {
+      try {
+         buffer = new BYTE[cap];
+         numUsed = 0;
+         bufferCapacity = cap;
+         TRACE("PNBT memory alloc OK %u bytes on try #%u\n", cap, i);
+         break;
+      }
+      catch (std::exception& e) {
+         TRACE("PNBT heap alloc attempt #%u failure for %u bytes:%s\n", i, cap, e.what());
+         return;
+      }
    }
-   catch (std::exception& e) {
-      TRACE("PNBT memory alloc failure for %u bytes:%s\n", cap, e.what());
-      return;
+   if (buffer == nullptr) {
+      // this COULD happen - what to do?
+      TRACE("PNBT heap alloc failure - using backup buffer.\n");
    }
+}
+
+static BYTE backupBuffer[MAX_MESSAGE * 10];
+
+BYTE* PNBufferTransfer::bufferStart()
+{
+   return (buffer == nullptr) ? backupBuffer : buffer;
+}
+
+const BYTE* PNBufferTransfer::bufferStart() const
+{
+   return (buffer == nullptr) ? backupBuffer : buffer;
 }
 
 void PNBufferTransfer::resize(size_t newSize)

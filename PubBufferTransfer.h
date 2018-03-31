@@ -33,13 +33,15 @@ class PNBufferTransfer {
    // helper
    void resize( size_t num_bytes );
    void reserve( size_t num_bytes );
+   BYTE* bufferStart();
+   const BYTE* bufferStart() const;
    // buffer std::vector simulation routines
-   BYTE* begin() { return buffer; }
-   BYTE* end() { return buffer + numUsed; }
-   const BYTE* begin() const { return buffer; }
-   const BYTE* end() const { return buffer + numUsed; }
    size_t size() const { return numUsed; }
    size_t capacity() const { return bufferCapacity; }
+   BYTE* begin() { return bufferStart(); }
+   BYTE* end() { return begin() + size(); }
+   const BYTE* begin() const { return bufferStart(); }
+   const BYTE* end() const { return begin() + size(); }
 public:
    PNBufferTransfer();
    ~PNBufferTransfer();

@@ -107,5 +107,11 @@ extern const TCHAR gStrCommUsername[];
 extern const TCHAR gStrCommPassword[];
 extern const TCHAR gStrCommSlave[];
 extern const TCHAR gStrCommPrimary[];
+// Pubnub-specific settings
+extern const TCHAR gStrCommCompany[];
+extern const TCHAR gStrCommDevice[];
+extern const TCHAR gStrCommDeviceUUID[];
+extern const TCHAR gStrCommAPIPubkey[];
+extern const TCHAR gStrCommAPISubkey[];
 
 #endif // hStrings

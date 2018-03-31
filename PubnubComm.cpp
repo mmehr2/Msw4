@@ -3,6 +3,10 @@
 #include "SendChannel.h"
 #include "ReceiveChannel.h"
 #include "Comm.h"
+#include "strings.h"
+#include "Msw.h"
+
+#include "PubBufferTransfer.h" // for unit testing
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
@@ -17,98 +21,101 @@ extern "C" {
 
 #pragma comment (lib, "pubnub_callback")
 
-// channel naming convention
-static const std::string channel_separator = "-"; // avoid Channel name disallowed characters
-static const std::string app_name = "MSW"; // prefix for all channel names by convention
+namespace {
 
-//// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
-//void pn_printf(char* fmt, ...)
-//{
-//   char buffer[10240];
-//
-//    va_list args;
-//    va_start(args,fmt);
-//    vsprintf(buffer,fmt,args);
-//    va_end(args);
-//
-//    TRACE("%s\n", buffer);
-//}
+   // channel naming convention
+   static const std::string channel_separator = "-"; // avoid Channel name disallowed characters
+   static const std::string app_name = "MSW"; // prefix for all channel names by convention
 
-static LPCTSTR GetFullPathOfExeFile()
-{
-   const int BSIZE = 8192;
-   // NOTE: For a discussion of Unicode path name length, which could theoretically exceed 32K WCHARs,
-   //   see https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
-   // The macro MAX_PATH is only 260 and is inadequate on today's drives (Microsoft, pay attention!)
-   static TCHAR buffer[BSIZE];
-   buffer[0] = '\0'; // in case call fails
-   /*DWORD res =*/ ::GetModuleFileName( NULL, buffer, BSIZE);
-   // res == 0 if failure, otherwise # of TCHARs copied
-   return buffer;
-}
+   //// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
+   //void pn_printf(char* fmt, ...)
+   //{
+   //   char buffer[10240];
+   //
+   //    va_list args;
+   //    va_start(args,fmt);
+   //    vsprintf(buffer,fmt,args);
+   //    va_end(args);
+   //
+   //    TRACE("%s\n", buffer);
+   //}
 
-static LPCTSTR GetIniFilePath()
-{
-   // NOTE: Full Unicode support required here
-   LPCTSTR fpath = GetFullPathOfExeFile();
-   LPCTSTR bslash = wcsrchr(fpath, '\\');
-   bslash++; // include the backslash
-   // end the string there (still sitting in original static buffer)
-   LPTSTR nullspot = const_cast<LPTSTR>(bslash);
-   nullspot[0] = '\0';
-   return fpath;
-}
+   static LPCTSTR GetFullPathOfExeFile()
+   {
+      const int BSIZE = 8192;
+      // NOTE: For a discussion of Unicode path name length, which could theoretically exceed 32K WCHARs,
+      //   see https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
+      // The macro MAX_PATH is only 260 and is inadequate on today's drives (Microsoft, pay attention!)
+      static TCHAR buffer[BSIZE];
+      buffer[0] = '\0'; // in case call fails
+      /*DWORD res =*/ ::GetModuleFileName( NULL, buffer, BSIZE);
+      // res == 0 if failure, otherwise # of TCHARs copied
+      return buffer;
+   }
 
-static LPCTSTR secName = _T("MSW_Pubnub");
+   static LPCTSTR GetIniFilePath()
+   {
+      // NOTE: Full Unicode support required here
+      LPCTSTR fpath = GetFullPathOfExeFile();
+      LPCTSTR bslash = wcsrchr(fpath, '\\');
+      bslash++; // include the backslash
+      // end the string there (still sitting in original static buffer)
+      LPTSTR nullspot = const_cast<LPTSTR>(bslash);
+      nullspot[0] = '\0';
+      return fpath;
+   }
 
-LPCTSTR GetRemoteIniFilePath()
-{
-   // NOTE: The params are TCHAR-style because file paths can include Unicode
-   static std::wstring iniFilePath;
-   iniFilePath = GetIniFilePath();
-   iniFilePath += _T("msw.ini");
-   LPCTSTR ini_path = iniFilePath.c_str();
-   return ini_path;
-}
+   static LPCTSTR secName = _T("MSW_Pubnub");
 
-LPCTSTR GetRemoteIniValue( LPCTSTR keyName, LPCTSTR defValue = _T("") )
-{
-   static TCHAR buffer[1024];
-   DWORD res;
-   buffer[0] = '\0';
-   res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), GetRemoteIniFilePath());
-   TRACE(_T("CONFIG: %s returned %d: %s\n"), keyName, res, buffer);
-   return buffer;
-}
+   LPCTSTR GetRemoteIniFilePath()
+   {
+      // NOTE: The params are TCHAR-style because file paths can include Unicode
+      static std::wstring iniFilePath;
+      iniFilePath = GetIniFilePath();
+      iniFilePath += _T("msw.ini");
+      LPCTSTR ini_path = iniFilePath.c_str();
+      return ini_path;
+   }
 
-const char* GetRemoteIniValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") )
-{
-   LPCTSTR buffer = GetRemoteIniValue(keyName, defValue);
-   CT2A ascii(buffer);
-   static std::string s;
-   s = ascii.m_psz; // remember lifetime issues, but use assignment
-   return s.c_str();
-}
+   LPCTSTR GetRemoteIniValue( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+   {
+      static TCHAR buffer[1024];
+      DWORD res;
+      buffer[0] = '\0';
+      res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), GetRemoteIniFilePath());
+      TRACE(_T("CONFIG: %s returned %d: %s\n"), keyName, res, buffer);
+      return buffer;
+   }
 
-void SetRemoteIniValue( LPCTSTR keyName, LPCTSTR newValue )
-{
-   LPCTSTR secName = _T("MSW_Pubnub");
-   ::WritePrivateProfileStringW(secName, keyName, newValue, GetRemoteIniFilePath());
-}
+   const char* GetRemoteIniValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+   {
+      LPCTSTR buffer = GetRemoteIniValue(keyName, defValue);
+      CT2A ascii(buffer);
+      static std::string s;
+      s = ascii.m_psz; // remember lifetime issues, but use assignment
+      return s.c_str();
+   }
 
-void SetRemoteIniValueA( LPCTSTR keyName, LPCSTR newValue )
-{
-   CA2T tcs(newValue);
-   SetRemoteIniValue( keyName, tcs.m_psz);
-}
+   void SetRemoteIniValue( LPCTSTR keyName, LPCTSTR newValue )
+   {
+      LPCTSTR secName = _T("MSW_Pubnub");
+      ::WritePrivateProfileStringW(secName, keyName, newValue, GetRemoteIniFilePath());
+   }
 
-#include "PubBufferTransfer.h"
-bool RunUnitTests()
-{
-   bool result = true;
-   result &= PNBufferTransfer::UnitTest();
-   return result;
-}
+   void SetRemoteIniValueA( LPCTSTR keyName, LPCSTR newValue )
+   {
+      CA2T tcs(newValue);
+      SetRemoteIniValue( keyName, tcs.m_psz);
+   }
+
+   bool RunUnitTests()
+   {
+      bool result = true;
+      result &= PNBufferTransfer::UnitTest();
+      return result;
+   }
+
+} // namespace (anonymous)
 
 APubnubComm::APubnubComm(AComm* pComm) 
    : fComm(pComm)
@@ -116,6 +123,10 @@ APubnubComm::APubnubComm(AComm* pComm)
    , fConnection(kNotSet)
    , fLinked(kDisconnected)
    , customerName("")
+   , deviceName("")
+   , deviceUUID("")
+   , pubAPIKey("")
+   , subAPIKey("")
    , pReceiver(nullptr)
    , pSender(nullptr)
    , pBuffer(nullptr)
@@ -133,6 +144,18 @@ APubnubComm::APubnubComm(AComm* pComm)
    TRACE("Unit tests %s\n", RunUnitTests() ? "PASSED" : "FAILED");
 }
 
+APubnubComm::~APubnubComm(void)
+{
+   // shut down links too?!!?! but cannot fail or wait
+   delete pSender;
+   pSender = nullptr;
+   delete pReceiver;
+   pReceiver = nullptr;
+   delete pBuffer;
+   pBuffer = nullptr;
+   //::DeleteCriticalSection(&cs);
+}
+
 void APubnubComm::Configure()
 {
    /// NOTE: this exists so it can be called after the App object's registry key is set
@@ -140,27 +163,44 @@ void APubnubComm::Configure()
    // NOTE: this will not change, unlike in early test code
    fConnection = fComm->IsMaster() ? kPrimary : kSecondary;
 
-   //std::string pubkey = "demo", subkey = "demo";
-   // get these from persistent storage
-   // NOTE: by using PrivateProfile, I can guarantee a file will be found (in the Windows directory, since I don't specify the full path)
-   // Otherwise, Windows prefers that you use the registry, which is much harder for the customer to edit when configuring their own accounts.
-   LPCTSTR keyname_pub = _T("Pubkey");
-   LPCTSTR keyname_sub = _T("Subkey");
-   LPCTSTR default_pnkey = _T("demo");
-   LPCTSTR keyname_company = _T("CompanyName");
-   LPCTSTR keyname_device = _T("DeviceName");
-   LPCTSTR keyname_device_uuid = _T("DeviceUUID");
-   LPCSTR pkey = GetRemoteIniValueA(keyname_pub, default_pnkey);
-   LPCSTR skey = GetRemoteIniValueA(keyname_sub, default_pnkey);
-   // fix for publish "Invalid subscribe key" error
-   //this->pSender->key2 = this->pReceiver->key;
-   // load the company/customer and device names (could be Unicode here - what does CT2A do with it?)
-   this->customerName = GetRemoteIniValueA(keyname_company);
-   const char* device_name = GetRemoteIniValueA(keyname_device);
-   std::string lchName = this->MakeChannelName(device_name);
+   // get scurrent ettings from persistent storage (registry)
+   this->Read();
 
-   // UUID: required for daily device tracking on PN network
-   std::string uuid = GetRemoteIniValueA(keyname_device_uuid);
+   bool changed = false;
+
+   // OPT FEATURE: import new settings from a private profile file in same place as EXE
+   // USAGE: If file exists, its settings are examined for overrides to the above registry entries
+   // NOTE: by using PrivateProfile with a specified full path, I can guarantee a file will be found if there
+   // The registry is useful, but is much harder for the customer to edit when configuring their own accounts.
+   // Some customers may prefer that, but this is provided as an alternate mechanism.
+   LPCTSTR keyname_company = gStrCommCompany;
+   LPCTSTR keyname_device = gStrCommDevice;
+   LPCTSTR keyname_device_uuid = gStrCommDeviceUUID;
+   LPCTSTR keyname_pub = gStrCommAPIPubkey;
+   LPCTSTR keyname_sub = gStrCommAPISubkey;
+
+   std::string temps;
+   temps = GetRemoteIniValueA(keyname_pub);
+   if (!temps.empty())
+      changed = true, this->pubAPIKey = temps;
+   temps = GetRemoteIniValueA(keyname_sub);
+   if (!temps.empty())
+      changed = true, this->subAPIKey = temps;
+
+   // load the company/customer and device name overrides
+   temps = GetRemoteIniValueA(keyname_company);
+   if (!temps.empty()) 
+      changed = true, this->customerName = temps;
+
+   temps = GetRemoteIniValueA(keyname_device);
+   if (!temps.empty()) 
+      changed = true, this->deviceName = temps;
+
+   // compose the local channel name from the device and company names
+   std::string lchName = this->MakeChannelName(deviceName);
+
+   // UUID: required for daily device tracking on PN network; do NOT look for this in INI override
+   std::string uuid = this->deviceUUID;
    if (uuid.empty())
    {
       // generate and save a new unique ID for this instance in both channels
@@ -174,24 +214,56 @@ void APubnubComm::Configure()
       } else {
          uuid = lchName; // better than nothing? but might not be unique
       }
+      this->deviceUUID = uuid;
+      changed = true;
    }
-   this->pReceiver->Setup(uuid, skey); // receiver only needs one key for listening
-   this->pReceiver->SetName(lchName);
-   this->pSender->Setup(uuid, pkey, skey); // sender needs both keys but channel name comes later (dynamic)
+
+   // write any changes back to the persistent store
+   this->Write();
+
+   // set up the channels, once the settings are decided
+   this->pReceiver->Setup(uuid, this->subAPIKey); // receiver only needs one key for listening
+   this->pReceiver->SetName(lchName); // receiver knows channel name when local device name is known
+   this->pSender->Setup(uuid, this->pubAPIKey, this->subAPIKey); // sender needs both keys but channel name comes later (dynamic)
 
    TRACE("Globally unique UUID for this device: %s\n", uuid.c_str());
 }
 
-APubnubComm::~APubnubComm(void)
+namespace {
+   // keep these implementation funcs in the anon.namespace
+   void ReadRemoteProfileStringWithOverrideA(std::string& destSetting, LPCTSTR lpszEntry, LPCTSTR lpszDefault= _T(""))
+   {
+      CString s;
+      s = theApp.GetProfileString(gStrComm, lpszEntry, lpszDefault);
+      CT2A ascii = s;
+      if (s != CString(lpszDefault)) {
+         destSetting = ascii.m_psz;
+      }
+   }
+
+   void WriteRemoteProfileStringA(LPCTSTR lpszEntry, const std::string& srcSetting)
+   {
+      CA2T unic(srcSetting.c_str());
+      theApp.WriteProfileString(gStrComm, lpszEntry, unic.m_psz);
+   }
+}
+
+void APubnubComm::Read()
 {
-   // shut down links too?!!?! but cannot fail or wait
-   delete pSender;
-   pSender = nullptr;
-   delete pReceiver;
-   pReceiver = nullptr;
-   delete pBuffer;
-   pBuffer = nullptr;
-   //::DeleteCriticalSection(&cs);
+   ReadRemoteProfileStringWithOverrideA(this->customerName, gStrCommCompany);
+   ReadRemoteProfileStringWithOverrideA(this->deviceName, gStrCommDevice);
+   ReadRemoteProfileStringWithOverrideA(this->deviceUUID, gStrCommDeviceUUID);
+   ReadRemoteProfileStringWithOverrideA(this->pubAPIKey, gStrCommAPIPubkey);
+   ReadRemoteProfileStringWithOverrideA(this->subAPIKey, gStrCommAPISubkey);
+}
+
+void APubnubComm::Write()
+{
+   WriteRemoteProfileStringA(gStrCommCompany, this->customerName);
+   WriteRemoteProfileStringA(gStrCommDevice, this->deviceName);
+   WriteRemoteProfileStringA(gStrCommDeviceUUID, this->deviceUUID);
+   WriteRemoteProfileStringA(gStrCommAPIPubkey, this->pubAPIKey);
+   WriteRemoteProfileStringA(gStrCommAPISubkey, this->subAPIKey);
 }
 
 void APubnubComm::SetParent(HWND parent)
@@ -219,7 +291,7 @@ std::string RemoveInvalidCharacters( std::string& s )
    return s;
 }
 
-std::string APubnubComm::MakeChannelName( const std::string& deviceName )
+std::string APubnubComm::MakeChannelName( const std::string& deviceName ) const
 {
    std::string result;
    result += app_name;

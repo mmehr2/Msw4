@@ -54,6 +54,10 @@ class APubnubComm
    ConnectionType fConnection; // Primary or Secondary
    ConnectionStatus fLinked; // disconnected, connected, or in transition
    std::string customerName;
+   std::string deviceName;
+   std::string deviceUUID;
+   std::string pubAPIKey;
+   std::string subAPIKey;
 
    // inbound pubnub channel info
    // mainly used by Secondary to listen for incoming Command messages
@@ -73,10 +77,15 @@ class APubnubComm
    void operator=(const APubnubComm&);
 
    // helpers
-   std::string MakeChannelName( const std::string& deviceName );
+   std::string MakeChannelName( const std::string& deviceName ) const;
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
+
+   // get/set options to/from persistent storage (registry)
+   void Read();
+   void Write();
+   void Override();
 
 public:
    APubnubComm(AComm* pComm);

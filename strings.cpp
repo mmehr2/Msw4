@@ -105,3 +105,8 @@ const TCHAR gStrCommPassword[]  = _T("Password");
 const TCHAR gStrCommSlave[]     = _T("Slave");
 const TCHAR gStrCommPrimary[]   = _T("Primary");
 // Pubnub settings
+const TCHAR gStrCommCompany[]  = _T("CompanyName");
+const TCHAR gStrCommDevice[]  = _T("DeviceName");
+const TCHAR gStrCommDeviceUUID[]     = _T("DeviceUUID");
+const TCHAR gStrCommAPIPubkey[]   = _T("Pubkey");
+const TCHAR gStrCommAPISubkey[]  = _T("Subkey");

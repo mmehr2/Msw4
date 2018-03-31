@@ -1,5 +1,5 @@
 Loaded Modules: 
- MagicScroll.exe,4.0.1,C:\Users\Mike\Documents\Toptal\ECSVideo\MSW\Msw4\DebugU\MagicScroll.exe
+ MagicScroll.exe,4.0.1,C:\Users\Mike\Documents\Toptal\ECSVideo\MSW\Msw4\DebugR\MagicScroll.exe
  ntdll.dll,6.1.7601,C:\Windows\SysWOW64\ntdll.dll
  kernel32.dll,6.1.7601,C:\Windows\syswow64\kernel32.dll
  KERNELBASE.dll,6.1.7601,C:\Windows\syswow64\KERNELBASE.dll
@@ -20,6 +20,8 @@ Loaded Modules:
  DEVOBJ.dll,6.1.7601,C:\Windows\syswow64\DEVOBJ.dll
  PSAPI.DLL,6.1.7600,C:\Windows\syswow64\PSAPI.DLL
  WINMM.dll,6.1.7601,C:\Windows\system32\WINMM.dll
+ CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
+ MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  WS2_32.dll,6.1.7601,C:\Windows\syswow64\WS2_32.dll
  NSI.dll,6.1.7601,C:\Windows\syswow64\NSI.dll
  MSIMG32.dll,6.1.7600,C:\Windows\system32\MSIMG32.dll
@@ -37,14 +39,15 @@ Loaded Modules:
  IMM32.dll,6.1.7601,C:\Windows\syswow64\IMM32.dll
  MSCTF.dll,6.1.7601,C:\Windows\syswow64\MSCTF.dll
  Secur32.dll,6.1.7601,C:\Windows\system32\Secur32.dll
+ libssl-1_1.dll,1.1.0,C:\Users\Mike\Documents\Toptal\ECSVideo\MSW\Msw4\DebugR\libssl-1_1.dll
+ libcrypto-1_1.dll,1.1.0,C:\Users\Mike\Documents\Toptal\ECSVideo\MSW\Msw4\DebugR\libcrypto-1_1.dll
+ MSVCR120.dll,12.0.21005,C:\Windows\system32\MSVCR120.dll
  apphelp.dll,6.1.7601,C:\Windows\system32\apphelp.dll
  AcLayers.DLL,6.1.7601,C:\Windows\AppPatch\AcLayers.DLL
  USERENV.dll,6.1.7601,C:\Windows\syswow64\USERENV.dll
  profapi.dll,6.1.7600,C:\Windows\syswow64\profapi.dll
  MPR.dll,6.1.7600,C:\Windows\system32\MPR.dll
  WINTRUST.dll,6.1.7601,C:\Windows\syswow64\WINTRUST.dll
- CRYPT32.dll,6.1.7601,C:\Windows\syswow64\CRYPT32.dll
- MSASN1.dll,6.1.7601,C:\Windows\syswow64\MSASN1.dll
  uxtheme.dll,6.1.7600,C:\Windows\system32\uxtheme.dll
  dwmapi.dll,6.1.7601,C:\Windows\system32\dwmapi.dll
  RICHED20.DLL,5.31.23,C:\Windows\system32\RICHED20.DLL

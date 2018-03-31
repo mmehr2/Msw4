@@ -32,7 +32,8 @@ void PNBufferTransfer::reserve(size_t cap)
    // we can probably do better than just fail if we run out of or fragment the heap
    // even one static buffer (size of one 32kB msg block) as fall-back would allow operation
    // This can operate in a loop, trying 1/2 the capacity each time until a) success or b) smaller than 32kb
-   for (size_t tent_cap = cap, i=1; tent_cap < MAX_MESSAGE; tent_cap /= 2, ++i)
+   size_t tent_cap = cap, i=1;
+   do// (size_t tent_cap = cap, i=1; tent_cap < MAX_MESSAGE; tent_cap /= 2, ++i)
    {
       try {
          buffer = new BYTE[cap];
@@ -43,10 +44,10 @@ void PNBufferTransfer::reserve(size_t cap)
       }
       catch (std::exception& e) {
          TRACE("PNBT heap alloc attempt #%u failure for %u bytes:%s\n", i, cap, e.what());
-         return;
       }
-   }
-   if (buffer == nullptr) {
+      tent_cap /= 2, ++i;
+   } while (tent_cap > MAX_MESSAGE);
+   if (buffer == nullptr) {   
       // this COULD happen - what to do?
       TRACE("PNBT heap alloc failure - using backup buffer.\n");
    }
@@ -90,12 +91,17 @@ bool PNBufferTransfer::initForDecoding(size_t num_blocks, size_t block_size)
    return this->initForCoding(cap);
 }
 
-void PNBufferTransfer::addBytes(const BYTE* pData, size_t countBytes)
+size_t PNBufferTransfer::addBytes(const BYTE* pData, size_t countBytes)
 {
-   // could this be interrupted? need a crit-section?
-   BYTE* pDest = this->end();
-   memcpy( pDest, pData, countBytes );
-   this->resize(countBytes + this->size());
+   size_t countTransferred = countBytes;
+   if (pData && countBytes) {
+      if (countBytes + numUsed > this->capacity())
+         countTransferred = this->capacity() - this->numUsed;
+      BYTE* pDest = this->end();
+      memcpy( pDest, pData, countTransferred );
+      this->resize(countTransferred + this->size());
+   }
+   return countTransferred;
 }
 
 size_t PNBufferTransfer::split_buffer(size_t section_size)
@@ -125,20 +131,22 @@ size_t PNBufferTransfer::split_buffer(size_t section_size)
       }
       //TRACE("..PBNT:Encoding bytes from [%u] to [%u]\n", pB-pBStart, pB+bufinc-pBStart);
       chunks.push_back(pB);
-  }
-   chunks.push_back(pBEnd);
-   return chunks.size()-1; // don't count the end ptr, it's just there to make things easier for coded string construction
+   }
+   //chunks.push_back(pBEnd); // hard to maintain in incremental situations, just add it when splitting
+   return chunks.size();
 }
 
 std::string PNBufferTransfer::getBufferSubstring(size_t n)
 {
    std::string result;
    // make sure n is in range first [0..sz)
-   if (n < chunks.size() - 1)
+   if (n < chunks.size())
    {
+      // special case for last chunk: add the missing end()
+      bool is_last = n == chunks.size() - 1;
       // and now do that encoding
       const BYTE* pStart = chunks[n];
-      const BYTE* pEnd = chunks[n+1];
+      const BYTE* pEnd = is_last ? this->end() : chunks[n+1];
       const size_t nBytes = pEnd - pStart;
       const size_t ENC_BUFSZ = pbbase64_char_array_size_for_encoding(nBytes);
       static char buf[MAX_MESSAGE]; // don't frag the heap, just use one maximally sized buffer
@@ -189,47 +197,141 @@ bool PNBufferTransfer::operator==( const PNBufferTransfer& other ) const
    return true;
 }
 
+size_t PNBufferTransfer::startRead()
+{
+   this->read_it = this->begin();
+   return this->size();
+}
+
+size_t PNBufferTransfer::getBytes(BYTE* pData, size_t countBytes)
+{
+   size_t countTransferred = 0;
+   if (pData && countBytes > 0) {
+      // trim the transfer count according to what's still unread, if anything
+      size_t bytesLeftToRead = this->end() - this->read_it;
+      countTransferred = countBytes;
+      if (countBytes > bytesLeftToRead) 
+         countTransferred = bytesLeftToRead;
+      // copy only if something left
+      if (countTransferred > 0) {
+         memcpy(pData, this->read_it, countTransferred);
+         this->read_it += countTransferred;
+      }
+   }
+   return countTransferred;
+}
+
+///////////////////// CLASS UNIT TESTING //////////////////////
+
 /*static*/ bool PNBufferTransfer::UnitTest()
 {
+#ifdef _DEBUG
+   const char* source = "0123456\r890123456789012\n456789"; // 30 chars w. embedded ctrl chars
+   if (!UnitTestOnce(source, 5))
+      return false;
+   // big buffer test
+   std::string s(source);
+   // make it some number of times this big by replication
+   int times = 1500;
+   int doubles = int(log((double)times)/log(2.0) + 0.5);
+   for (int i=0; i<doubles; ++i)
+      s += s;
+   if (!UnitTestOnce(s.c_str(), MAX_MESSAGE))
+      return false;
+#endif //def _DEBUG
+   return true;
+}
+
+#include <ctime>
+extern time_t get_local_timestamp();
+
+class TestTimer {
+   time_t tStart;
+   std::string description;
+   bool passed;
+public:
+   TestTimer(const char* descr)
+   {
+      description = descr;
+      tStart = get_local_timestamp();
+   }
+   ~TestTimer()
+   {
+      time_t tEnd = get_local_timestamp();
+      double td = difftime(tEnd, tStart) / 1.0e7;
+      TRACE("%s timediff = %1.6lfs.\n", description.c_str(), td);
+   }
+   void addResult(bool pass, const std::string& moreDesc = "")
+   {
+      passed = pass;
+      description += moreDesc;
+   }
+};
+
+inline size_t countSplits(size_t sz, size_t splitsz)
+{
+   size_t result = sz / splitsz + ((sz % splitsz) ? 1 : 0);
+   return result;
+}
+
+ /*static*/ bool PNBufferTransfer::UnitTestOnce(const char* source, size_t maxBlockSize)
+{
+   bool result = false;
+#ifdef _DEBUG
    PNBufferTransfer test;
-   const char* source = "012345678901234567890123456789"; // 30 chars
    size_t sz = strlen(source);
 
+   char buffer_s[80];
+   sprintf_s(buffer_s, "PNBT Unit Test of %u bytes", sz);
+   TestTimer tt(buffer_s);
+
    // allocation size tests
-   size_t cap = sz * 4 / 3; // TBD - use pubnub func.here
+   size_t cap = sz;
    test.initForCoding( cap );
-   if (test.capacity() != cap)
-      return false;
+   if (test.capacity() != cap) {
+      tt.addResult(result, "failed CAP-TEST");
+      return result;
+   }
 
    // test the input step (raw bytes)
    const BYTE* s = reinterpret_cast<const BYTE*>(source);
-   const int CHUNK_SIZE = 10;
-   for (size_t i =0; i != cap - CHUNK_SIZE; i += CHUNK_SIZE) {
-      test.addBytes( s + i, CHUNK_SIZE );
-      if (test.size() != i + CHUNK_SIZE)
-         return false;
+   const size_t CHUNK_SIZE = maxBlockSize;
+   for (size_t i =0, num = CHUNK_SIZE; num == CHUNK_SIZE; i += num) {
+      num = test.addBytes( s + i, CHUNK_SIZE );
+      if (test.size() != i + num) {
+         tt.addResult(result, "failed ADDBYTES-TEST");
+         return result;
+      }
    }
 
    // test the buffer splitter
-   int sizes[] = { 5, 1, 2, 7, 25, 29, 30, 31, 0, -13 };
+   int sizes[] = { 5, 1, 2, 7, 25, 29, 30, 31, 0, MAX_MESSAGE, -13 };
    for (int j = 0; j != sizeof sizes/sizeof sizes[0]; ++j) 
    {
       int SPLIT_SIZE = sizes[j];
       size_t num = test.split_buffer(SPLIT_SIZE);
       if (SPLIT_SIZE == 0) {
-         if (num != 0) 
-            return false;
+         if (num != 0) {
+            tt.addResult(result, "failed a SIZE=0 SPLIT TEST");
+            return result;
+         }
       }
       else if (SPLIT_SIZE < 0) {
-         if (num != 1) // acts like a HUGE number (unsigned), so one chunk ptr and the end ptr
-            return false;
+         if (num != countSplits(sz, MAX_MESSAGE)) // acts like a HUGE number (unsigned), so one chunk ptr and the end ptr
+         {
+            tt.addResult(result, "failed a SIZE<0 SPLIT TEST");
+            return result;
+         }
       }
-      else if (num != (sz / SPLIT_SIZE + ((sz % SPLIT_SIZE) ? 1 : 0)))
-         return false;
+      else if (num != countSplits(sz, SPLIT_SIZE))
+      {
+         tt.addResult(result, "failed a SPLIT TEST");
+         return result;
+      }
    }
 
    // test overall encoding process with decoding (test passes if buffers the same)
-   int SPLIT_SIZE = sizes[0];
+   int SPLIT_SIZE = maxBlockSize;
    int x = test.split_buffer(SPLIT_SIZE);
    PNBufferTransfer test2;
    test2.initForDecoding(x, SPLIT_SIZE);
@@ -238,7 +340,32 @@ bool PNBufferTransfer::operator==( const PNBufferTransfer& other ) const
       test2.addCodedString(s);
    }
    if (!(test == test2))
-      return false;
+   {
+      tt.addResult(result, "failed ENCODE TEST");
+      return result;
+   }
 
-   return true;
+   // test the streaming processes
+   size_t total = test2.startRead();
+   PNBufferTransfer test3;
+   test3.initForCoding(total);
+   const int BSIZE = 100; // arbitrary size
+   BYTE buffer[BSIZE];
+   for (size_t accumulated = 0; accumulated < total; ) {
+      size_t numXfer = test2.getBytes(buffer, BSIZE);
+      if (numXfer == 0)
+         break;
+      test3.addBytes(buffer, numXfer);
+      accumulated += numXfer;
+   }
+   if (!(test3 == test2))
+   {
+      tt.addResult(result, " failed STREAM TEST");
+      return result;
+   }
+
+   result = true;
+   tt.addResult(result, " PASSED ALL TESTS!");
+#endif //def _DEBUG
+   return result;
 }

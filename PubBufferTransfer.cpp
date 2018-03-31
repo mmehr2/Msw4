@@ -232,7 +232,7 @@ size_t PNBufferTransfer::getBytes(BYTE* pData, size_t countBytes)
    // big buffer test
    std::string s(source);
    // make it some number of times this big by replication
-   int times = 1500;
+   int times = 150000;
    int doubles = int(log((double)times)/log(2.0) + 0.5);
    for (int i=0; i<doubles; ++i)
       s += s;

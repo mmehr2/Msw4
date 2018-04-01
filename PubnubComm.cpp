@@ -24,8 +24,8 @@ extern "C" {
 namespace {
 
    // channel naming convention
-   static const std::string channel_separator = "-"; // avoid Channel name disallowed characters
-   static const std::string app_name = "MSW"; // prefix for all channel names by convention
+   const std::string channel_separator = "-"; // avoid Channel name disallowed characters
+   const std::string app_name = "MSW"; // prefix for all channel names by convention
 
    //// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
    //void pn_printf(char* fmt, ...)
@@ -40,7 +40,35 @@ namespace {
    //    TRACE("%s\n", buffer);
    //}
 
-   static LPCTSTR GetFullPathOfExeFile()
+   bool RunUnitTests()
+   {
+      bool result = true;
+      result &= PNBufferTransfer::UnitTest();
+      return result;
+   }
+
+   class RemoteIniFile {
+      LPCTSTR secName;
+      LPCTSTR fileName;
+
+      // helpers
+      static LPCTSTR GetFullPathOfExeFile();
+      static LPCTSTR GetIniFilePath();
+   public:
+      RemoteIniFile(LPCTSTR fname_)
+         : secName(_T("MSW_Pubnub"))
+         , fileName(fname_)
+      {
+      }
+
+      LPCTSTR GetFilePath();
+      LPCTSTR GetValue( LPCTSTR keyName, LPCTSTR defValue = _T("") );
+      const char* GetValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") );
+      void SetValue( LPCTSTR keyName, LPCTSTR newValue );
+      void SetValueA( LPCTSTR keyName, LPCSTR newValue );
+   };
+
+   /*static*/ LPCTSTR RemoteIniFile::GetFullPathOfExeFile()
    {
       const int BSIZE = 8192;
       // NOTE: For a discussion of Unicode path name length, which could theoretically exceed 32K WCHARs,
@@ -53,7 +81,7 @@ namespace {
       return buffer;
    }
 
-   static LPCTSTR GetIniFilePath()
+   /*static*/ LPCTSTR RemoteIniFile::GetIniFilePath()
    {
       // NOTE: Full Unicode support required here
       LPCTSTR fpath = GetFullPathOfExeFile();
@@ -67,7 +95,7 @@ namespace {
 
    static LPCTSTR secName = _T("MSW_Pubnub");
 
-   LPCTSTR GetRemoteIniFilePath()
+   LPCTSTR RemoteIniFile::GetFilePath()
    {
       // NOTE: The params are TCHAR-style because file paths can include Unicode
       static std::wstring iniFilePath;
@@ -77,42 +105,35 @@ namespace {
       return ini_path;
    }
 
-   LPCTSTR GetRemoteIniValue( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+   LPCTSTR RemoteIniFile::GetValue( LPCTSTR keyName, LPCTSTR defValue )
    {
       static TCHAR buffer[1024];
       DWORD res;
       buffer[0] = '\0';
-      res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), GetRemoteIniFilePath());
+      res = ::GetPrivateProfileString(secName, keyName, defValue, buffer, sizeof(buffer), GetFilePath());
       TRACE(_T("CONFIG: %s returned %d: %s\n"), keyName, res, buffer);
       return buffer;
    }
 
-   const char* GetRemoteIniValueA( LPCTSTR keyName, LPCTSTR defValue = _T("") )
+   const char* RemoteIniFile::GetValueA( LPCTSTR keyName, LPCTSTR defValue )
    {
-      LPCTSTR buffer = GetRemoteIniValue(keyName, defValue);
+      LPCTSTR buffer = GetValue(keyName, defValue);
       CT2A ascii(buffer);
       static std::string s;
       s = ascii.m_psz; // remember lifetime issues, but use assignment
       return s.c_str();
    }
 
-   void SetRemoteIniValue( LPCTSTR keyName, LPCTSTR newValue )
+   void RemoteIniFile::SetValue( LPCTSTR keyName, LPCTSTR newValue )
    {
       LPCTSTR secName = _T("MSW_Pubnub");
-      ::WritePrivateProfileStringW(secName, keyName, newValue, GetRemoteIniFilePath());
+      ::WritePrivateProfileStringW(secName, keyName, newValue, GetFilePath());
    }
 
-   void SetRemoteIniValueA( LPCTSTR keyName, LPCSTR newValue )
+   void RemoteIniFile::SetValueA( LPCTSTR keyName, LPCSTR newValue )
    {
       CA2T tcs(newValue);
-      SetRemoteIniValue( keyName, tcs.m_psz);
-   }
-
-   bool RunUnitTests()
-   {
-      bool result = true;
-      result &= PNBufferTransfer::UnitTest();
-      return result;
+      SetValue( keyName, tcs.m_psz);
    }
 
 } // namespace (anonymous)
@@ -166,35 +187,7 @@ void APubnubComm::Configure()
    // get scurrent ettings from persistent storage (registry)
    this->Read();
 
-   bool changed = false;
-
-   // OPT FEATURE: import new settings from a private profile file in same place as EXE
-   // USAGE: If file exists, its settings are examined for overrides to the above registry entries
-   // NOTE: by using PrivateProfile with a specified full path, I can guarantee a file will be found if there
-   // The registry is useful, but is much harder for the customer to edit when configuring their own accounts.
-   // Some customers may prefer that, but this is provided as an alternate mechanism.
-   LPCTSTR keyname_company = gStrCommCompany;
-   LPCTSTR keyname_device = gStrCommDevice;
-   LPCTSTR keyname_device_uuid = gStrCommDeviceUUID;
-   LPCTSTR keyname_pub = gStrCommAPIPubkey;
-   LPCTSTR keyname_sub = gStrCommAPISubkey;
-
-   std::string temps;
-   temps = GetRemoteIniValueA(keyname_pub);
-   if (!temps.empty())
-      changed = true, this->pubAPIKey = temps;
-   temps = GetRemoteIniValueA(keyname_sub);
-   if (!temps.empty())
-      changed = true, this->subAPIKey = temps;
-
-   // load the company/customer and device name overrides
-   temps = GetRemoteIniValueA(keyname_company);
-   if (!temps.empty()) 
-      changed = true, this->customerName = temps;
-
-   temps = GetRemoteIniValueA(keyname_device);
-   if (!temps.empty()) 
-      changed = true, this->deviceName = temps;
+   bool changed = ReadOverrideFile("MSW.INI");
 
    // compose the local channel name from the device and company names
    std::string lchName = this->MakeChannelName(deviceName);
@@ -209,7 +202,7 @@ void APubnubComm::Configure()
       // docs and samples lied: v4 generator returns 0 if AOK, else -1 on error
       if (0 == pubnub_generate_uuid_v4_random(&uuid_)) {
          random_uuid = pubnub_uuid_to_string(&uuid_).uuid;
-         SetRemoteIniValueA(keyname_device_uuid, random_uuid);
+         //ofile.SetValueA(keyname_device_uuid, random_uuid); // don't write to the INI file either
          uuid = random_uuid;
       } else {
          uuid = lchName; // better than nothing? but might not be unique
@@ -219,7 +212,8 @@ void APubnubComm::Configure()
    }
 
    // write any changes back to the persistent store
-   this->Write();
+   if (changed)
+      this->Write();
 
    // set up the channels, once the settings are decided
    this->pReceiver->Setup(uuid, this->subAPIKey); // receiver only needs one key for listening
@@ -264,6 +258,43 @@ void APubnubComm::Write()
    WriteRemoteProfileStringA(gStrCommDeviceUUID, this->deviceUUID);
    WriteRemoteProfileStringA(gStrCommAPIPubkey, this->pubAPIKey);
    WriteRemoteProfileStringA(gStrCommAPISubkey, this->subAPIKey);
+}
+
+bool APubnubComm::ReadOverrideFile(const char* fileName)
+{
+   CA2T unicode = fileName;
+   RemoteIniFile ofile(unicode.m_psz);
+
+   bool changed = false;
+   // OPT FEATURE: import new settings from a private profile file in same place as EXE
+   // USAGE: If file exists, its settings are examined for overrides to the above registry entries
+   // NOTE: by using PrivateProfile with a specified full path, I can guarantee a file will be found if there
+   // The registry is useful, but is much harder for the customer to edit when configuring their own accounts.
+   // Some customers may prefer that, but this is provided as an alternate mechanism.
+   LPCTSTR keyname_company = gStrCommCompany;
+   LPCTSTR keyname_device = gStrCommDevice;
+   //LPCTSTR keyname_device_uuid = gStrCommDeviceUUID; // this key is NOT read from INI file
+   LPCTSTR keyname_pub = gStrCommAPIPubkey;
+   LPCTSTR keyname_sub = gStrCommAPISubkey;
+
+   std::string temps;
+   temps = ofile.GetValueA(keyname_pub);
+   if (!temps.empty())
+      changed = true, this->pubAPIKey = temps;
+   temps = ofile.GetValueA(keyname_sub);
+   if (!temps.empty())
+      changed = true, this->subAPIKey = temps;
+
+   // load the company/customer and device name overrides
+   temps = ofile.GetValueA(keyname_company);
+   if (!temps.empty()) 
+      changed = true, this->customerName = temps;
+
+   temps = ofile.GetValueA(keyname_device);
+   if (!temps.empty()) 
+      changed = true, this->deviceName = temps;
+
+   return changed;
 }
 
 void APubnubComm::SetParent(HWND parent)

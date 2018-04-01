@@ -53,6 +53,8 @@ class APubnubComm
    HWND fParent;
    ConnectionType fConnection; // Primary or Secondary
    ConnectionStatus fLinked; // disconnected, connected, or in transition
+
+   // the following are persistent settings
    std::string customerName;
    std::string deviceName;
    std::string deviceUUID;
@@ -85,7 +87,7 @@ class APubnubComm
    // get/set options to/from persistent storage (registry)
    void Read();
    void Write();
-   void Override();
+   bool ReadOverrideFile(const char* fileName); // returns true if any changes made to persistent settings
 
 public:
    APubnubComm(AComm* pComm);

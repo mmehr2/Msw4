@@ -530,7 +530,7 @@ if (fSpeed && (elapsed > (currentFrameInterval + kAcceptablePause)))
 
 #ifdef _REMOTE
          // send out synchronization message
-         if (!gComm.IsMaster()) {
+         if (gComm.IsMaster()) {
             gComm.SendCommand(AComm::kScrollPosSync, fRtfHelper.GetCurrentUserPos());
          }
 #endif // _REMOTE

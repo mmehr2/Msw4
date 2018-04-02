@@ -12,6 +12,52 @@ extern "C" {
 #include "pubnub_blocking_io.h" // setting non blocking io (not needed maybe?)
 }
 
+/*
+RECEIVE CHANNEL CLASS
+
+States used:
+   kNone - set at startup when context is allocated, but has no channel info yet
+   kDisconnected - set when object is not online but has all needed info (channel name, key, and UUID, OPT proxy settings)
+   kIdle - set when object is online listening for data (active subscribe on channel)
+      NOTE: Channel remains in kIdle until disconnected.
+   kDisconnecting - set when object is waiting for results of pubnub_cancel
+   TBD - [kConnecting - set when object is waiting to go online (during proxy negotiations)]
+
+Operations:
+      ** on UI thread **
+   ctor - allocates context, STATE( kNone )
+   Setup() - sets the channel name, key and UUID; STATE( kNone => kDisconnected )
+   Init() - takes the channel online by calling Listen(); STATE( kDisconnected => kIdle )
+      [NOTE: TBD when proxy negotiation is needed, it can wait for it in Init() first using intermediate state kConnecting]
+   Deinit() - takes the channel offline by calling cancel(); STATE( kIdle => kDisconnecting )
+      This is a no-op if already offline.
+
+      ** on alt.thread **
+   OnCallback() - if no errors, will dispatch data and call Listen() again (no state change)
+      - if cancel was successful (considered error), STATE( kDisconnecting => kDisconnected )
+      - if other errors, TBD!
+
+Async Waits Needed:
+   Setup() - none
+   Init() - none
+   DeInit() - only if an operation is being canceled (if Idle at start)
+
+MORE ON PROXY NEGOTIATIONS (Issue #10-B):
+   This should be done at the system level (PubnubComm or higher).
+   The call to pubnub_set_proxy_from_system() can block for quite a while, so it should be executed on a worker CWinThread.
+   This implies the need for a way to do the state transition STATE( kConnecting => kIdle ) and kick off the Listen() call.
+   Unfortunately, each context needs to have the info thus acquired, so a mechanism for sharing proxy settings needs to be added.
+   Pubnub will be providing this on a future version of the code (afer 2.3.2) so check the development branch for how this will work.
+
+   One good design would be to have the long call happen at startup time (if configured) by PubnubComm. Then each channel could be given the extra 
+      information by the pService object. That object will need its own context to do this call on, so we can use a custom function at that level.
+      Or perhaps a simple ProxyChannel object can encapsulate the sequences.
+   In any case, it seems that if pService says proxy info is needed, we can hold off the transition to kDisconnected until both sets of info are
+      available (channel name/UUID/key and proxy settings). There would be two Setup calls, each would set its own flag, and only if both flags 
+      were set would it transition to kDisconnected state (on the second of the two calls).
+   And of course, the Init() call would fail if both pieces of info weren't available. So defnitely check the return value of Init().
+*/
+
 ReceiveChannel::ReceiveChannel(APubnubComm *pSvc) 
    : state(remchannel::kNone)
    , key("demo")
@@ -69,6 +115,8 @@ void ReceiveChannel::Setup(
 
 bool ReceiveChannel::Init(void)
 {
+   if (state == remchannel::kNone)
+      return false;
    // SECONDARY receiver gets this at Login time
    // PRIMARY receiver gets this at Connect time (or whenever a response is desired)
    // for all calls after the first on a new context, set transaction timeouts and either listen (local) or return
@@ -81,14 +129,19 @@ bool ReceiveChannel::Init(void)
 // the job of this should be to close any connection. We should not need to free the context here, just the dtor.
 bool ReceiveChannel::DeInit()
 {
+   if (state == remchannel::kDisconnecting) {
+      // no need to send this more than once
+      return true;
+   }
+
    pubnub_cancel(pContext);
-   // set Comm state to kDeleting until the callback gets results
+   // set Comm state to kDisconnecting until the callback gets results
    state = remchannel::kDisconnecting;
    return true;
 }
 
 // start to listen on this channel
-bool ReceiveChannel::Listen(void) const
+bool ReceiveChannel::Listen(void)
 {
    pubnub_res res;
    res = pubnub_subscribe(pContext, this->channelName.c_str(), NULL);
@@ -97,10 +150,11 @@ bool ReceiveChannel::Listen(void) const
    const char* last_tmtoken = pubnub_last_time_token(pContext);
    int msec = pubnub_transaction_timeout_get(pContext);
    TRACE("LISTENING FOR %1.3lf sec, last token=%s\n", msec/1000.0, last_tmtoken);
+   state = remchannel::kIdle;
    return true;
 }
 
-void ReceiveChannel::OnMessage(const char* data) const
+void ReceiveChannel::OnMessage(const char* data)
 {
    // coming in on the subscriber thread
    if (pService) {
@@ -141,6 +195,13 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       // TIMEOUT - listen again
       // disconnect
       // other errors - notify an error handler, then listen again OR replace context?
+      if (res == PNR_CANCELLED) {
+         TRACE("SUB OPERATION CANCELLED.\n");
+         if (state == remchannel::kDisconnecting) {
+            state = remchannel::kDisconnected;
+            TRACE("CHANNEL DISCONNECTED.\n");
+         }
+      }
       return;
    } else if (this->init_sub_pending) {
       // call Listen() again now that we have the initial time token for this context

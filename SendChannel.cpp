@@ -14,6 +14,47 @@ extern "C" {
 #include "pubnub_helper.h" // various publish helpers
 }
 
+/*
+SEND CHANNEL CLASS
+
+States used:
+   kNone - set at startup when context is allocated, but has no channel info yet
+   kDisconnected - set when object is not online but has all needed info (key, UUID, OPT proxy settings)
+   kIdle - set when object is ready to send messages but no transaction is in progress
+   kDisconnecting - set when object is waiting for results of pubnub_cancel
+   [kConnecting - set when object is waiting to go online (during Ping Test command, e.g.)]
+   kBusy - set when publish transactions are in progress
+
+Operations:
+      ** on UI thread **
+   ctor - allocates context, STATE( kNone )
+   Setup() - sets the key and UUID; STATE( kNone => kDisconnected )
+      NOTE: For Proxy settings protocol, see note in ReceiveChannel.cpp
+   Init() - takes the channel online by setting the channel name; STATE( kDisconnected => kIdle )
+      TBD: If a Ping Test is needed, perform that via transition STATE( kDisconnected => kConnecting )
+   Deinit() - takes the channel offline by calling cancel() if an operation is in progress; 
+      EITHER STATE( kIdle => kDisconnected ) OR STATE( kBusy => kDisconnecting )
+
+      ** on alt.thread **
+   OnCallback() - if no errors, will use the PQ to continue to publish the next data (no state change)
+      - when finally all data in PQ is published, STATE( {kBusy, kConnecting} => kIdle )
+      - if cancel was successful (considered error), STATE( kDisconnecting => kDisconnected )
+      - if other errors, will implement the PublishRetry loop (no state change)
+
+Async Waits Needed:
+   Setup() - none
+   Init() - only if a Ping Test is in progress (TBD)
+   DeInit() - only if an operation is being canceled (not too likely except during file transfers or scrolling)
+
+Use of UI interlock for these Async calls:
+   The intent is that the pService object can have a callback extension too, that can coordinate replies from each channel.
+   On Logon, that object will coordinate a call to pReceiver->Init(), and wants a callback when the listen is started.
+   On Connect, it will coordinate calls to both channel Init()s, and needs to wait for both before notifying the UI of completion.
+
+Use of the PQ Object:
+   This is the part of the publishing process that involves queueing messages when in the kBusy state.
+*/
+
 SendChannel::SendChannel(APubnubComm *pSvc) 
    : state(remchannel::kNone)
    , key("demo")
@@ -75,9 +116,17 @@ void SendChannel::Setup(
 
 bool SendChannel::Init(const std::string& cname)
 {
+   // ignore Init calls while disconnecting or busy
+   if (state == remchannel::kDisconnecting || 
+      state == remchannel::kBusy || 
+      state == remchannel::kNone) {
+      return false;
+   }
+
    // PRIMARY sender gets this at Connect time
    // SECONDARY sender gets this from remote PING command (for sending responses)
    this->channelName = cname;
+   state = remchannel::kIdle;
    return true;
 }
 
@@ -105,6 +154,11 @@ bool SendChannel::DeInit()
 
 bool SendChannel::Send(const char*message)
 {
+   // ignore Send calls while disconnecting
+   if (state == remchannel::kDisconnecting) {
+      return false;
+   }
+
    if (pContext == nullptr)
       return false;
    std::string msg = SendChannel::JSONify(message);
@@ -113,17 +167,19 @@ bool SendChannel::Send(const char*message)
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
    this->SendOptTimeRequest();
 
+   // NOTE: PQ::busy state is same as kBusy in the local state and is crit-section protected
    if (this->pQueue->isBusy())
    {
       return pQueue->push(msg.c_str());
    } else {
+      this->state = remchannel::kBusy;
       this->pQueue->setBusy(true);
       this->pubRetryCount = 1;
       return this->SendBare(msg.c_str());
    }
 }
 
-bool SendChannel::SendBare(const char*message) const
+bool SendChannel::SendBare(const char*message)
 {
    pubnub_res res;
 
@@ -138,44 +194,52 @@ bool SendChannel::SendBare(const char*message) const
 void SendChannel::PublishRetry()
 {
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
-   // request to publish the next one
+   // request to publish the same one (don't pop the queue)
    pQueue->get_publish(this);
-}
-
-std::string SendChannel::TimeToken(const char* input)
-{
-   // request to publish the next one
-   std::string result = pQueue->get_ttok();
-   if (input != nullptr)
-      pQueue->set_ttok(input);
-   return result;
-}
-
-void SendChannel::SendOptTimeRequest()
-{
-   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
-   // if context has no time token, ask for one
-   // this should only happen on init() for the Remote (pub-only) side unless it fails to work
-   std::string tkn( this->pQueue->get_ttok() );
-   if (tkn.empty())
-   {
-      pubnub_time(this->pContext);
-      this->pubRetryCount = 1;
-      pQueue->setBusy(true); // can no longer use the context
-   }
 }
 
 void SendChannel::ContinuePublishing()
 {
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
-   // if the queue has more items, 
+   // if the queue has more items,
+   // ACTUALLY, just test if the PQ is in BUSY mode or not
    if (pQueue->isBusy()) {
       // request to publish the next one
       pQueue->pop_publish(this);
    } else {
       // otherwise we're done and it's back to direct publishing mode
-      pQueue->setBusy(false);
+      pQueue->setBusy(false); // redundant! it's already tested false in the if stmt!
+      state = remchannel::kIdle;
    }
+}
+
+// request the server time token IF NONE ALREADY
+void SendChannel::SendOptTimeRequest()
+{
+   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
+   // if context has no time token, ask for one
+   // this should only happen on init() for the Remote (pub-only) side unless it fails to work
+   std::string tkn( pQueue->get_ttok() );
+   if (tkn.empty())
+   {
+      // start a "fake" publish (time) transaction
+      this->state = remchannel::kBusy;
+      pQueue->setBusy(true);
+      this->pubRetryCount = 1;
+      pubnub_time(this->pContext);
+   }
+}
+
+// get and/or set the time token
+std::string SendChannel::TimeToken(const char* input)
+{
+   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
+   // sets the latest time token received from an OptTimeRequest (if input non-null)
+   // returns the most recent time token
+   std::string result = pQueue->get_ttok();
+   if (input != nullptr)
+      pQueue->set_ttok(input);
+   return result;
 }
 
 std::string SendChannel::JSONify( const std::string& input, bool is_safe )

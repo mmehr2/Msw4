@@ -57,7 +57,7 @@ public:
    // for use by pubnub callback function (PROTECTED in case of UI thread usage)
    void ContinuePublishing(); 
    void PublishRetry();
-   bool SendBare(const char* data) const; // UNPROTECTED
+   bool SendBare(const char* data); // UNPROTECTED
    std::string TimeToken(const char* data = nullptr); // UNPROTECTED
 
    // the callback extensions (will be called directly by the callback function)

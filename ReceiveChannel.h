@@ -38,11 +38,11 @@ public:
 
    bool IsBusy() const;
 
-   void OnMessage(const char* data) const; // for use by OnSubscribeCallback() (UNPROTECTED) (SUB)
+   void OnMessage(const char* data); // for use by OnSubscribeCallback() (UNPROTECTED) (SUB)
    void OnSubscribeCallback(pubnub_res res); // for use by pubnub callback function (UNPROTECTED) (SUB)
 
    // For use by PubnubComm client (ultimately UI thread)
-   bool Listen() const;
+   bool Listen();
 
    const char* GetTypeName() const;
    // NOTE: 'safe' commands do not contain any escapable JSON string characters or non-ASCII chars

@@ -191,7 +191,7 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //int port = _tstoi(password);
    //char buffer[128];
    //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
-   fRemote->Initialize(ascii.m_psz);
+   fRemote->Login(ascii.m_psz);
 }
 
 UINT AComm::Connect(LPVOID /*param*/) {
@@ -236,7 +236,7 @@ void AComm::Disconnect() {
       fThread->Delete();
       fThread = NULL;
    }
-   fRemote->Deinitialize(); // but this is asynchronous ...
+   fRemote->Logout(); // but this is asynchronous ...
    this->SetState(kIdle);
 }
 

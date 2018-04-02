@@ -370,61 +370,96 @@ const char* APubnubComm::GetConnectionStateName() const
 }
 
 
-bool APubnubComm::Initialize(const char* ourDeviceName_)
+bool APubnubComm::isBusy() const
 {
+   bool result = false;
+   switch (this->fLinked) {
+   case kConnecting:
+   case kDisconnecting:
+   case kLinking:
+   case kUnlinking:
+   case kBusy:
+      result = true;
+      break;
+   default:
+      break;
+   }
+   return result;
+}
+
+
+bool APubnubComm::Login(const char* ourDeviceName_)
+{
+   // no-op if waiting on existing transaction
+   if (isBusy()) {
+      TRACE("%s LOGIN, LINK ALREADY BUSY.\n", this->GetConnectionTypeName());
+      return false;
+   }
+
    if (fConnection == kNotSet) {
       TRACE("DEVICE IS %s, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName());
       return false;
    }
 
-   this->Deinitialize();
-
    bool result = true;
    std::string ourDeviceName = ourDeviceName_ ? ourDeviceName_ : "";
    // if we've been given a new name, change our channel name here
-   if (!ourDeviceName.empty())
+   if (!ourDeviceName.empty()) {
+      this->deviceName = ourDeviceName;
+      this->Write();
       pReceiver->SetName( this->MakeChannelName(ourDeviceName) );
+   }
 
+   // PRIMARY:
    if (this->isPrimary()) {
-      // TBD - connect up to proxy if needed using pSender
+      // TBD - get proxy info if needed using special proxy thread and context (Issue #10-B)
+      // NOTE: To save message traffic, Primary will only listen when a transaciton is in progress that needs it
       fLinked = kConnected;
       TRACE("%s IS ONLINE AND READY.\n", this->GetConnectionTypeName());
       return true;
    }
-   
-   if (pReceiver->isUnnamed()) {
-      TRACE("%s %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+
+   // SECONDARY:
+   if (fLinked >= kConnected) {
+      TRACE("%s LOGIN, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName());
+      return result;
+   }
+
+   if (this->pReceiver->isUnnamed()) {
+      TRACE("%s LOGIN: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       return false;
    }
 
    // set up receiver to listen on our private channel
-   //if (!ConnectHelper(pReceiver)) {
-   //   TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName());
+   if (!(pReceiver->Init())) {
+      TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName());
 
-   //   result = false;
-   //} else {
-   //   TRACE("%s IS NOW LISTENING TO %s ON CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName());
+      result = false;
+   } else {
+      TRACE("%s LOGIN: %s IS WAITING TO LISTEN AS %s ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), pReceiver->GetTypeName(), ourDeviceName_, pReceiver->GetName());
 
-   //   fLinked = kConnected; // TBD - move this to callback when known
-   //}
+      fLinked = kConnecting; // TBD - move this to callback when known
+   }
    return result; // started sequence successfully
 }
 
-void APubnubComm::Deinitialize()
+void APubnubComm::Logout()
 {
-   if (fLinked == kDisconnected) {
+   if (fLinked <= kConnected) {
+      TRACE("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
+         (fLinked == kDisconnected) ? "LOGGED" : "LOGGING");
       return;
    }
 
    if (pReceiver->isUnnamed()) {
-      TRACE("%s HAS NO LOCAL LINK TO SHUT DOWN.\n", this->GetConnectionTypeName());
+      TRACE("%s HAS NO %s LINK TO SHUT DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       return;
    }
 
    // shut down any pSender link first
-   this->CloseLink();
+   //this->CloseLink();
 
    TRACE("%s IS SHUTTING DOWN LOCAL LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pReceiver->GetName());
    // make it so 
@@ -531,7 +566,7 @@ void APubnubComm::OnMessage(const char * message)
       /*t*/ case AComm::kTimer:           this->SendCmd(((AComm::kReset == arg1) ? rCmdTimerReset : rCmdToggleTimer), arg1); break;
       /*s*/ case AComm::kScrollSpeed:     this->SendMsg(AMswApp::sSetScrollSpeedMsg, arg1); break;
       /*p*/ case AComm::kScrollPos:       this->SendMsg(AMswApp::sSetScrollPosMsg, arg1); break;
-      /*g*/ case AComm::kScrollPosSync:   this->SendMsg(AMswApp::sSetScrollPosSyncMsg, arg1); break;
+      /*y*/ case AComm::kScrollPosSync:   this->SendMsg(AMswApp::sSetScrollPosSyncMsg, arg1); break;
       /*m*/ case AComm::kScrollMargins:   theApp.SetScrollMargins(arg1, arg2); break;
       /*c*/ case AComm::kCueMarker:       ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
       /*f*/ case AComm::kFrameInterval:   AScrollDialog::gMinFrameInterval = arg1; break;

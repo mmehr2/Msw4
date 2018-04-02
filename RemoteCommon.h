@@ -10,14 +10,18 @@ enum ConnectionType {
 };
 
 enum ConnectionStatus {
-   kDisconnected, // no local link
-   //kConnecting, // transient
-   kConnected, // no remote link
-   //kRemoting, // transient
-   kChatting, // both links, no command modes
+   kDisconnected, // not online (logged out)
+   kConnecting, // transient v
+   kDisconnecting, // transient ^
+   kConnected, // online, has contact with system but not in paired communications
+   kLinking, // transient v
+   kUnlinking, // transient ^
+   kChatting, // paired for comm, but no commands in progress
    kScrolling, // CMD: scrolling is in progress
    kFileSending, // CMD: file send is in progress
    kFileRcving, // CMD: file rcv is in progress
+   kFileCanceling,
+   kBusy, // transaction in progress
 };
 
 namespace remchannel {

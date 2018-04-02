@@ -2,8 +2,8 @@
 
 /* OPERATIONAL SCHEME
 The class will maintain two channels for various purposes:
-1. THe local channel will be the one to use for the remote to talk back to this class on
-2. The remote channel will be the one to use to contact the remote end
+1. The Receiver channel will be the one to use for listening for any remote communications to this machine
+2. The Sender channel will be the one to use to contact the remote machine
 
 Channels will be named by convention as follows:
    MSW-<custname>-<devicename>
@@ -12,26 +12,47 @@ where the <custname> is the assigned customer name (needs to be unique across al
 the <devicename> is assigned by the customer and set up in the configuration data
 
 IN THIS VERSION:
-1. On startup, the class subscribes its assigned local channel (config file) (PRIMARY/SECONDARY both)
+1. On startup, the class sets up info but does not start communications (PRIMARY/SECONDARY both)
    a. State is kDisconnected
-   b. No need to pay attention to any messages coming in here
-2. When Initialize() occurs, the user can supply a different local name
+   b. No need to pay attention to any messages coming in here (would cause excess traffic)
+2. When Login() occurs, the user can supply a different local name
    a. Decide if this is permanent or just a temporary override
    b. If perm, need to update the config when diffs are detected
    c. If temp, just let it override here.
-   d. If changes happened, Unsubscribe the old channel, and subscribe to the new one
-3. When OpenLink() occurs, the class is given the name of a SECONDARY to contact...
+   d. PRIMARY - no operation occurs (except configuring Receiver with new channel name)
+   e. SECONDARY - Receiver enters subscribe loop listening for messages
+ * f. If changes happened, may need to Unsubscribe the old channel, and subscribe to the new one
+   g. State goes to kConnected immediately (no async ops)
+3. PRIMARY: When OpenLink() occurs, the class is given the name of a SECONDARY to contact...
    a. The remote channel name is calculated and saved
-   b. The Contact message is published to the remote channel
-   c. The subscriber pays attention to callback messages FROM THAT REMOTE ONLY, if needed
-   d. State is kConnecting until the AckContact comes back
-   e. On receiving AckContact, state is kConnected and further connection requests are ignored
-4. CloseLink() disconnects any use of the remote channel
-   a. State goes to kDisconnecting if needed, outbound conversations cease
-   b. Unsubscribe the remote channel
-   c. When successful, state goes to kDisconnected, no error
-   d. If error unsubscribing, state must go to kDisconnected with error condition
+   b. TBD The Contact message is published to the Sender channel
+   c. The Receiver pays attention to a single callback message, entering a single subscribe request w/o looping
+   d. State is kLinking until the AckContact comes back
+   e. On receiving AckContact, state is kChatting
+   f. SECONDARY: Receiver gets the Contact message, configures its Sender channel and sends back the AckContact in reply
+   g. SECONDARY state goes to kChatting and further connection requests from other PRIMARY machines are ignored
+4. PRIMARY: CloseLink() disconnects any use of the remote channel
+   a. Any outgoing messages to Sender are canceled.
+   b. At same time, Unsubscribe the Receiver channel if in use for a Response wait
+   c. Wait for Receiver cancel to complete (if any)
+   d. TBD Send the Disconnect message to the Sender channel to release the SECONDARY
+   e. Wait for both Sender and Receiver ops to complete
+   f. When successful, state goes to kConnected, no error
+   g. If errors on R or S, object must decide if state returns to kChatting or moves to kConnected
+   h. SECONDARY: Receiver gets Disconnect message, forgets about the Sender channel (cancel any publishes and state=>kUnlinking)
+   i. SECONDARY: When done, state goes to kConnected and further Contact requests are allowed (ignore cancel errors?)
+5. When Logout() occurs, the shutdown of links should happen.
+   a. PRIMARY: If links are paired (kChatting), CloseLink() must be called first, and wait for the completion.
+   b. Once we are in kConnected state, we can Deinit() both Sender and Receiver. No need to wait. (SECONDARY stays kConnected)
+   c. SECONDARY: If logging out is initiated on the Secondary, and if the link is kChatting, the pairing must be removed first.
+      c1. The Sender must send the Disconnect Response message to the PRIMARY and wait for the publish callback.
+      c2. When it comes in, state goes to kConnected and logout can continue
+   d. Then the Receiver subscribe loop must be canceled and then wait for completion.
+   e. SECONDARY state goes to kDisconnected once the sub is canceled OK.
+   f. Logout can fail if the Sender Disconnect fails to publish, or the Receiver cancel fails to work. State changes?
 
+NOTE: All async replies that post status changes must be funneled through the fComm object before being posted to the parent window.
+   This will allow fComm to change its state accordingly as well. The function that does this is @@@TBD@@@.
 */
 
 #include <afx.h> // for HWND
@@ -116,8 +137,8 @@ public:
    // PRIMARY: no channel setup, just setup and verify connections and remember device name
    // SECONDARY: will also setup receiver channel to listen on private device channel
    // returns false if immediate errors
-   bool Initialize(const char* deviceName);
-   void Deinitialize();
+   bool Login(const char* asDeviceName);
+   void Logout();
 
    // PRIMARY: will open up a sender link to a particular SECONDARY (may also configure receiver to listen for Responses)
    // SECONDARY: needs to get a request for this over the link, to configure the sender channel where to send Responses
@@ -130,7 +151,8 @@ public:
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);
 
-   // chat code taken from old implementation by Steve Cox
+   // Post a result message to the parent window (for UI action)
+   // NOTE: this is based on chat code taken from old implementation by Steve Cox
    void SendCmd(WPARAM cmd, int param) {::PostMessage(fParent, WM_COMMAND, MAKEWPARAM(cmd, param), 0);}
    void SendMsg(UINT msg, WPARAM wParam=0, LPARAM lParam=0) {::PostMessage(fParent, msg, wParam, lParam);}
 

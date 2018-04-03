@@ -23,8 +23,8 @@ extern "C" {
 
 namespace remchannel {
    // these are used by the channel interfaces
-   const std::string JSON_PREFIX(1, (char)JSON::PREFIX);
-   const std::string JSON_SUFFIX(1, (char)JSON::SUFFIX);
+   const std::string JSON_PREFIX = std::string(1, (char)PREFIX);
+   const std::string JSON_SUFFIX = std::string(1, (char)SUFFIX);
 }
 
 namespace {

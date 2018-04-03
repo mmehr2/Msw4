@@ -80,6 +80,7 @@ BEGIN_MESSAGE_MAP(AMainFrame, CMDIFrameWnd)
    ON_COMMAND(rCmdEditPrefs, &OnPreferences)
 #ifdef _REMOTE
    ON_COMMAND(rCmdRemote, &OnRemote)
+	ON_MESSAGE(WMA_UPDATE_SETTINGS, OnUpdateSettings)
 #endif // _REMOTE
    ON_COMMAND(rCmdViewQueue, &OnViewScriptQueue)
    ON_UPDATE_COMMAND_UI(rCmdViewQueue, &OnUpdateViewScriptQueue)
@@ -705,47 +706,52 @@ void AMainFrame::OnPreferences()
 
    if (IDOK == dlg.DoModal())
    {  // save 'em
-      theApp.fClearPaperclips = dlg.fGeneralPage.fClearPaperclips ? true : false;
-      theApp.fResetTimer = dlg.fGeneralPage.fResetTimer ? true : false;
-      theApp.fManualTimer = dlg.fGeneralPage.fManualTimer ? true : false;
-      const int charsPerSec = static_cast<int>(dlg.fGeneralPage.fCharsPerSecond * 10.0);
-      if (charsPerSec != theApp.fCharsPerSecond)
-      {  // redraw the script dialog
-         theApp.fCharsPerSecond = charsPerSec;
-         theApp.fScriptQueueDlg.UpdateTimes();
-      }
-      const bool inverseEdit = dlg.fGeneralPage.fInverseEditMode ? true : false;
-      if (theApp.fInverseEditMode != inverseEdit)
-      {  // redraw all views
-         theApp.fInverseEditMode = inverseEdit;
-         this->SendMessageToDescendants(theApp.sInverseEditModeMsg);
-      }
-      theApp.fFontLanguage = dlg.fGeneralPage.fFontLanguage;
-      m_wndFormatBar.FillFontList();
-
-      theApp.fLButtonAction = dlg.fScrollPage.fLButton;
-      theApp.fRButtonAction = dlg.fScrollPage.fRButton;
-      theApp.fReverseSpeedControl = dlg.fScrollPage.fReverseSpeedControl ? true : false;
-
-      theApp.fColorOut = dlg.fVideoPage.fColor ? true : false;
-      theApp.fInverseOut = dlg.fVideoPage.fInverseVideo ? true : false;
-      theApp.fShowDividers = dlg.fVideoPage.fScriptDividers ? true : false;
-      theApp.fShowSpeed = dlg.fVideoPage.fShowSpeed ? true : false;
-      theApp.fShowPos = dlg.fVideoPage.fShowScriptPos ? true : false;
-      theApp.fShowTimer = dlg.fVideoPage.fShowTimer ? true : false;
-      theApp.fLoop = dlg.fVideoPage.fLoop ? true : false;
-      theApp.fLink = dlg.fVideoPage.fLink ? true : false;
-      theApp.fMirror = dlg.fVideoPage.fRightToLeft ? true : false;
-
-      /*
-      theApp.fCaption.fPortNum = dlg.fCaptionsPage.fPort;
-      theApp.fCaption.fEnabled = dlg.fCaptionsPage.fEnabled;
-      theApp.fCaption.fBaudRate = dlg.fCaptionsPage.fBaudRate;
-      theApp.fCaption.fByteSize = dlg.fCaptionsPage.fByteSize;
-      theApp.fCaption.fParity = dlg.fCaptionsPage.fParity;
-      theApp.fCaption.fStopBits = dlg.fCaptionsPage.fStopBits;
-      */
+      SaveSettings(dlg);
    }
+}
+
+void AMainFrame::SaveSettings(const APrefsDlg& dlg)
+{
+   theApp.fClearPaperclips = dlg.fGeneralPage.fClearPaperclips ? true : false;
+   theApp.fResetTimer = dlg.fGeneralPage.fResetTimer ? true : false;
+   theApp.fManualTimer = dlg.fGeneralPage.fManualTimer ? true : false;
+   const int charsPerSec = static_cast<int>(dlg.fGeneralPage.fCharsPerSecond * 10.0);
+   if (charsPerSec != theApp.fCharsPerSecond)
+   {  // redraw the script dialog
+      theApp.fCharsPerSecond = charsPerSec;
+      theApp.fScriptQueueDlg.UpdateTimes();
+   }
+   const bool inverseEdit = dlg.fGeneralPage.fInverseEditMode ? true : false;
+   if (theApp.fInverseEditMode != inverseEdit)
+   {  // redraw all views
+      theApp.fInverseEditMode = inverseEdit;
+      this->SendMessageToDescendants(theApp.sInverseEditModeMsg);
+   }
+   theApp.fFontLanguage = dlg.fGeneralPage.fFontLanguage;
+   m_wndFormatBar.FillFontList();
+
+   theApp.fLButtonAction = dlg.fScrollPage.fLButton;
+   theApp.fRButtonAction = dlg.fScrollPage.fRButton;
+   theApp.fReverseSpeedControl = dlg.fScrollPage.fReverseSpeedControl ? true : false;
+
+   theApp.fColorOut = dlg.fVideoPage.fColor ? true : false;
+   theApp.fInverseOut = dlg.fVideoPage.fInverseVideo ? true : false;
+   theApp.fShowDividers = dlg.fVideoPage.fScriptDividers ? true : false;
+   theApp.fShowSpeed = dlg.fVideoPage.fShowSpeed ? true : false;
+   theApp.fShowPos = dlg.fVideoPage.fShowScriptPos ? true : false;
+   theApp.fShowTimer = dlg.fVideoPage.fShowTimer ? true : false;
+   theApp.fLoop = dlg.fVideoPage.fLoop ? true : false;
+   theApp.fLink = dlg.fVideoPage.fLink ? true : false;
+   theApp.fMirror = dlg.fVideoPage.fRightToLeft ? true : false;
+
+   /*
+   theApp.fCaption.fPortNum = dlg.fCaptionsPage.fPort;
+   theApp.fCaption.fEnabled = dlg.fCaptionsPage.fEnabled;
+   theApp.fCaption.fBaudRate = dlg.fCaptionsPage.fBaudRate;
+   theApp.fCaption.fByteSize = dlg.fCaptionsPage.fByteSize;
+   theApp.fCaption.fParity = dlg.fCaptionsPage.fParity;
+   theApp.fCaption.fStopBits = dlg.fCaptionsPage.fStopBits;
+   */
 }
 
 #ifdef _REMOTE
@@ -757,6 +763,16 @@ void AMainFrame::OnRemote()
       //
       TRACE("TBD - SECONDARY NEEDS DIALOG HERE...\n");
    }
+}
+
+LRESULT AMainFrame::OnUpdateSettings(WPARAM wParam, LPARAM /*lParam*/)
+{
+   CStringA s( (LPCSTR)wParam );
+   TRACE("UPDATE SETTINGS MESSAGE: %s\n", (LPCSTR)s);
+   APrefsDlg dlg(_T("Data from Remote"));
+   dlg.Deserialize(s);
+   SaveSettings(dlg);
+   return 0;
 }
 #endif // _REMOTE
 

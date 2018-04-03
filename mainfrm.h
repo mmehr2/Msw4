@@ -11,6 +11,8 @@
 //#include "SRManager.h"
 #include "BCMenu.h"
 
+class APrefsDlg; // fwd.ref.
+
 class AMainFrame : public CMDIFrameWnd
 {
 	DECLARE_DYNCREATE(AMainFrame)
@@ -67,6 +69,7 @@ protected:
 	afx_msg LRESULT UpdateStyles(WPARAM wParam, LPARAM lParam);
 #ifdef _REMOTE
    afx_msg void OnRemote();
+	afx_msg LRESULT OnUpdateSettings(WPARAM wParam, LPARAM lParam);
 #endif // _REMOTE
    //}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
@@ -100,6 +103,7 @@ private:
    afx_msg void OnUpdateFormatCommand(CCmdUI *pCmdUI);
 
    void SetArtTimer(DWORD milliseconds);
+   void SaveSettings(const APrefsDlg& data);
 
 private:
    //ASRManager fSpeech;

@@ -21,6 +21,12 @@ extern "C" {
 
 #pragma comment (lib, "pubnub_callback")
 
+namespace remchannel {
+   // these are used by the channel interfaces
+   const std::string JSON_PREFIX(1, (char)JSON::PREFIX);
+   const std::string JSON_SUFFIX(1, (char)JSON::SUFFIX);
+}
+
 namespace {
 
    // channel naming convention

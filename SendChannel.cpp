@@ -254,7 +254,7 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
       //result = wjUTF8Encode(buffer);
    }
    // 2. add JSON string prefix and suffix (simple mode) "<stripped-string>"
-   result = remchannel::JSON_PREFIX + result + remchannel::JSON_PREFIX;
+   result = remchannel::JSON_PREFIX + result + remchannel::JSON_SUFFIX;
    return result;
 }
 

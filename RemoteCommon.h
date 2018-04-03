@@ -35,7 +35,10 @@ namespace remchannel {
       kBusy, // transaction in process (sub, pub, or time), waiting for callback
    };
 
-   const std::string JSON_PREFIX = "\"";
-   const std::string JSON_SUFFIX = "\"";
+   enum JSON {
+      PREFIX = '\"',
+      SUFFIX = '\"'
+   };
 
+   extern const std::string JSON_PREFIX, JSON_SUFFIX;
 }

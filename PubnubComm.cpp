@@ -342,7 +342,7 @@ std::string APubnubComm::MakeChannelName( const std::string& deviceName ) const
 
 const char* APubnubComm::GetConnectionTypeName() const
 {
-   const char* result = this->isPrimary() ? "PRIMARY" : this->isPrimary() ? "SECONDARY" : "UNCONFIGURED";
+   const char* result = this->isPrimary() ? "PRIMARY" : this->isSecondary() ? "SECONDARY" : "UNCONFIGURED";
    return result;
 }
 
@@ -396,10 +396,9 @@ bool APubnubComm::isBusy() const
 
 bool APubnubComm::Login(const char* ourDeviceName_)
 {
-   // no-op if waiting on existing transaction
-   if (isBusy()) {
-      TRACE("%s LOGIN, LINK ALREADY BUSY.\n", this->GetConnectionTypeName());
-      return false;
+      TRACE("%s LOGIN REQUESTED, ALREADY %s IN.\n", this->GetConnectionTypeName(), 
+         (fLinked == kConnected) ? "LOGGED" : "LOGGING");
+      return true;
    }
 
    if (fConnection == kNotSet) {
@@ -453,7 +452,7 @@ bool APubnubComm::Login(const char* ourDeviceName_)
 
 void APubnubComm::Logout()
 {
-   if (fLinked <= kConnected) {
+   if (fLinked < kConnected) {
       TRACE("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
          (fLinked == kDisconnected) ? "LOGGED" : "LOGGING");
       return;
@@ -466,20 +465,40 @@ void APubnubComm::Logout()
 
    // shut down any pSender link first
    //this->CloseLink();
+   if (fLinked > kConnected) {
+      TRACE("%s LOGOUT ERROR: %s LINK STILL OPERATING, DISCONNECT FIRST.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      return;
+   }
 
-   TRACE("%s IS SHUTTING DOWN LOCAL LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pReceiver->GetName());
+   TRACE("%s IS SHUTTING DOWN %s LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+
    // make it so 
-   //// just don't lose the pReceiver channel name - it will be replaced if needed by a new one, else use old one
-   //if (!DisconnectHelper(pReceiver)) {
-   //   TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), pReceiver->GetName());
-   //   // TBD - but this really will cause problems! what are failure scenarios here?
-   //} else {
-   //   TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), pReceiver->GetName());
+   // PRIMARY:
+   if (this->isPrimary()) {
+      // NOTE: This version does not use Primary at login time, so nothing to log out.
+      fLinked = kDisconnected;
+      TRACE("%s IS OFFLINE.\n", this->GetConnectionTypeName());
+      return;
+   }
 
-   //   fLinked = kDisconnected;
-   //}
+   // SECONDARY: shut down the listener loop in Receiver channel
+   // NOTE: If this is async, we need to be told to wait.
+   bool res = pReceiver->DeInit();
+   bool busy = pReceiver->IsBusy();
+   if (!res) {
+      TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
+         this->GetConnectionTypeName(), pReceiver->GetName());
+      // TBD - but this really will cause problems! what are failure scenarios here?
+   } else if (!busy) {
+      TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
+         this->GetConnectionTypeName(), pReceiver->GetName());
+
+      fLinked = kDisconnected;
+   } else {
+      TRACE("%s WAITING TO SHUT DOWN CHANNEL %s\n", 
+         this->GetConnectionTypeName(), pReceiver->GetName());
+      // look for answer in the OnCallback
+   }
 }
 
 bool APubnubComm::OpenLink(const char * pSenderName_)

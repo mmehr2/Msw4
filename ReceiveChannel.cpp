@@ -115,8 +115,8 @@ void ReceiveChannel::Setup(
 
 bool ReceiveChannel::Init(void)
 {
-   if (state == remchannel::kNone)
-      return false;
+   if (IsBusy())
+      return false; // TBD - return value should be state-dependent here
    // SECONDARY receiver gets this at Login time
    // PRIMARY receiver gets this at Connect time (or whenever a response is desired)
    // for all calls after the first on a new context, set transaction timeouts and either listen (local) or return
@@ -129,15 +129,45 @@ bool ReceiveChannel::Init(void)
 // the job of this should be to close any connection. We should not need to free the context here, just the dtor.
 bool ReceiveChannel::DeInit()
 {
-   if (state == remchannel::kDisconnecting) {
+   if (state <= remchannel::kDisconnecting) {
       // no need to send this more than once
       return true;
    }
 
    pubnub_cancel(pContext);
    // set Comm state to kDisconnecting until the callback gets results
-   state = remchannel::kDisconnecting;
-   return true;
+   bool result = true;
+   switch (state) {
+   case remchannel::kDisconnecting:
+      result = false; // wait until result done
+      break;
+   case remchannel::kIdle:
+      // subscribe op in progress: cancel it
+      pubnub_cancel(pContext);
+      // set channel state until the callback gets results
+      state = remchannel::kDisconnecting;
+      break;
+   default:
+      // nothing to cancel, we just go "offline" (TBD - do we forget the channel we were using here?)
+      state = remchannel::kDisconnected;
+      break;
+   }
+   return result;
+}
+
+bool ReceiveChannel::IsBusy() const
+{
+   bool result = false;
+   switch (this->state) {
+   case remchannel::kBusy:
+   case remchannel::kDisconnecting:
+   case remchannel::kConnecting:
+      result = true;
+      break;
+   default:
+      break;
+   }
+   return result;
 }
 
 // start to listen on this channel

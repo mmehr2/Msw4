@@ -30,8 +30,8 @@ namespace remchannel {
       kNone, // starts here, needs activation info
       kDisconnected, // no active connection
       kConnecting, // in process of setting up connection
-      kIdle, // connected, no active transaction or command
       kDisconnecting, // in process of shutting down connection
+      kIdle, // connected, no active transaction or command
       kBusy, // transaction in process (sub, pub, or time), waiting for callback
    };
 

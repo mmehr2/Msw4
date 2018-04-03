@@ -116,10 +116,8 @@ void SendChannel::Setup(
 
 bool SendChannel::Init(const std::string& cname)
 {
-   // ignore Init calls while disconnecting or busy
-   if (state == remchannel::kDisconnecting || 
-      state == remchannel::kBusy || 
-      state == remchannel::kNone) {
+   // ignore Init calls while disconnecting or busy, but post a deferred Init?
+   if (IsBusy()) {
       return false;
    }
 
@@ -147,6 +145,21 @@ bool SendChannel::DeInit()
    default:
       // nothing to cancel, we just go "offline" (TBD - do we forget the channel we were using here?)
       state = remchannel::kDisconnected;
+      break;
+   }
+   return result;
+}
+
+bool SendChannel::IsBusy() const
+{
+   bool result = false;
+   switch (this->state) {
+   case remchannel::kBusy:
+   case remchannel::kDisconnecting:
+   case remchannel::kConnecting:
+      result = true;
+      break;
+   default:
       break;
    }
    return result;

@@ -70,6 +70,7 @@ protected:
 #ifdef _REMOTE
    afx_msg void OnRemote();
 	afx_msg LRESULT OnUpdateSettings(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateStatus(WPARAM wParam, LPARAM lParam);
 #endif // _REMOTE
    //}}AFX_MSG
 	DECLARE_MESSAGE_MAP()

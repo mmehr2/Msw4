@@ -81,6 +81,7 @@ BEGIN_MESSAGE_MAP(AMainFrame, CMDIFrameWnd)
 #ifdef _REMOTE
    ON_COMMAND(rCmdRemote, &OnRemote)
 	ON_MESSAGE(WMA_UPDATE_SETTINGS, OnUpdateSettings)
+	ON_MESSAGE(WMA_UPDATE_STATUS, OnUpdateStatus)
 #endif // _REMOTE
    ON_COMMAND(rCmdViewQueue, &OnViewScriptQueue)
    ON_UPDATE_COMMAND_UI(rCmdViewQueue, &OnUpdateViewScriptQueue)
@@ -761,7 +762,8 @@ void AMainFrame::OnRemote()
       ARemoteDlg().DoModal();
    else {
       //
-      TRACE("TBD - SECONDARY NEEDS DIALOG HERE...\n");
+      TRACE("TBD - SECONDARY NEEDS DIFFERENT DIALOG HERE...\n");
+      ARemoteDlg().DoModal();
    }
 }
 
@@ -772,6 +774,12 @@ LRESULT AMainFrame::OnUpdateSettings(WPARAM wParam, LPARAM /*lParam*/)
    APrefsDlg dlg(_T("Data from Remote"));
    dlg.Deserialize(s);
    SaveSettings(dlg);
+   return 0;
+}
+
+LRESULT AMainFrame::OnUpdateStatus(WPARAM wParam, LPARAM /*lParam*/)
+{
+   TRACE("UI RECEIVED TRANSACTION STATUS UPDATE CODE: %u\n", (UINT)wParam);
    return 0;
 }
 #endif // _REMOTE

@@ -174,7 +174,7 @@ bool AComm::IsOnline() const {
 
 void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //ASSERT(username && *username && password);
-   this->Disconnect(); // but this is asynchronous...
+   this->Disconnect(); // this is asynchronous...
 
    if (!(username && *username && password)) {
       TRACE("CANNOT CONFIGURE IP ADDRESS AT STARTUP - USE REMOTE DIALOG TO CONFIGURE LOCAL ADDRESS.\n");
@@ -192,6 +192,11 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
    //char buffer[128];
    //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
    fRemote->Login(ascii.m_psz);
+   this->RemoteBusyWait();
+   if (fRemote->isSuccessful())
+      this->SetState(kConnected);
+   else
+      this->SetState(kIdle); // with failure code reported
 }
 
 UINT AComm::Connect(LPVOID /*param*/) {
@@ -231,13 +236,43 @@ UINT AComm::Connect(LPVOID /*param*/) {
    return 0;
 }
 
+void AComm::OnStateChange(int statusCode) {
+   // **NOTE**: this will be called on a non-UI thread in most cases 
+   // for now, we will NOT make any local state changes here (CRITICAL SECTION NEEDED FOR THAT)
+   // each function can examine the status code that caused this and change state accordingly
+   // post the status message to the UI (no CS for that)
+   fRemote->SendMsg( WMA_UPDATE_STATUS, (WPARAM)statusCode );
+}
+
+void AComm::RemoteBusyWait() {
+   //while (fRemote->isBusy()) {
+   //   Sleep(10);
+   //}
+   do {  // check for messages while we're killing time...
+      MSG msg;
+      if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+      {  // we've got messages in our queue
+         ::TranslateMessage(&msg);
+         ::DispatchMessage(&msg);
+      }
+   } while (fRemote->isBusy());
+}
+
 void AComm::Disconnect() {
    if (NULL != fThread) {
       fThread->Delete();
       fThread = NULL;
    }
+
+   this->SetState(kDisconnecting);
    fRemote->Logout(); // but this is asynchronous ...
-   this->SetState(kIdle);
+
+   this->RemoteBusyWait();
+
+   if (fRemote->isSuccessful())
+      this->SetState(kIdle);
+   else
+      this->SetState(kConnected); // with failure code reported
 }
 
 bool AComm::StartChat(LPCTSTR target) {
@@ -248,17 +283,17 @@ bool AComm::StartChat(LPCTSTR target) {
    char buffer[kMaxJid] = {0}; // this is actually an IP address now for TEST version
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
 
-   if (fRemote->OpenLink(buffer)) {
-      // SECONDARY ADDRESS
-      TRACE("SECONDARY LINK CONNECTED!\n");
-      this->SetState(kChatting);
-   }
-   else {
-      TRACE("CANNOT OPEN LINK TO SECONDARY.\n");
-      this->SetState(kIdle);
-   }
+   fRemote->OpenLink(buffer);
 
-   return true;
+   this->RemoteBusyWait();
+   bool result = fRemote->isSuccessful();
+
+   if (result)
+      this->SetState(kChatting);
+   else
+      this->SetState(kConnected); // with failure code reported
+
+   return result;
 }
 
 void AComm::EndChat() {
@@ -269,7 +304,14 @@ void AComm::EndChat() {
 
    fRemote->CloseLink();
 
-   this->SetState(kConnected); // no longer chatting
+   this->RemoteBusyWait();
+   bool result = fRemote->isSuccessful();
+
+   if (result)
+      this->SetState(kConnected); // no longer chatting
+   else
+      // might need to check actual error scenario (code) to determine best state here
+      this->SetState(kChatting); // with failure code reported
 }
 
 bool AComm::SendFile(LPCTSTR filename) {

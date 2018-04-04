@@ -121,9 +121,12 @@ bool ReceiveChannel::Init(void)
    // PRIMARY receiver gets this at Connect time (or whenever a response is desired)
    // for all calls after the first on a new context, set transaction timeouts and either listen (local) or return
    // if local, we kick off the first subscribe automatically (gets a time token)
-   this->init_sub_pending = true; // makes sure we do a "real" subscribe too
+   //??@@@@@??//this->init_sub_pending = true; // makes sure we do a "real" subscribe too
       // NOTE: not needed, just handle empty responses (this is the time token under the hood)
-   return Listen();
+   bool startedOK = Listen();
+   // notify client of login completion + error status
+   pService->OnTransactionComplete(remchannel::kReceiver, startedOK ? remchannel::kOK : remchannel::kError);
+   return startedOK;
 }
 
 // the job of this should be to close any connection. We should not need to free the context here, just the dtor.
@@ -134,7 +137,7 @@ bool ReceiveChannel::DeInit()
       return true;
    }
 
-   pubnub_cancel(pContext);
+   //pubnub_cancel(pContext);
    // set Comm state to kDisconnecting until the callback gets results
    bool result = true;
    switch (state) {
@@ -143,9 +146,10 @@ bool ReceiveChannel::DeInit()
       break;
    case remchannel::kIdle:
       // subscribe op in progress: cancel it
-      pubnub_cancel(pContext);
       // set channel state until the callback gets results
       state = remchannel::kDisconnecting;
+      // NOTE: since callback may run synchronously on this thread, set the state 1st
+      pubnub_cancel(pContext);
       break;
    default:
       // nothing to cancel, we just go "offline" (TBD - do we forget the channel we were using here?)
@@ -186,7 +190,7 @@ bool ReceiveChannel::Listen(void)
 
 void ReceiveChannel::OnMessage(const char* data)
 {
-   // coming in on the subscriber thread
+   // dispatch data to higher layer; coming in on the subscriber background thread
    if (pService) {
       // strip the JSON-ness (OK for simple strings anyway)
       std::string inner_data = UnJSONify(data);
@@ -227,16 +231,21 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       // other errors - notify an error handler, then listen again OR replace context?
       if (res == PNR_CANCELLED) {
          TRACE("SUB OPERATION CANCELLED.\n");
-         if (state == remchannel::kDisconnecting) {
-            state = remchannel::kDisconnected;
-            TRACE("CHANNEL DISCONNECTED.\n");
-         }
+         if (state != remchannel::kDisconnecting)
+            TRACE("CHANNEL DISCONNECTED AT STATE %d.\n", state);
+         else
+            TRACE("CHANNEL DISCONNECTED NORMALLY.\n");
+         state = remchannel::kDisconnected;
+         // notify client of logout completion w/o errors
+         pService->OnTransactionComplete(remchannel::kReceiver, remchannel::kOK);
       }
       return;
    } else if (this->init_sub_pending) {
       // call Listen() again now that we have the initial time token for this context
       this->init_sub_pending = false;
-      this->Listen();
+      bool restartedOK = this->Listen();
+      // notify client of login completion + error status
+      pService->OnTransactionComplete(remchannel::kReceiver, restartedOK ? remchannel::kOK : remchannel::kError);
       return;
    }
    // get all the data if OK
@@ -260,5 +269,6 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
 
    // TBD: do final error handling and decide if OK to continue
    // then reopen an active subscribe() to start the next data transaction
-   this->Listen();
+   // NOTE: this is normal operation, and no transaction is in progress; if it fails, it's an async event worth noticing
+   this->Listen(); // TBD: check return code and deal with this re-subscribe error
 }

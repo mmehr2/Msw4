@@ -39,13 +39,18 @@ public:
       kUnknown,
       kIdle, 
       kConnecting, 
+      kDisconnecting, 
       kConnected, 
       kChatting
    };
    
    enum Status {
       kSuccess,
-      kFailure
+      kWaiting = 50,
+      kFailure = 100,
+      kUnconfigured,
+      kNoChannelName,
+      kUnableToListen,
    };
 
    class ASlave
@@ -86,7 +91,7 @@ public:
      */
    void Disconnect();
 
-   /** enter a new state. Parent will be notified.
+   /** enter a new state. Parent will be notified in some circumstances.
      */
    void SetState(State newState);
 
@@ -116,6 +121,10 @@ public:
    bool IsMaster() const;
    bool IsSlave() const;
    bool IsConnected() const;
+
+   // for use by remote comm implementation, when a transaction completes with a status code
+   void OnStateChange(int statusCode);
+   void RemoteBusyWait();
 
 private:
    static UINT Connect(LPVOID param);

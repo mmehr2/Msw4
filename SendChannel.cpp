@@ -138,9 +138,10 @@ bool SendChannel::DeInit()
       break;
    case remchannel::kBusy:
       // op in progress: cancel it
-      pubnub_cancel(pContext);
       // set channel state until the callback gets results
       state = remchannel::kDisconnecting;
+      // NOTE: since callback may run synchronously on this thread, set the state 1st
+      pubnub_cancel(pContext);
       break;
    default:
       // nothing to cancel, we just go "offline" (TBD - do we forget the channel we were using here?)
@@ -276,6 +277,7 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    std::string op;
    const char *last_tmtoken = "";
    const char* cname = this->GetName();
+   remchannel::result result = remchannel::kOK;
 
    // CUSTOM CALLBACK FOR PUBLISHERS
    op = pubnub_last_publish_result(this->pContext);
@@ -292,6 +294,7 @@ void SendChannel::OnPublishCallback(pubnub_res res)
       case pbccFalse:
          TRACE(" There is no benefit to retry\n");
          this->pubRetryCount = 1;
+         result = remchannel::kError;
          break;
       case pbccTrue:
          TRACE(" Retrying #%d...\n", res, pubnub_res_2_string(res), this->pubRetryCount);
@@ -299,6 +302,7 @@ void SendChannel::OnPublishCallback(pubnub_res res)
       case pbccNotSet:
          TRACE(" We decided not to retry since it could make things worse.\n");
          this->pubRetryCount = 1;
+         result = remchannel::kError;
          break;
       }
    }
@@ -309,8 +313,13 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    // TBD: also limit MAX number of retries, or add a wait, or something
    if (this->pubRetryCount >= 2)
       this->PublishRetry();
-   else if (this->pubRetryCount == 1)
+   else if (this->pubRetryCount == 1) {
+      remchannel::state oldState = state;
       this->ContinuePublishing();
+      // notify client of completion of async Logout w/o errors
+      if (oldState == remchannel::kDisconnecting)
+         pService->OnTransactionComplete(remchannel::kSender, result);
+   }
 }
 
 void SendChannel::OnTimeCallback(pubnub_res res)

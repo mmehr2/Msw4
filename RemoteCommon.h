@@ -26,6 +26,11 @@ enum ConnectionStatus {
 
 namespace remchannel {
 
+   enum type {
+      kReceiver,
+      kSender,
+   };
+
    enum state {
       kNone, // starts here, needs activation info
       kDisconnected, // no active connection
@@ -33,6 +38,11 @@ namespace remchannel {
       kDisconnecting, // in process of shutting down connection
       kIdle, // connected, no active transaction or command
       kBusy, // transaction in process (sub, pub, or time), waiting for callback
+   };
+
+   enum result {
+      kOK,
+      kError,
    };
 
    enum JSON {

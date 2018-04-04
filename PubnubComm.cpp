@@ -154,6 +154,7 @@ APubnubComm::APubnubComm(AComm* pComm)
    , deviceUUID("")
    , pubAPIKey("")
    , subAPIKey("")
+   , statusCode(AComm::kSuccess)
    , pReceiver(nullptr)
    , pSender(nullptr)
    , pBuffer(nullptr)
@@ -353,11 +354,17 @@ const char* APubnubComm::GetConnectionStateName() const
    case kDisconnected:
       result = "DISCONNECTED";
       break;
+   case kDisconnecting:
+      result = "DISCONNECTING";
+      break;
+   case kConnecting:
+      result = "CONNECTING";
+      break;
    case kConnected:
-      result = "CONNECTED LOCALLY";
+      result = "CONNECTED";
       break;
    case kChatting:
-      result = "CONNECTED REMOTELY";
+      result = "PAIRED";
       break;
    case kScrolling:
       result = "SCROLLING";
@@ -367,6 +374,12 @@ const char* APubnubComm::GetConnectionStateName() const
       break;
    case kFileRcving:
       result = "FILE RECEIVING";
+      break;
+   case kFileCanceling:
+      result = "CANCELING FILE OP";
+      break;
+   case kBusy:
+      result = "IN TRANSACTION";
       break;
    default:
       result = "UNKNOWN";
@@ -393,20 +406,35 @@ bool APubnubComm::isBusy() const
    return result;
 }
 
+int APubnubComm::GetStatusCode() const
+{
+   return this->statusCode;
+}
+
+bool APubnubComm::isSuccessful() const
+{
+   return this->statusCode == AComm::kSuccess;
+}
 
 bool APubnubComm::Login(const char* ourDeviceName_)
 {
+   // report where we are each time
+   TRACE("LOGIN STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("LOGIN STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
+   if (fLinked > kDisconnected) {
       TRACE("%s LOGIN REQUESTED, ALREADY %s IN.\n", this->GetConnectionTypeName(), 
          (fLinked == kConnected) ? "LOGGED" : "LOGGING");
+      // don't change statusCode or state here
       return true;
    }
 
    if (fConnection == kNotSet) {
       TRACE("DEVICE IS %s, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName());
+      this->SetState( this->fLinked, AComm::kUnconfigured );
       return false;
    }
 
-   bool result = true;
    std::string ourDeviceName = ourDeviceName_ ? ourDeviceName_ : "";
    // if we've been given a new name, change our channel name here
    if (!ourDeviceName.empty()) {
@@ -415,43 +443,104 @@ bool APubnubComm::Login(const char* ourDeviceName_)
       pReceiver->SetName( this->MakeChannelName(ourDeviceName) );
    }
 
+   bool result = true;
    // PRIMARY:
    if (this->isPrimary()) {
       // TBD - get proxy info if needed using special proxy thread and context (Issue #10-B)
       // NOTE: To save message traffic, Primary will only listen when a transaciton is in progress that needs it
-      fLinked = kConnected;
+      this->SetState( kConnected );
       TRACE("%s IS ONLINE AND READY.\n", this->GetConnectionTypeName());
-      return true;
+      return result;
    }
 
    // SECONDARY:
    if (fLinked >= kConnected) {
       TRACE("%s LOGIN, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName());
+      // don't change state here
       return result;
    }
 
    if (this->pReceiver->isUnnamed()) {
       TRACE("%s LOGIN: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      this->SetState( this->fLinked, AComm::kNoChannelName );
       return false;
    }
 
    // set up receiver to listen on our private channel
+   // NOTE: callback can happen immediately, so set state first; callback will do state transitions
+   this->SetState( kConnecting, AComm::kWaiting );
    if (!(pReceiver->Init())) {
-      TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s\n", 
-         this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName());
+      // immediate failure
+      TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s (STATE=%d)\n", 
+         this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName(), fLinked);
 
+      //this->SetState( kDisconnected, AComm::kUnableToListen );
       result = false;
-   } else {
+   } else if (pReceiver->IsBusy()) {
+      // async completion
       TRACE("%s LOGIN: %s IS WAITING TO LISTEN AS %s ON CHANNEL %s\n", 
          this->GetConnectionTypeName(), pReceiver->GetTypeName(), ourDeviceName_, pReceiver->GetName());
 
-      fLinked = kConnecting; // TBD - move this to callback when known
+   } else {
+      // immediate completion
+      TRACE("%s LOGIN: %s IS LISTENING AS %s ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), pReceiver->GetTypeName(), ourDeviceName_, pReceiver->GetName());
+
+      //this->SetState( kConnected );
    }
    return result; // started sequence successfully
 }
 
+void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::result what)
+{
+   bool changed = false;
+   const char* opname = "UNKNOWN";
+   switch(fLinked) {
+   case kConnecting:
+      // Logging in
+      opname = "LOGIN";
+      if (which != remchannel::kReceiver)
+         break; // only get async logins from Rcvr channel
+      if (what == remchannel::kOK)
+         this->SetState( kConnected );
+      else
+         this->SetState( kDisconnected, this->statusCode );
+      changed = true;
+      break;
+   case kDisconnecting:
+      // Logging out
+      opname = "LOGOUT";
+      if (which != remchannel::kReceiver)
+         break; // only get async logins from Rcvr channel
+      // async logout still can only happen on receiver, since it is the only one logged in
+      if (what == remchannel::kOK)
+         this->SetState( kDisconnected );
+      else
+         this->SetState( kConnected, this->statusCode );
+      changed = true;
+      break;
+   case kLinking:
+   case kUnlinking:
+      // both of these can happen on 
+      break;
+   }
+   if (changed) {
+      // log state change
+      const char* tname = (which == remchannel::kReceiver) ? pReceiver->GetTypeName() : pSender->GetTypeName();
+      const char* cname = (which == remchannel::kReceiver) ? pReceiver->GetName() : pSender->GetName();
+      TRACE("%s %s IN %s OP IS NOW %s ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, opname, this->GetConnectionStateName(), cname);
+      // fire state change up to the next level
+      fComm->OnStateChange(this->statusCode); // to change its own state and post a status message to the UI; needed: status codes
+   }
+}
+
 void APubnubComm::Logout()
 {
+   // report where we are each time
+   TRACE("LOGOUT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("LOGOUT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
    if (fLinked < kConnected) {
       TRACE("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
          (fLinked == kDisconnected) ? "LOGGED" : "LOGGING");
@@ -470,12 +559,12 @@ void APubnubComm::Logout()
       return;
    }
 
-   TRACE("%s IS SHUTTING DOWN %s LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   //TRACE("%s IS SHUTTING DOWN %s LINK TO PUBNUB CHANNEL %s\n", this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
 
    // make it so 
    // PRIMARY:
    if (this->isPrimary()) {
-      // NOTE: This version does not use Primary at login time, so nothing to log out.
+      // NOTE: We do not use Primary at login time, so nothing to log out.
       fLinked = kDisconnected;
       TRACE("%s IS OFFLINE.\n", this->GetConnectionTypeName());
       return;
@@ -483,21 +572,27 @@ void APubnubComm::Logout()
 
    // SECONDARY: shut down the listener loop in Receiver channel
    // NOTE: If this is async, we need to be told to wait.
+   this->SetState( kDisconnecting, AComm::kWaiting );
    bool res = pReceiver->DeInit();
    bool busy = pReceiver->IsBusy();
+   const char* chname = pReceiver->GetName();
    if (!res) {
+      // immediate failure
       TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pReceiver->GetName());
+         this->GetConnectionTypeName(), chname);
       // TBD - but this really will cause problems! what are failure scenarios here?
-   } else if (!busy) {
-      TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pReceiver->GetName());
-
-      fLinked = kDisconnected;
-   } else {
+   } else if (busy) {
+      // waiting to find out results
       TRACE("%s WAITING TO SHUT DOWN CHANNEL %s\n", 
-         this->GetConnectionTypeName(), pReceiver->GetName());
-      // look for answer in the OnCallback
+         this->GetConnectionTypeName(), chname);
+      
+      //fLinked = kDisconnecting;
+   } else {
+      // immediate success
+      TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
+         this->GetConnectionTypeName(), chname);
+
+      //fLinked = kDisconnected;
    }
 }
 

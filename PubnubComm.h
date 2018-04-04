@@ -82,6 +82,8 @@ class APubnubComm
    std::string pubAPIKey;
    std::string subAPIKey;
 
+   int statusCode; // latest transaction result, for reporting to the UI level
+
    // inbound pubnub channel info
    // mainly used by Secondary to listen for incoming Command messages
    // Primary will only this to listen for Response messages, if we implement those
@@ -104,6 +106,11 @@ class APubnubComm
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
+   void SetState( ConnectionStatus newState, int reason=0 )
+   {
+      statusCode = reason;
+      fLinked = newState;
+   }
 
    // get/set options to/from persistent storage (registry)
    void Read();
@@ -132,16 +139,19 @@ public:
    bool isConversing() const { return fLinked >= kChatting; }
 
    bool isBusy() const; // operation in progress, check back later
+   int GetStatusCode() const; // report most-recently-sent status code (ONLY CALL IF NOT BUSY)
+   bool isSuccessful() const; // report if most-recently-sent status code means a successful operation (ONLY CALL IF NOT BUSY)
  
    // Will set up the the channel link(s) to go online
    // PRIMARY: no channel setup, just setup and verify connections and remember device name
    // SECONDARY: will also setup receiver channel to listen on private device channel
-   // returns false if immediate errors
+   // returns false if immediate errors; check isBusy() to determine async operation
    bool Login(const char* asDeviceName);
    void Logout();
 
    // PRIMARY: will open up a sender link to a particular SECONDARY (may also configure receiver to listen for Responses)
    // SECONDARY: needs to get a request for this over the link, to configure the sender channel where to send Responses
+   // returns false if immediate errors; check isBusy() to determine async operation
    bool OpenLink(const char * remote_channel);
    void CloseLink();
 
@@ -150,6 +160,9 @@ public:
 
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);
+
+   // called by Sender/Receiver callback when async operation (transaction start/cancel) completes
+   void OnTransactionComplete(remchannel::type which, remchannel::result what);
 
    // Post a result message to the parent window (for UI action)
    // NOTE: this is based on chat code taken from old implementation by Steve Cox

@@ -102,6 +102,7 @@ public:
       notifications.
      */
    void SetParent(HWND parent);
+   HWND GetParent() const;
 
    /** send a command to the connected slave instance
       return false is sending the command failed
@@ -124,6 +125,7 @@ public:
    bool IsMaster() const;
    bool IsSlave() const;
    bool IsConnected() const;
+   CString GetLastMessage() const;
 
    // for use by remote comm implementation, when a transaction completes with a status code
    void OnStateChange(int statusCode);

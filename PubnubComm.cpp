@@ -733,7 +733,7 @@ void APubnubComm::SendCommand(const char * message)
    std::string msg = (message);
    TRACE("SENDING MESSAGE %s:", msg.c_str()); // DEBUGGING
    if (false == pSender->Send(message)) {
-      TRACE(pSender->op_msg.c_str());
+      TRACE(pSender->GetLastMessage());
    }
    TRACE("\n");
 }
@@ -780,3 +780,12 @@ void TRACE_LAST_ERROR(LPCSTR f, DWORD ln)
 void TRACE_LAST_ERROR(LPCSTR , DWORD ) { }
 #endif
 
+CString APubnubComm::GetLastMessage() const
+{
+   static CString msg;
+   CA2T amsgSender(this->pSender->GetLastMessage());
+   CA2T amsgReceiver(this->pReceiver->GetLastMessage());
+   msg.Format(_T("Last operation completed with code %d\nRCV:%s\nSND:%s\n"),
+      this->statusCode, (LPCTSTR)amsgReceiver, amsgSender.m_psz);
+   return msg;
+}

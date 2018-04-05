@@ -33,10 +33,13 @@ private:
    afx_msg void OnSlaveChange();
    afx_msg void OnLogin();
    afx_msg LRESULT OnKickIdle(WPARAM, LPARAM);
+   afx_msg LRESULT OnUpdateStatus(WPARAM, LPARAM);
 
    virtual BOOL OnInitDialog();
    void EnableControls();
    bool SelIsConnected() const;
+
+   HWND oldTarget; // where remote command notifications used to go
 
 public:
    CString fUsername;

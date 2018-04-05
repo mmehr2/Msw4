@@ -20,13 +20,11 @@ extern const char* GetPubnubResultName(pubnub_res res);
 extern time_t get_local_timestamp();
 
 class SendChannel {
-public:
    remchannel::state state;
    std::string key;
    std::string key2;
    std::string deviceUUID;
    std::string op_msg;
-private:
    pubnub_t * pContext;
    APubnubComm * pService;
    std::string channelName;
@@ -46,6 +44,7 @@ public:
    void SetName(const std::string& name) { channelName = name; }
    const char* GetName() const { return channelName.c_str(); }
    bool isUnnamed() const { return channelName.empty(); }
+   const char* GetLastMessage() const { return op_msg.c_str(); }
 
    // start online operation (sub listens, pub may send a ping)
    bool Init(const std::string& channelName); // sender

@@ -7,14 +7,12 @@
 class APubnubComm;
 
 class ReceiveChannel {
-public:
    remchannel::state state;
    std::string key;
    //std::string key2;
    std::string uuid;
    std::string op_msg;
    bool init_sub_pending; // requires first sub for time token (see C SDK docs for subscribe() and elsewhere)
-private:
    pubnub_t * pContext;
    APubnubComm * pService;
    std::string channelName;
@@ -30,6 +28,7 @@ public:
    void SetName(const std::string& name) { channelName = name; }
    const char* GetName() const { return channelName.c_str(); }
    bool isUnnamed() const { return channelName.empty(); }
+   const char* GetLastMessage() const { return op_msg.c_str(); }
 
    // start online operation (sub listens, pub may send a ping)
    bool Init(); // receiver

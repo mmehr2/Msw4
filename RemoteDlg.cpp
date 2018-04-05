@@ -32,6 +32,7 @@ BEGIN_MESSAGE_MAP(ARemoteDlg, CDialog)
    ON_LBN_SELCHANGE(rCtlSlaves, &ARemoteDlg::OnSlaveChange)
    ON_BN_CLICKED(ID_LOGIN, &ARemoteDlg::OnLogin)
    ON_MESSAGE(WM_KICKIDLE, &OnKickIdle)
+   ON_MESSAGE(WMA_UPDATE_STATUS, &OnUpdateStatus)
 END_MESSAGE_MAP()
 
 BOOL ARemoteDlg::OnInitDialog()
@@ -45,6 +46,26 @@ BOOL ARemoteDlg::OnInitDialog()
    fSlaves.SetCurSel(0);
 
    this->EnableControls();
+
+   // set ourselves up to receive notification messages
+   this->oldTarget = gComm.GetParent();
+   gComm.SetParent( this->m_hWnd );
+   // populate the network message box with the latest update
+   this->OnUpdateStatus(0, 0); // get actual parameter(s) last sent - statusCode and operationCode
+
+   if (!gComm.IsMaster()) {
+
+      // SECONDARY BOX IS SIMPLER
+      this->SetWindowTextW(_T("Remote Operations"));
+
+      this->GetDlgItem(ID_REMOTE_GROUP)->ShowWindow(0);
+      this->GetDlgItem(rCtlSlaves)->ShowWindow(0);
+      this->GetDlgItem(ID_ADD)->ShowWindow(0);
+      this->GetDlgItem(ID_EDIT)->ShowWindow(0);
+      this->GetDlgItem(ID_SETTINGS)->ShowWindow(0);
+      this->GetDlgItem(ID_REMOVE)->ShowWindow(0);
+      this->GetDlgItem(ID_CONNECT)->ShowWindow(0);
+   }
 
    return TRUE;  // return TRUE unless you set the focus to a control
    // EXCEPTION: OCX Property Pages should return FALSE
@@ -77,6 +98,14 @@ void ARemoteDlg::OnAdd()
       fSlaves.AddString(dlg.fUsername);
       this->EnableControls();
    }
+}
+
+LRESULT ARemoteDlg::OnUpdateStatus(WPARAM wp, LPARAM lp)
+{
+   CString msg = gComm.GetLastMessage();
+   TRACE(_T("Received UI status in dialog: %u, %X - Msg:\n%s\n"), wp, lp, (LPCTSTR)msg);
+   this->GetDlgItem(ID_NETMESSAGE)->SetWindowTextW(msg);
+   return 0;
 }
 
 void ARemoteDlg::OnEdit()
@@ -151,6 +180,9 @@ void ARemoteDlg::OnOK()
 
    gComm.SetUsername(fUsername);
    gComm.SetPassword(fPassword);
+
+   // restore old target of notification messages
+   gComm.SetParent( this->oldTarget );
 
    CDialog::OnOK();
 }

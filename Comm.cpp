@@ -347,6 +347,14 @@ void AComm::SetParent(HWND parent) {
    fRemote->SetParent(parent);
 }
 
+HWND AComm::GetParent(void) const {
+   return fRemote->GetParent();
+}
+
+CString AComm::GetLastMessage(void) const {
+   return fRemote->GetLastMessage();
+}
+
 CString AComm::GetSessionJid() const {
    return fImpl->fChat ? fImpl->fChat->remote_jid().Str().c_str() : CString();
 }

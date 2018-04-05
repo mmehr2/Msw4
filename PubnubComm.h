@@ -128,6 +128,7 @@ public:
       notifications.
      */
    void SetParent(HWND parent);
+   HWND GetParent() const { return fParent; }
 
    // is this a PRIMARY or a SECONDARY
    bool isPrimary() const { return fConnection == kPrimary; }
@@ -141,6 +142,7 @@ public:
    bool isBusy() const; // operation in progress, check back later
    int GetStatusCode() const; // report most-recently-sent status code (ONLY CALL IF NOT BUSY)
    bool isSuccessful() const; // report if most-recently-sent status code means a successful operation (ONLY CALL IF NOT BUSY)
+   CString GetLastMessage() const;
  
    // Will set up the the channel link(s) to go online
    // PRIMARY: no channel setup, just setup and verify connections and remember device name

@@ -31,9 +31,6 @@ public:
    bool /*get*/get_publish(SendChannel* pDest); // used by callback routine from Pubnub
    bool trigger_publish(SendChannel* pDest); // used for pubnub_time() triggering and similar non-pubsub events
 
-   const char* get_ttok() const { return last_timetoken.c_str(); }
-   void set_ttok(const char* tk) { last_timetoken = tk; }
-   bool has_ttok() const { return last_timetoken.empty(); }
 
 private:
    void sendNextCommand(SendChannel* pWhere, bool retry); // used by private thread

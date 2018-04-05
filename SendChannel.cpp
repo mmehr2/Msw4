@@ -179,7 +179,6 @@ bool SendChannel::Send(const char*message)
 
    // if the message queue is in BUSY state, it means we should send there
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
-   this->SendOptTimeRequest();
 
    // NOTE: PQ::busy state is same as kBusy in the local state and is crit-section protected
    if (this->pQueue->isBusy())
@@ -227,34 +226,6 @@ void SendChannel::ContinuePublishing()
    }
 }
 
-// request the server time token IF NONE ALREADY
-void SendChannel::SendOptTimeRequest()
-{
-   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
-   // if context has no time token, ask for one
-   // this should only happen on init() for the Remote (pub-only) side unless it fails to work
-   std::string tkn( pQueue->get_ttok() );
-   if (tkn.empty())
-   {
-      // start a "fake" publish (time) transaction
-      this->state = remchannel::kBusy;
-      pQueue->setBusy(true);
-      this->pubRetryCount = 1;
-      pubnub_time(this->pContext);
-   }
-}
-
-// get and/or set the time token
-std::string SendChannel::TimeToken(const char* input)
-{
-   RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
-   // sets the latest time token received from an OptTimeRequest (if input non-null)
-   // returns the most recent time token
-   std::string result = pQueue->get_ttok();
-   if (input != nullptr)
-      pQueue->set_ttok(input);
-   return result;
-}
 
 std::string SendChannel::JSONify( const std::string& input, bool is_safe )
 {
@@ -278,7 +249,6 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
 //extern "C" {
 #include "pubnub_internal.h" // for experimental pub timetoken bugfix
 #include "ReceiveChannel.h" // for UnJSONify()
-//#include "pubnub_ccore_pubsub.h" // for experimental pub timetoken bugfix
 //}
 //#undef min
 namespace {
@@ -351,23 +321,23 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    }
 }
 
-void SendChannel::OnTimeCallback(pubnub_res res)
+void SendChannel::OnTimeCallback(pubnub_res /*res*/)
 {
-   std::string op;
-   const char *last_tmtoken = "";
-   const char* cname = this->GetName();
+   //std::string op;
+   //const char *last_tmtoken = "";
+   //const char* cname = this->GetName();
 
-   // CUSTOM CALLBACK #2 FOR PUBLISHERS
-   if (res == PNR_OK)
-   {
-      last_tmtoken = pubnub_get(this->pContext); // NOTE: this data does NOT seem to ever be saved in the context!
-      this->TimeToken(last_tmtoken); // update it in the channel info
-   }
-   // call the time difference reporter here
-   ReportTimeDifference(last_tmtoken, PBTT_TIME, res, op, cname, 0);
-   // TBD: do error handling and decide if OK to continue
-   // continue with the actual publish message this precedes
-   this->ContinuePublishing();
+   //// CUSTOM CALLBACK #2 FOR PUBLISHERS
+   //if (res == PNR_OK)
+   //{
+   //   last_tmtoken = pubnub_get(this->pContext); // NOTE: this data does NOT seem to ever be saved in the context!
+   //   this->TimeToken(last_tmtoken); // update it in the channel info
+   //}
+   //// call the time difference reporter here
+   //ReportTimeDifference(last_tmtoken, PBTT_TIME, res, op, cname, 0);
+   //// TBD: do error handling and decide if OK to continue
+   //// continue with the actual publish message this precedes
+   //this->ContinuePublishing();
 }
 
 

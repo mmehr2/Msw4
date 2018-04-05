@@ -58,7 +58,6 @@ public:
    void ContinuePublishing(); 
    void PublishRetry();
    bool SendBare(const char* data); // UNPROTECTED
-   std::string TimeToken(const char* data = nullptr); // UNPROTECTED
 
    // the callback extensions (will be called directly by the callback function)
    void OnPublishCallback(pubnub_res res);
@@ -77,5 +76,4 @@ private:
    SendChannel(const SendChannel& other);
    SendChannel& operator=(const SendChannel& other);
 
-   void SendOptTimeRequest();
 };

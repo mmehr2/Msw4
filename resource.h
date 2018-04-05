@@ -383,6 +383,9 @@
 #define rCtlRegNumber2                  1052
 #define rCtlRemoteName                  1052
 #define rCtlCcEnable                    1052
+#define ID_NETMESSAGE                   1053
+#define IDC_REMOTE_GROUP                1054
+#define ID_REMOTE_GROUP                 1054
 #define rCmdToggleInverseEdit           1099
 #define rCmdViewNtsc                    1100
 #define rCmdViewQueue                   1101
@@ -600,7 +603,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        228
 #define _APS_NEXT_COMMAND_VALUE         33057
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

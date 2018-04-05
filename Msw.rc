@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -64,7 +62,7 @@ rGrammar                SRGRAMMAR               "res\\Grammar.cfg"
 // Menu
 //
 
-rMainFrame MENU 
+rMainFrame MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -162,7 +160,7 @@ BEGIN
     END
 END
 
-rMenuInPlace MENU 
+rMenuInPlace MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -191,7 +189,7 @@ BEGIN
     END
 END
 
-rMenuTextPopup MENU 
+rMenuTextPopup MENU
 BEGIN
     POPUP "TEXT_POPUP"
     BEGIN
@@ -205,7 +203,7 @@ BEGIN
     END
 END
 
-rMenuDisabled MENU 
+rMenuDisabled MENU
 BEGIN
     POPUP "Disabled Features"
     BEGIN
@@ -232,7 +230,7 @@ BEGIN
     END
 END
 
-rMenuSize MENU 
+rMenuSize MENU
 BEGIN
     POPUP "Size"
     BEGIN
@@ -253,7 +251,7 @@ BEGIN
     END
 END
 
-rMenuFormat MENU 
+rMenuFormat MENU
 BEGIN
     POPUP "Style"
     BEGIN
@@ -272,7 +270,7 @@ BEGIN
     END
 END
 
-IDR_MENU1 MENU 
+IDR_MENU1 MENU
 BEGIN
     POPUP "TEXT_POPUP"
     BEGIN
@@ -303,7 +301,7 @@ END
 // Accelerator
 //
 
-rMainFrame ACCELERATORS 
+rMainFrame ACCELERATORS
 BEGIN
     "1",            40100,                  VIRTKEY, CONTROL, NOINVERT
     "2",            40101,                  VIRTKEY, CONTROL, NOINVERT
@@ -377,7 +375,7 @@ BEGIN
     "L",            rCmdViewShowLineNum,    VIRTKEY, CONTROL, ALT, NOINVERT
 END
 
-rScrollAccelerators ACCELERATORS 
+rScrollAccelerators ACCELERATORS
 BEGIN
     "T",            rCmdToggleTimer,        VIRTKEY, NOINVERT
 END
@@ -488,7 +486,7 @@ BEGIN
     RTEXT           "",rCtrlStatus2,64,117,124,12,SS_ENDELLIPSIS,WS_EX_CLIENTEDGE
 END
 
-rDlgReplaceCount DIALOG  40, 20, 110, 45
+rDlgReplaceCount DIALOG 40, 20, 110, 45
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Replace Results"
 FONT 8, "MS Sans Serif"
@@ -498,7 +496,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,34,27,40,14
 END
 
-rDlgFindCont DIALOG  40, 20, 104, 63
+rDlgFindCont DIALOG 40, 20, 104, 63
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Find / Replace"
 FONT 8, "MS Sans Serif"
@@ -654,7 +652,7 @@ BEGIN
     DEFPUSHBUTTON   "Close",IDCANCEL,57,145,50,14
 END
 
-rDlgRemote DIALOGEX 0, 0, 293, 228
+rDlgRemote DIALOGEX 0, 0, 293, 256
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Remote Installations"
@@ -666,14 +664,15 @@ BEGIN
     LTEXT           "My &Password:",IDC_STATIC,14,38,73,8
     EDITTEXT        rCtlMe2,90,36,138,14,ES_PASSWORD | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&Login",ID_LOGIN,90,58,50,14
-    GROUPBOX        "Remote Installations",IDC_STATIC,7,92,279,105
-    LISTBOX         rCtlSlaves,14,104,208,65,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "&Add...",ID_ADD,229,104,50,14
-    DEFPUSHBUTTON   "&Edit...",ID_EDIT,229,121,50,14
-    DEFPUSHBUTTON   "&Settings...",ID_SETTINGS,229,139,50,14
-    DEFPUSHBUTTON   "&Remove",ID_REMOVE,229,156,50,14
-    DEFPUSHBUTTON   "Co&nnect",ID_CONNECT,89,176,50,14
-    DEFPUSHBUTTON   "&Close",IDOK,236,207,50,14
+    GROUPBOX        "Remote Installations",ID_REMOTE_GROUP,7,77,279,105
+    LISTBOX         rCtlSlaves,14,89,208,65,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "&Add...",ID_ADD,229,89,50,14
+    DEFPUSHBUTTON   "&Edit...",ID_EDIT,229,106,50,14
+    DEFPUSHBUTTON   "&Settings...",ID_SETTINGS,229,124,50,14
+    DEFPUSHBUTTON   "&Remove",ID_REMOVE,229,141,50,14
+    DEFPUSHBUTTON   "Co&nnect",ID_CONNECT,89,161,50,14
+    DEFPUSHBUTTON   "&Close",IDOK,236,235,50,14
+    LTEXT           "Network Status",ID_NETMESSAGE,14,187,265,43,WS_BORDER
 END
 
 rDlgAddSlave DIALOGEX 0, 0, 186, 66
@@ -964,7 +963,7 @@ rCurScroll              CURSOR                  "RES\\SCROLL.CUR"
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     rDlgParaFormat, DIALOG
     BEGIN
@@ -1090,7 +1089,7 @@ BEGIN
         VERTGUIDE, 222
         VERTGUIDE, 279
         TOPMARGIN, 7
-        BOTTOMMARGIN, 221
+        BOTTOMMARGIN, 249
     END
 
     rDlgAddSlave, DIALOG
@@ -1132,7 +1131,7 @@ END
 // Toolbar
 //
 
-rTbFormat TOOLBAR  16, 16
+rTbFormat TOOLBAR 16, 16
 BEGIN
     BUTTON      rCmdSizeLarger
     BUTTON      rCmdSizeSmaller
@@ -1153,7 +1152,7 @@ BEGIN
     BUTTON      ID_BUTTON33054
 END
 
-rTbIconBig TOOLBAR  24, 24
+rTbIconBig TOOLBAR 24, 24
 BEGIN
     BUTTON      rCmdFormatFontBtn
     BUTTON      rCmdEditFind
@@ -1166,7 +1165,7 @@ BEGIN
     BUTTON      rCmdLink
 END
 
-rTbMain TOOLBAR  16, 16
+rTbMain TOOLBAR 16, 16
 BEGIN
     BUTTON      rCmdFileNew
     BUTTON      rCmdFileOpen
@@ -1188,7 +1187,7 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  MagicScroll can not continue."
     rMainFrame              "MagicScroll\nDocument\nMagicScroll Document\nWord for Windows (*.doc)\n.DOC\nMagicScroll.Document.1\nMagicScroll Document"
@@ -1204,7 +1203,7 @@ BEGIN
     rStrControlPanelCaption "Control Panel"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rStrRulerRight          "Right indent: click and drag to adjust the right indent for the current or selected paragraph(s)."
     rStrRulerTabs           "Tabs: click to create a tab, click and drag a tab off the ruler to remove it."
@@ -1224,7 +1223,7 @@ BEGIN
     rStrCloseApps           "The following processes running on your system have been\nknown to cause scrolling irregularities in MagicScroll. Please\nconsider shutting down these applications before using MagicScroll\nin a production environment.\n\n%1\nWould you like MagicScroll to attempt to close these process for you?"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rStrCloseApps2          "MagicScroll failed to shut down the following processes:\n\n%1\nIf one of these looks unfamiliar, do an internet search to find out\nwhat it is and how to shut it down.\n\n"
     rStrInitProtection      "MagicScroll system verification has failed.\n\nPlease reainstall the application or contact MagicTeleprompting."
@@ -1233,7 +1232,7 @@ BEGIN
     rStrBtnLogin            "Login"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rStrSingleSpace         "Single"
     IDS_TEXT_DOC            "Text Document\nText Documents (*.txt)\n*.txt\nText Document"
@@ -1253,7 +1252,7 @@ BEGIN
     IDS_NEW_STYLE           "<New Style>"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_WRITEPROTECT        "Unable to write to %1.\nThe disk is write-protected.\nA file cannot be saved on a write-protected disk."
     IDS_TITLE_ICONBAR       "Controls"
@@ -1272,14 +1271,14 @@ BEGIN
     rStrRulerLeft           "Left indent: click and drag to adjust both the first line and hanging indent for the current or selected paragraph(s)."
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_APP_TITLE       "MagicScroll"
     AFX_IDS_IDLEMESSAGE     "For Help, press F1"
     AFX_IDS_HELPMODEMESSAGE "Select an object you want to get Help on."
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_INDICATOR_EXT        "EXT"
     ID_INDICATOR_CAPS       "CAP"
@@ -1289,7 +1288,7 @@ BEGIN
     ID_INDICATOR_REC        "REC"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdFileNew             "Creates a new document\nNew"
     rCmdFileOpen            "Opens an existing document\nOpen"
@@ -1305,19 +1304,19 @@ BEGIN
     ID_FILE_SEND_MAIL       "Sends the document through electronic mail\nSend"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdFileSaveCopyAs      "Saves a copy of the active document with a new name\nSave Copy"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdViewRuler           "Shows or hides the ruler\nToggle Ruler"
     rCmdListen              "Enables voice-activation\nListen for Commands"
     rCmdVoiceTraining       "Shows voice training wizard\nVoice training"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_APP_ABOUT            "Displays program information, version number, and copyright\nAbout"
     ID_APP_EXIT             "Quits the application; prompts you to save documents\nExit"
@@ -1327,7 +1326,7 @@ BEGIN
     ID_HELP                 "Displays Help for current task or command\nHelp"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_FILE_MRU_FILE1       "Opens this document"
     ID_FILE_MRU_FILE2       "Opens this document"
@@ -1335,20 +1334,20 @@ BEGIN
     ID_FILE_MRU_FILE4       "Opens this document"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_NEXT_PANE            "Switches to the next window pane\nNext Pane"
     ID_PREV_PANE            "Switches back to the previous window pane\nPrevious Pane"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
     ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
     ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_EDIT_CLEAR           "Erases the selection\nErase"
     ID_EDIT_CLEAR_ALL       "Erases everything\nErase All"
@@ -1364,14 +1363,14 @@ BEGIN
     ID_EDIT_REDO            "Carries out the previously undone action\nRedo"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdViewToolbar         "Shows or hides the toolbar\nToggle ToolBar"
     rCmdViewStatusBar       "Shows or hides the status bar\nToggle StatusBar"
     rCmdViewFormatbar       "Shows or hides the format bar\nToggle Format Bar"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_SCSIZE          "Changes the window size"
     AFX_IDS_SCMOVE          "Changes the window position"
@@ -1382,18 +1381,18 @@ BEGIN
     AFX_IDS_SCCLOSE         "Closes the active window and prompts to save the documents"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_SCRESTORE       "Restores the window to normal size"
     AFX_IDS_SCTASKLIST      "Activates Task List"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_PREVIEW_CLOSE   "Closes print preview mode\nCancel Preview"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdInsertDate          "Inserts today's date and/or time\nDate/Time"
     rCmdFormatPara          "Formats current or selected paragraph(s)"
@@ -1401,31 +1400,31 @@ BEGIN
     rCmdColor1              "Dark Red\nDark Red"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdMicSetup            "Shows the microphone setup wizard\nMicrophone setup"
     rCmdFormatBullets       "Inserts or removes a bullet on this line\nBullets"
     rCmdFormatTabs          "Sets Tabs"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdSizeLarger          "Increases the size of the selected text\nIncrease text size"
     rCmdSizeSmaller         "Decreases the size of the selected text\nDecrease text size"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdFormatFont          "Selects font for current selection\nFont"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdToggleTimer         "Starts or stops the timer in scroll mode\nTimer On/Off"
     rCmdFormatFontBtn       "Selects font for current selection\nFont"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_CHAR_BOLD            "Makes the selection bold (toggle).\nBold"
     ID_CHAR_ITALIC          "Makes the selection italic (toggle)\nItalic"
@@ -1437,7 +1436,7 @@ BEGIN
     rCmdTogglePaperclip     "Adds or removes a paperclip on the current line\nToggle paperclip"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdColor2              "Green\nGreen"
     rCmdColor3              "Olive\nOlive"
@@ -1456,7 +1455,7 @@ BEGIN
     rCmdColor16             "Automatic\nAutomatic"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_SAVE_FORMAT_TEXT    "You are about to save the document in Text-Only format, which will remove all formatting. Are you sure?"
     IDS_SAVING              "Saving File.  Please Wait."
@@ -1476,7 +1475,7 @@ BEGIN
     IDS_WORD6_WARNING_BUTTONS "&Save\nSave &As...\nCancel"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rStrScriptsQueued       "(%1!d!) Queued"
     rStrScriptsRunTime      "Running Time: %1  %2"
@@ -1496,7 +1495,7 @@ BEGIN
     IDS_PICA_ABBREV         "pi"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDP_CONFIRM_DELETE      "Are you sure you want to delete %1?"
     IDP_DUPLICATE_STYLE     "The style '%1' already exists. Please chose a different name."
@@ -1516,7 +1515,7 @@ BEGIN
     rStrScriptQArt          "ART"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_NOMORETABS          "There are too many tab stops set in this paragraph."
     IDS_MAPI_FAIL           "An error occurred while sending the document."
@@ -1536,23 +1535,23 @@ BEGIN
     IDS_WORD6_DOCUMENT      "Word Document"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdClearBkMks          "Clears all bookmarks\nClear bookmarks"
     rCmdClearPclips         "Clears all paperclips"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdSetBkMk1            "Adds a bookmark on the current line\nSet bookmark"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdTimerToArt          "Puts the current timer value in the ART for the active script\nTimer to ART"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdTimerReset          "Resets the timer\nReset timer"
     rCmdEditPrefs           "Sets MagicScroll preferences\nPreferences"
@@ -1560,7 +1559,7 @@ BEGIN
     rCmdPrevPclip           "Jumps to the previous paperclip\nPrevious paperclip"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdViewShowLineNum     "Shows line numbers\nToggle line numbers"
     rCmdViewShowInvis       "Shows text formating information\nShow invisibles"
@@ -1571,7 +1570,7 @@ BEGIN
     rCmdViewIconBar         "Shows or hides the control panel\nToggle control panel"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdToggleInverseEdit   "Toggle inverse video edit mode\nInverse Edit"
     rCmdViewNtsc            "Shows or hides the NTSC/PAL window\nToggle NTSC/PAL view"
@@ -1580,7 +1579,7 @@ BEGIN
     rCmdToggleScrollMode    "Enters scrolling (prompter) mode\nScroll"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdViewUpdate          "Updates the NTSC display\nNTSC Update"
     rCmdViewConfig          "Configures video output options\nConfigure video output"
@@ -1591,13 +1590,13 @@ BEGIN
     rStrRegNameEmpty        "MagicScroll requires both a registration name and number."
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_FORMAT_BULLETS       "Adds/removes bullets from current or selected paragraph(s)"
     ID_FORMAT_STYLES        "Adds, edits, or removes styles\nStyles"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_VIEW_SHOWINVISIBLES  "Shows invisible characters\nInvisibles"
     rCmdHelpWeb             "Jumps to Magic Teleprompting on the web\nMagic Teleprompting on the web"
@@ -1605,7 +1604,7 @@ BEGIN
     rCmdPrevBkmk            "Jumps to the previous bookmark\nPrevious bookmark"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdBookmarks           "Goes to the selected bookmark\nGo to bookmark"
     rCmdLoop                "Loop scripts when scrolling\nLoop"
@@ -1613,12 +1612,12 @@ BEGIN
     rCmdLink                "Link scripts when scrolling\nLink"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     rCmdHelpRegisterMsw     "Allows you to purchase and register MagicScroll"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

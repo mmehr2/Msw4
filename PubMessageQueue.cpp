@@ -138,6 +138,15 @@ bool PNChannelPublishQueueing::trigger_publish(SendChannel* /*pDest*/)
    return true;
 }
 
+bool PNChannelPublishQueueing::shutdown()
+{
+   RAII_CriticalSection rcs(&this->cs);
+   // what to do about the busy_flag? wait until any transaction is canceled...
+   bool result = this->thePQ.empty();
+   this->thePQ.clear();
+   return result;
+}
+
 void PNChannelPublishQueueing::sendNextCommand(SendChannel* pWhere, bool retry)
 {
    std::string command;

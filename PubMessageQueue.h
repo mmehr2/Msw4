@@ -26,11 +26,11 @@ public:
    void setBusy(bool newValue); // used by both threads
    bool isBusy(); // used by both threads
 
+   bool shutdown(); // used by client class
    bool push(const char* data); // used by client class
    bool /*pop*/pop_publish(SendChannel* pDest); // used by callback routine from Pubnub
    bool /*get*/get_publish(SendChannel* pDest); // used by callback routine from Pubnub
    bool trigger_publish(SendChannel* pDest); // used for pubnub_time() triggering and similar non-pubsub events
-
 
 private:
    void sendNextCommand(SendChannel* pWhere, bool retry); // used by private thread

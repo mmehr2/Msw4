@@ -132,6 +132,10 @@ time_t FileTimetToTimetEx( FILETIME ft, time_t* t = NULL)
    return result;
 }
 
+// remember most recent previous values of system and local hi-res timestamps (100ns precision or secs/10^7)
+static time_t last_localtime = 0;
+static time_t last_systemtime = 0;
+
 void ReportTimeDifference(const char* last_tmtoken, 
    pubnub_trans trans, 
    pubnub_res res, 
@@ -140,18 +144,23 @@ void ReportTimeDifference(const char* last_tmtoken,
 {
    // time difference reporting feature TBD- needs work!
    std::string ltt = last_tmtoken;
-   time_t pn_time = _atoi64(last_tmtoken);
-   time_t lts = get_local_timestamp();
+   time_t pn_time = _atoi64(last_tmtoken); // most recent system time (hi-res)
+   time_t lts = get_local_timestamp(); // most recent local time (hi-res)
    static char lts_str[32];
    time_t lts_secs = lts / 10000000; // 1e7
    ctime_s(lts_str, 32, &lts_secs);
    lts_str[24] = '\0'; // get rid of that final CR
    double td = difftime( pn_time, lts) / 1e7; // converted to sec
+   double td1 = difftime( pn_time, last_systemtime ) / 1e7;
+   double td2 = difftime( lts, last_localtime ) / 1e7;
    int cbCountTotal, cbCountSubs, cbCountPubs;
    GetCallbackCounters(&cbCountTotal, &cbCountSubs, &cbCountPubs);
-   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d[H=%d/Hs=%d/Hp=%d],t=%s,lt=%s,diff=%1.7lf)\n", 
+   TRACE("@*@_CB> %s IN %s ON: %s (T=%X)%s(c=%d[TT=%d/TTs=%d/TTp=%d],t=%s,lt=%s,diff=%1.7lf,sysdiff=%1.7lf,locdiff=%1.7lf)\n", 
       GetPubnubResultName(res), GetPubnubTransactionName(trans), cname, ::GetCurrentThreadId(), op.c_str(), 
-      msgctr, cbCountTotal, cbCountSubs, cbCountPubs, last_tmtoken, lts_str, td);
+      msgctr, cbCountTotal, cbCountSubs, cbCountPubs, last_tmtoken, lts_str, td, td1, td2);
+   // update statistics for next time
+   last_systemtime = pn_time;
+   last_localtime = lts;
 }
 
 static int callback_counter = 0;

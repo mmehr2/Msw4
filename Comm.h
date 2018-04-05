@@ -50,7 +50,10 @@ public:
       kFailure = 100,
       kUnconfigured,
       kNoChannelName,
-      kUnableToListen,
+      kUnableToLogin,
+      kUnableToLogout,
+      kUnableToPair,
+      kUnableToUnpair,
    };
 
    class ASlave

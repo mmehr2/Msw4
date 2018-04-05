@@ -504,7 +504,7 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
       if (what == remchannel::kOK)
          this->SetState( kConnected );
       else
-         this->SetState( kDisconnected, this->statusCode );
+         this->SetState( kDisconnected, AComm::kUnableToLogin );
       changed = true;
       break;
    case kDisconnecting:
@@ -516,12 +516,32 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
       if (what == remchannel::kOK)
          this->SetState( kDisconnected );
       else
-         this->SetState( kConnected, this->statusCode );
+         this->SetState( kConnected, AComm::kUnableToLogout );
       changed = true;
       break;
    case kLinking:
+      // Pairing
+      opname = "CONNECT"; //"PAIR";
+      if (which != remchannel::kSender)
+         break; // only get async disconnects from Sndr channel (PRIMARY)
+      // async connects can only happen for senders, and only when they are in a publish transaction
+      if (what == remchannel::kOK)
+         this->SetState( kChatting );
+      else
+         this->SetState( kConnected, AComm::kUnableToPair );
+      changed = true;
+      break;
    case kUnlinking:
-      // both of these can happen on 
+      // Unpairing
+      opname = "DISCONNECT"; //"UNPAIR";
+      if (which != remchannel::kSender)
+         break; // only get async disconnects from Sndr channel (PRIMARY)
+      // async logout still can only happen on receiver, since it is the only one logged in
+      if (what == remchannel::kOK)
+         this->SetState( kConnected );
+      else
+         this->SetState( kChatting, AComm::kUnableToUnpair );
+      changed = true;
       break;
    }
    if (changed) {
@@ -585,69 +605,122 @@ void APubnubComm::Logout()
       // waiting to find out results
       TRACE("%s WAITING TO SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
-      
-      //fLinked = kDisconnecting;
    } else {
       // immediate success
       TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
-
-      //fLinked = kDisconnected;
    }
 }
 
 bool APubnubComm::OpenLink(const char * pSenderName_)
 {
-   this->CloseLink();
+   // report where we are each time
+   TRACE("CONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("CONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
+   if (fLinked == kLinking || fLinked == kChatting) {
+      TRACE("%s CONNECT REQUESTED, ALREADY CONNECT%s.\n", this->GetConnectionTypeName(), 
+         (fLinked == kChatting) ? "ED" : "ING");
+      // don't change statusCode or state here
+      return true;
+   }
+
+   //this->CloseLink();
 
    bool result = true;
-   this->pSender->SetName( this->MakeChannelName(pSenderName_) );
-   TRACE("%s IS OPENING LINK TO SECONDARY %s ON PUBNUB CHANNEL %s\n", 
-      this->GetConnectionTypeName(), pSenderName_, this->pSender->GetName());
+   //this->pSender->SetName( this->MakeChannelName(pSenderName_) );
+   //TRACE("%s IS OPENING LINK TO SECONDARY %s ON PUBNUB CHANNEL %s\n", 
+   //   this->GetConnectionTypeName(), pSenderName_, this->pSender->GetName());
 
-   //// TBD - move this to callback when known
-   //if (!ConnectHelper(pSender)) {
-   //   TRACE("%s IS UNABLE TO CONNECT TO %s ON CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), pSenderName_, pSender->GetName());
+   // This is where we need to set up the Sender for publishing (Init() call)
+   // OPEN LINK: state is kChatting
+   // TRANSITION STATES: turning on = kLinking, turning off = kUnlinking
+   // CLOSED LINK: state is kConnected
 
-   //   result = false;
-   //} else {
-   //   TRACE("%s IS NOW READY TO SEND TO %s ON CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), pSenderName_, pSender->GetName());
+   // SECONDARY - could happen over the link; any need for different behavior here?
 
-   //   fLinked = kChatting;
-   //}
+   // PRIMARY: make sure the sender can operate to send messages
+   if (fLinked >= kChatting) {
+      TRACE("%s CONNECT, LINK ALREADY PAIRED TO CHANNEL %s.\n", this->GetConnectionTypeName(), pSender->GetName());
+      // don't change state here
+      return result;
+   }
+
+   this->SetState( kLinking, AComm::kWaiting );
+   std::string secondaryName = this->MakeChannelName(pSenderName_);
+   bool res = pSender->Init( secondaryName );
+   bool busy = pSender->IsBusy();
+   const char* chname = pSender->GetName();
+   const char* tname = pSender->GetTypeName();
+   if (!res) {
+      // immediate failure
+      TRACE("%s %s IS UNABLE TO SETUP PAIRED LINK TO CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      
+      this->OnTransactionComplete(remchannel::kSender, remchannel::kError);
+   } else if (busy) {
+      // waiting to find out results
+      TRACE("%s %s WAITING TO SET UP PAIRED LINK TO CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+   } else {
+      // immediate success
+      TRACE("%s %s CORRECTLY SET UP PAIRED LINK TO CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      this->OnTransactionComplete(remchannel::kSender, remchannel::kOK);
+   }
 
    return result; // started sequence successfully
 }
 
 void APubnubComm::CloseLink()
 {
+   // report where we are each time
+   TRACE("DISCONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("DISCONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
    if (fLinked < kChatting) {
+      TRACE("%s DISCONNECT REQUESTED, ALREADY DISCONNECT%s.\n", this->GetConnectionTypeName(), 
+         (fLinked == kConnected) ? "ED" : "ING");
       return; // already closed
    }
 
-   if (pSender->isUnnamed()) {
-      TRACE("%s HAS NO REMOTE LINK TO SHUT DOWN.\n", this->GetConnectionTypeName());
+   // shut down any higher states here (Scrolling, FileSend, Busy transactions w PQ)
+   if (fLinked > kChatting) {
+      TRACE("%s DISCONNECT ERROR: %s LINK STILL OPERATING, SHUTTING DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       return;
    }
 
-   // shut down any higher states here
+   // OPEN LINK: state is kChatting
+   // TRANSITION STATES: turning on = kLinking, turning off = kUnlinking
+   // CLOSED LINK: state is kConnected
 
-   TRACE("%s IS CLOSING LINK TO SECONDARY ON PUBNUB CHANNEL %s\n", 
-      this->GetConnectionTypeName(), this->pSender->GetName());
+   /*TRACE("%s IS CLOSING LINK TO SECONDARY ON PUBNUB CHANNEL %s\n", 
+      this->GetConnectionTypeName(), this->pSender->GetName());*/
 
-   //// TBD: make it so
-   // if (!DisconnectHelper(pSender)) {
-   //   TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), pSender->GetName());
-   //   // TBD - but this really will cause problems! what are failure scenarios here?
-   //} else {
-   //   TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
-   //      this->GetConnectionTypeName(), pSender->GetName());
+   // SECONDARY - this will be started by command over the link - any special behavior TBD
 
-   //   fLinked = kConnected;
-   //}
+   // PRIMARY: shut down the publishing loop, if any, and cancel any transaction in progress
+   this->SetState( kUnlinking, AComm::kWaiting );
+   bool res = pSender->DeInit();
+   bool busy = pSender->IsBusy();
+   const char* chname = pSender->GetName();
+   const char* tname = pSender->GetTypeName();
+   if (!res) {
+      // immediate failure
+      TRACE("%s %s IS UNABLE TO SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      
+      this->OnTransactionComplete(remchannel::kSender, remchannel::kError);
+   } else if (busy) {
+      // waiting to find out results
+      TRACE("%s %s WAITING TO SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+   } else {
+      // immediate success
+      TRACE("%s %s CORRECTLY SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      this->OnTransactionComplete(remchannel::kSender, remchannel::kOK);
+   }
 }
 
 void APubnubComm::SendCommand(const char * message)

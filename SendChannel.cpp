@@ -132,20 +132,28 @@ bool SendChannel::Init(const std::string& cname)
 bool SendChannel::DeInit()
 {
    bool result = true;
+   RAII_CriticalSection cs(pQueue->GetCS());
+   // empty anything in the publishing queue
+   /*bool was_empty =*/ pQueue->shutdown();
+   // cancel any retry looping
+   this->pubRetryCount = 0;
+   // take care of any active transaction
+   // if none, ok to remove busy flag if it was on; if so, wait until canceled (async)
    switch (state) {
    case remchannel::kDisconnecting:
-      result = false; // wait until result done
+      result = false; // wait until result done (how can we get here? two DeInit() calls while waiting for async cancel!)
       break;
    case remchannel::kBusy:
       // op in progress: cancel it
       // set channel state until the callback gets results
-      state = remchannel::kDisconnecting;
+      state = remchannel::kDisconnecting; // this is still a busy state if IsBusy() is used for testing
       // NOTE: since callback may run synchronously on this thread, set the state 1st
       pubnub_cancel(pContext);
       break;
    default:
       // nothing to cancel, we just go "offline" (TBD - do we forget the channel we were using here?)
       state = remchannel::kDisconnected;
+      pQueue->setBusy(false);
       break;
    }
    return result;
@@ -208,15 +216,19 @@ void SendChannel::PublishRetry()
 {
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
    // request to publish the same one (don't pop the queue)
-   pQueue->get_publish(this);
+   if (state != remchannel::kDisconnecting)
+      pQueue->get_publish(this);
 }
 
 void SendChannel::ContinuePublishing()
 {
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
+   bool shutting_down = false;
+   if (state == remchannel::kDisconnecting)
+      shutting_down = true;
    // if the queue has more items,
    // ACTUALLY, just test if the PQ is in BUSY mode or not
-   if (pQueue->isBusy()) {
+   if (!shutting_down && pQueue->isBusy()) {
       // request to publish the next one
       pQueue->pop_publish(this);
    } else {
@@ -225,7 +237,6 @@ void SendChannel::ContinuePublishing()
       state = remchannel::kIdle;
    }
 }
-
 
 std::string SendChannel::JSONify( const std::string& input, bool is_safe )
 {

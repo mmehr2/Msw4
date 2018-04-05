@@ -272,9 +272,37 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
    return result;
 }
 
+// EXPERIMENTAL: There is a bug in 2.3.2 (and later?) that publish transactions don't record their time tokens, unlike subscribes do.
+// This is code to dive into the internals of the PN context and retrieve the reply buffer contents and parse it.
+// HIGHLY DEPENDENT ON LIBRARY VERSION - BUG IS REPORTED, MODIFY HERE WHEN FIXED! THIS MAY EVENTUALLY STOP WORKING!!!
+//extern "C" {
+#include "pubnub_internal.h" // for experimental pub timetoken bugfix
+#include "ReceiveChannel.h" // for UnJSONify()
+//#include "pubnub_ccore_pubsub.h" // for experimental pub timetoken bugfix
+//}
+//#undef min
+namespace {
+   std::string LastTimeTokenFromReply( const pubnub_t* pContext )
+   {
+      static char repbuf[256];
+      size_t len = min(256, pContext->core.http_content_len);
+      memcpy_s(repbuf, 256, pContext->core.http_reply, len);
+      repbuf[len] = 0;
+      // There are now three strings in repbuf, end to end, followed by another null.
+      // 1st is code number string, 2nd is error string, 3rd is time token string
+      const char* str2 = repbuf + strlen(repbuf) + 1;
+      const char* str3 = str2 + strlen(str2) + 1;
+      //int code = atoi(&repbuf[1]);
+      //const char* message = ReceiveChannel::UnJSONify(str2).c_str();
+      std::string ttoken = ReceiveChannel::UnJSONify(str3);
+      //TRACE("PN pub reply with time token was [%d,%s,%s]\n", code, message, ttoken.c_str());
+      return ttoken;
+   }
+}
+
 void SendChannel::OnPublishCallback(pubnub_res res)
 {
-   std::string op;
+   std::string op, ttok;
    const char *last_tmtoken = "";
    const char* cname = this->GetName();
    remchannel::result result = remchannel::kOK;
@@ -283,13 +311,14 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    op = pubnub_last_publish_result(this->pContext);
    op += pubnub_res_2_string(res);
    this->op_msg = op;
-   last_tmtoken = this->TimeToken().c_str();
+   ttok = LastTimeTokenFromReply(pContext);
+   last_tmtoken = ttok.c_str();
    // implement publish retry loop here
    if (res == PNR_OK) {
       TRACE("Publish succeeded (c=%d), moving on...\n", this->pubRetryCount);
       this->pubRetryCount = 1;
    } else {
-      TRACE("Publishing failed with code: %d ('%s')\n", res, pubnub_res_2_string(res));
+      TRACE("Publishing failed with code: %d ('%s')\n", res, op.c_str());
       switch (pubnub_should_retry(res)) {
       case pbccFalse:
          TRACE(" There is no benefit to retry\n");
@@ -297,7 +326,7 @@ void SendChannel::OnPublishCallback(pubnub_res res)
          result = remchannel::kError;
          break;
       case pbccTrue:
-         TRACE(" Retrying #%d...\n", res, pubnub_res_2_string(res), this->pubRetryCount);
+         TRACE(" Retrying #%d...\n", this->pubRetryCount);
          this->pubRetryCount++;
       case pbccNotSet:
          TRACE(" We decided not to retry since it could make things worse.\n");

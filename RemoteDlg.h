@@ -40,6 +40,7 @@ private:
    bool SelIsConnected() const;
 
    HWND oldTarget; // where remote command notifications used to go
+   bool actionButtonsEnabled;
 
 public:
    CString fUsername;

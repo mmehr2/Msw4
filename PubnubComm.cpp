@@ -381,6 +381,12 @@ const char* APubnubComm::GetConnectionStateName() const
    case kConnected:
       result = "CONNECTED";
       break;
+   case kLinking:
+      result = "PAIRING";
+      break;
+   case kUnlinking:
+      result = "UNPAIRING";
+      break;
    case kChatting:
       result = "PAIRED";
       break;
@@ -486,14 +492,14 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    fOperation = kLogin;
    remchannel::type who = remchannel::kReceiver;
    // report where we are each time
-   TRACE("LOGIN STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
-   TRACE("LOGIN STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked > kDisconnected) {
       TRACE("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
          (fLinked == kConnected) ? "LOGGED IN" : "LOGGING IN");
       // don't change statusCode or state here, just notify request completion
-      this->SetState( this->fLinked, this->statusCode );
+      //this->SetState( this->fLinked, this->statusCode );
       this->OnTransactionComplete( who, remchannel::kOK );
       return true;
    }
@@ -526,15 +532,15 @@ bool APubnubComm::Login(const char* ourDeviceName_)
 
    // SECONDARY:
    if (fLinked >= kConnected) {
-      TRACE("%s LOGIN, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName());
+      TRACE("%s %s, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName(), this->GetOperationName());
       // don't change state here
-      this->SetState( this->fLinked, this->statusCode );
+      //this->SetState( this->fLinked, this->statusCode );
       this->OnTransactionComplete( who, remchannel::kOK );
       return result;
    }
 
    if (this->pReceiver->isUnnamed()) {
-      TRACE("%s LOGIN: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      TRACE("%s %s: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), this->GetOperationName(), pReceiver->GetTypeName());
       this->SetState( this->fLinked, AComm::kNoChannelName );
       this->OnTransactionComplete( who, remchannel::kError );
       return false;
@@ -571,8 +577,8 @@ void APubnubComm::Logout()
    remchannel::type who = remchannel::kReceiver;
 
    // report where we are each time
-   TRACE("LOGOUT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
-   TRACE("LOGOUT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked < kConnected) {
       TRACE("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
@@ -636,24 +642,22 @@ void APubnubComm::Logout()
 
 bool APubnubComm::OpenLink(const char * pSenderName_)
 {
+   fOperation = kConnect;
+   remchannel::type who = remchannel::kReceiver;
+
    // report where we are each time
-   TRACE("CONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
-   TRACE("CONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked == kLinking || fLinked == kChatting) {
       TRACE("%s CONNECT REQUESTED, ALREADY CONNECT%s.\n", this->GetConnectionTypeName(), 
          (fLinked == kChatting) ? "ED" : "ING");
       // don't change statusCode or state here
+      this->OnTransactionComplete(who, remchannel::kOK);
       return true;
    }
 
-   //this->CloseLink();
-
    bool result = true;
-   //this->pSender->SetName( this->MakeChannelName(pSenderName_) );
-   //TRACE("%s IS OPENING LINK TO SECONDARY %s ON PUBNUB CHANNEL %s\n", 
-   //   this->GetConnectionTypeName(), pSenderName_, this->pSender->GetName());
-
    // This is where we need to set up the Sender for publishing (Init() call)
    // OPEN LINK: state is kChatting
    // TRANSITION STATES: turning on = kLinking, turning off = kUnlinking
@@ -665,6 +669,7 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
    if (fLinked >= kChatting) {
       TRACE("%s CONNECT, LINK ALREADY PAIRED TO CHANNEL %s.\n", this->GetConnectionTypeName(), pSender->GetName());
       // don't change state here
+      this->OnTransactionComplete(who, remchannel::kOK);
       return result;
    }
 
@@ -696,28 +701,30 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
 
 void APubnubComm::CloseLink()
 {
+   fOperation = kDisconnect;
+   remchannel::type who = remchannel::kSender;
+
    // report where we are each time
-   TRACE("DISCONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
-   TRACE("DISCONNECT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked < kChatting) {
-      TRACE("%s DISCONNECT REQUESTED, ALREADY DISCONNECT%s.\n", this->GetConnectionTypeName(), 
+      TRACE("%s %s REQUESTED, ALREADY %s%s.\n", this->GetConnectionTypeName(), this->GetOperationName(), this->GetOperationName(), 
          (fLinked == kConnected) ? "ED" : "ING");
+      this->OnTransactionComplete(who, remchannel::kOK);
       return; // already closed
    }
 
    // shut down any higher states here (Scrolling, FileSend, Busy transactions w PQ)
    if (fLinked > kChatting) {
       TRACE("%s DISCONNECT ERROR: %s LINK STILL OPERATING, SHUTTING DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      this->OnTransactionComplete(who, remchannel::kError);
       return;
    }
 
    // OPEN LINK: state is kChatting
    // TRANSITION STATES: turning on = kLinking, turning off = kUnlinking
    // CLOSED LINK: state is kConnected
-
-   /*TRACE("%s IS CLOSING LINK TO SECONDARY ON PUBNUB CHANNEL %s\n", 
-      this->GetConnectionTypeName(), this->pSender->GetName());*/
 
    // SECONDARY - this will be started by command over the link - any special behavior TBD
 

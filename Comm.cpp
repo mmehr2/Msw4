@@ -264,6 +264,9 @@ void AComm::Disconnect() {
       fThread = NULL;
    }
 
+   // end any conversation, if it exists
+   this->EndChat();
+
    this->SetState(kDisconnecting);
    fRemote->Logout(); // but this is asynchronous ...
 
@@ -316,11 +319,11 @@ void AComm::EndChat() {
 
 bool AComm::SendFile(LPCTSTR filename) {
    ASSERT(this->IsMaster());
-   if (fImpl->fFs.get() && fImpl->fChat) {
-      char buffer[_MAX_PATH] = {0};
-      VERIFY(::sprintf_s(buffer, _countof(buffer), "%S", filename) < mCountOf(buffer));
-      fImpl->fFs->SendFile(buffer, fImpl->fChat->remote_jid());
-   }
+   //if (fImpl->fFs.get() && fImpl->fChat) {
+   //   char buffer[_MAX_PATH] = {0};
+   //   VERIFY(::sprintf_s(buffer, _countof(buffer), "%S", filename) < mCountOf(buffer));
+   //   fImpl->fFs->SendFile(buffer, fImpl->fChat->remote_jid());
+   //}
    return true;
 }
 

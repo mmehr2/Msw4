@@ -474,11 +474,12 @@ void AFontComboBox::EnumFontFamiliesEx(CDC& dc, BYTE nCharSet)
 
    // CPtrArray will NOT automatically delete all its pointers; not doing this causes huge memory leaks!
    // see here: http://forums.codeguru.com/showthread.php?300189-Will-CPtrArray-RemoveAll()-delete-all-the-memory-allocated
-   for (i = 0; i<nCount;i++)
-   {
-      CFontDesc* pDesc = (CFontDesc*)m_arrayFontDesc[i];
-      delete pDesc;
-   }
+   // NOTE: However, this patch causes MAJOR problems with usage, random crashes, can't select fonts, etc. SO LET IT RIDE!
+   //for (i = 0; i<nCount;i++)
+   //{
+   //   CFontDesc* pDesc = (CFontDesc*)m_arrayFontDesc[i];
+   //   delete pDesc;
+   //}
 
 	m_arrayFontDesc.RemoveAll();
 }

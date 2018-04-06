@@ -155,6 +155,7 @@ APubnubComm::APubnubComm(AComm* pComm)
    , pubAPIKey("")
    , subAPIKey("")
    , statusCode(AComm::kSuccess)
+   , fOperation(kNone)
    , pReceiver(nullptr)
    , pSender(nullptr)
    , pBuffer(nullptr)
@@ -347,10 +348,27 @@ const char* APubnubComm::GetConnectionTypeName() const
    return result;
 }
 
+const char* APubnubComm::GetOperationName() const
+{
+   const char* result = "UNKNOWN";
+   switch(this->fOperation) {
+   case kNone: result = "NONE"; break;
+   case kLogin: result = "LOGIN"; break;
+   case kLogout: result = "LOGOUT"; break;
+   case kConnect: result = "CONNECT"; break;
+   case kDisconnect: result = "DISCONNECT"; break;
+   case kMessage: result = "MESSAGE"; break;
+   case kFileSend: result = "SENDFILE"; break;
+   case kFileReceive: result = "RCVFILE"; break;
+   case kFileCancel: result = "CANFILE"; break;
+   }
+   return result;
+}
+
 const char* APubnubComm::GetConnectionStateName() const
 {
    const char* result = "";
-   switch (fLinked) {
+   switch (this->fLinked) {
    case kDisconnected:
       result = "DISCONNECTED";
       break;
@@ -416,22 +434,74 @@ bool APubnubComm::isSuccessful() const
    return this->statusCode == AComm::kSuccess;
 }
 
+// This will finalize any of the four major busy operations, and report any state change to the parent, even those externally set by caller
+void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::result what)
+{
+   switch(fLinked) {
+   case kConnecting:
+      // Logging in
+      if (what == remchannel::kOK)
+         this->SetState( kConnected, AComm::kSuccess );
+      else
+         this->SetState( kDisconnected, AComm::kUnableToLogin );
+      break;
+   case kDisconnecting:
+      // Logging out
+      // async logout still can only happen on receiver, since it is the only one logged in
+      if (what == remchannel::kOK)
+         this->SetState( kDisconnected, AComm::kSuccess );
+      else
+         this->SetState( kConnected, AComm::kUnableToLogout );
+      break;
+   case kLinking:
+      // Pairing/connecting
+      // async connects can only happen for senders, and only when they are in a publish transaction
+      if (what == remchannel::kOK)
+         this->SetState( kChatting, AComm::kSuccess );
+      else
+         this->SetState( kConnected, AComm::kUnableToPair );
+      break;
+   case kUnlinking:
+      // Unpairing/disconnecting
+      // async logout still can only happen on receiver, since it is the only one logged in
+      if (what == remchannel::kOK)
+         this->SetState( kConnected, AComm::kSuccess );
+      else
+         this->SetState( kChatting, AComm::kUnableToUnpair );
+       break;
+   }
+
+   // log state change
+   const char* tname = (which == remchannel::kReceiver) ? pReceiver->GetTypeName() : pSender->GetTypeName();
+   const char* cname = (which == remchannel::kReceiver) ? pReceiver->GetName() : pSender->GetName();
+   TRACE("%s %s IN %s OP IS NOW %s ON CHANNEL %s\n", 
+      this->GetConnectionTypeName(), tname, this->GetOperationName(), this->GetConnectionStateName(), cname);
+
+   // fire state change up to the next level
+   fComm->OnStateChange(this->statusCode); // to change its own state and post a status message to the UI; needed: status codes
+}
+
 bool APubnubComm::Login(const char* ourDeviceName_)
 {
+   fOperation = kLogin;
+   remchannel::type who = remchannel::kReceiver;
    // report where we are each time
    TRACE("LOGIN STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("LOGIN STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked > kDisconnected) {
-      TRACE("%s LOGIN REQUESTED, ALREADY %s IN.\n", this->GetConnectionTypeName(), 
-         (fLinked == kConnected) ? "LOGGED" : "LOGGING");
-      // don't change statusCode or state here
+      TRACE("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
+         (fLinked == kConnected) ? "LOGGED IN" : "LOGGING IN");
+      // don't change statusCode or state here, just notify request completion
+      this->SetState( this->fLinked, this->statusCode );
+      this->OnTransactionComplete( who, remchannel::kOK );
       return true;
    }
 
    if (fConnection == kNotSet) {
       TRACE("DEVICE IS %s, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName());
       this->SetState( this->fLinked, AComm::kUnconfigured );
+      this->OnTransactionComplete( who, remchannel::kError );
       return false;
    }
 
@@ -448,8 +518,9 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    if (this->isPrimary()) {
       // TBD - get proxy info if needed using special proxy thread and context (Issue #10-B)
       // NOTE: To save message traffic, Primary will only listen when a transaciton is in progress that needs it
-      this->SetState( kConnected );
       TRACE("%s IS ONLINE AND READY.\n", this->GetConnectionTypeName());
+      this->SetState( kConnected );
+      this->OnTransactionComplete( who, remchannel::kOK );
       return result;
    }
 
@@ -457,12 +528,15 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    if (fLinked >= kConnected) {
       TRACE("%s LOGIN, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName());
       // don't change state here
+      this->SetState( this->fLinked, this->statusCode );
+      this->OnTransactionComplete( who, remchannel::kOK );
       return result;
    }
 
    if (this->pReceiver->isUnnamed()) {
       TRACE("%s LOGIN: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       this->SetState( this->fLinked, AComm::kNoChannelName );
+      this->OnTransactionComplete( who, remchannel::kError );
       return false;
    }
 
@@ -474,7 +548,7 @@ bool APubnubComm::Login(const char* ourDeviceName_)
       TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s (STATE=%d)\n", 
          this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName(), fLinked);
 
-      //this->SetState( kDisconnected, AComm::kUnableToListen );
+      this->OnTransactionComplete(who, remchannel::kError);
       result = false;
    } else if (pReceiver->IsBusy()) {
       // async completion
@@ -486,77 +560,16 @@ bool APubnubComm::Login(const char* ourDeviceName_)
       TRACE("%s LOGIN: %s IS LISTENING AS %s ON CHANNEL %s\n", 
          this->GetConnectionTypeName(), pReceiver->GetTypeName(), ourDeviceName_, pReceiver->GetName());
 
-      //this->SetState( kConnected );
+      this->OnTransactionComplete(who, remchannel::kOK);
    }
    return result; // started sequence successfully
 }
 
-void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::result what)
-{
-   bool changed = false;
-   const char* opname = "UNKNOWN";
-   switch(fLinked) {
-   case kConnecting:
-      // Logging in
-      opname = "LOGIN";
-      if (which != remchannel::kReceiver)
-         break; // only get async logins from Rcvr channel
-      if (what == remchannel::kOK)
-         this->SetState( kConnected );
-      else
-         this->SetState( kDisconnected, AComm::kUnableToLogin );
-      changed = true;
-      break;
-   case kDisconnecting:
-      // Logging out
-      opname = "LOGOUT";
-      if (which != remchannel::kReceiver)
-         break; // only get async logins from Rcvr channel
-      // async logout still can only happen on receiver, since it is the only one logged in
-      if (what == remchannel::kOK)
-         this->SetState( kDisconnected );
-      else
-         this->SetState( kConnected, AComm::kUnableToLogout );
-      changed = true;
-      break;
-   case kLinking:
-      // Pairing
-      opname = "CONNECT"; //"PAIR";
-      if (which != remchannel::kSender)
-         break; // only get async disconnects from Sndr channel (PRIMARY)
-      // async connects can only happen for senders, and only when they are in a publish transaction
-      if (what == remchannel::kOK)
-         this->SetState( kChatting );
-      else
-         this->SetState( kConnected, AComm::kUnableToPair );
-      changed = true;
-      break;
-   case kUnlinking:
-      // Unpairing
-      opname = "DISCONNECT"; //"UNPAIR";
-      if (which != remchannel::kSender)
-         break; // only get async disconnects from Sndr channel (PRIMARY)
-      // async logout still can only happen on receiver, since it is the only one logged in
-      if (what == remchannel::kOK)
-         this->SetState( kConnected );
-      else
-         this->SetState( kChatting, AComm::kUnableToUnpair );
-      changed = true;
-      break;
-   }
-   if (changed) {
-      // log state change
-      const char* tname = (which == remchannel::kReceiver) ? pReceiver->GetTypeName() : pSender->GetTypeName();
-      const char* cname = (which == remchannel::kReceiver) ? pReceiver->GetName() : pSender->GetName();
-      TRACE("%s %s IN %s OP IS NOW %s ON CHANNEL %s\n", 
-         this->GetConnectionTypeName(), tname, opname, this->GetConnectionStateName(), cname);
-      // fire state change up to the next level
-      fComm->OnStateChange(this->statusCode); // to change its own state and post a status message to the UI; needed: status codes
-   }
-}
-
 void APubnubComm::Logout()
 {
+   fOperation = kLogout;
+   remchannel::type who = remchannel::kReceiver;
+
    // report where we are each time
    TRACE("LOGOUT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("LOGOUT STATE=%s FOR %s %s ON %s\n", this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
@@ -564,11 +577,15 @@ void APubnubComm::Logout()
    if (fLinked < kConnected) {
       TRACE("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
          (fLinked == kDisconnected) ? "LOGGED" : "LOGGING");
+      //this->SetState( this->fLinked, this->statusCode );
+      this->OnTransactionComplete(who, remchannel::kOK);
       return;
    }
 
    if (pReceiver->isUnnamed()) {
       TRACE("%s HAS NO %s LINK TO SHUT DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      this->SetState( this->fLinked, AComm::kNoChannelName );
+      this->OnTransactionComplete(who, remchannel::kError);
       return;
    }
 
@@ -576,6 +593,8 @@ void APubnubComm::Logout()
    //this->CloseLink();
    if (fLinked > kConnected) {
       TRACE("%s LOGOUT ERROR: %s LINK STILL OPERATING, DISCONNECT FIRST.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      //this->SetState( this->fLinked, this->statusCode );
+      this->OnTransactionComplete(who, remchannel::kError); // TBD - need to send status code w/o changing existing one
       return;
    }
 
@@ -585,8 +604,9 @@ void APubnubComm::Logout()
    // PRIMARY:
    if (this->isPrimary()) {
       // NOTE: We do not use Primary at login time, so nothing to log out.
-      fLinked = kDisconnected;
       TRACE("%s IS OFFLINE.\n", this->GetConnectionTypeName());
+      this->SetState( kDisconnected, AComm::kSuccess );
+      this->OnTransactionComplete(who, remchannel::kOK);
       return;
    }
 
@@ -600,6 +620,7 @@ void APubnubComm::Logout()
       // immediate failure
       TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
+      this->OnTransactionComplete(who, remchannel::kError);
       // TBD - but this really will cause problems! what are failure scenarios here?
    } else if (busy) {
       // waiting to find out results
@@ -609,6 +630,7 @@ void APubnubComm::Logout()
       // immediate success
       TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
+      this->OnTransactionComplete(who, remchannel::kOK);
    }
 }
 
@@ -726,6 +748,12 @@ void APubnubComm::CloseLink()
 void APubnubComm::SendCommand(const char * message)
 {
    //bool result = true;
+   // don't allow if not in paired conversation mode
+   if (fLinked < kChatting) {
+      //
+      TRACE("MESSAGE BLOCKED: %s\n", message);
+      return;
+   }
 
    // publish message to pSender->channelName and set up callback
    // PRIMARY: will send commands

@@ -54,6 +54,7 @@ public:
       kUnableToLogout,
       kUnableToPair,
       kUnableToUnpair,
+      kAlreadyInProgress,
    };
 
    class ASlave

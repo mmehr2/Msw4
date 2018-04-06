@@ -73,7 +73,7 @@ class APubnubComm
    AComm* fComm;
    HWND fParent;
    ConnectionType fConnection; // Primary or Secondary
-   ConnectionStatus fLinked; // disconnected, connected, or in transition
+   ConnectionStatus fLinked; // state: disconnected, connected, or in transition, etc.
 
    // the following are persistent settings
    std::string customerName;
@@ -82,6 +82,7 @@ class APubnubComm
    std::string pubAPIKey;
    std::string subAPIKey;
 
+   OpType fOperation; // what transaction we're working on
    int statusCode; // latest transaction result, for reporting to the UI level
 
    // inbound pubnub channel info
@@ -106,6 +107,7 @@ class APubnubComm
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
+   const char* GetOperationName() const;
    void SetState( ConnectionStatus newState, int reason=0 )
    {
       statusCode = reason;
@@ -142,7 +144,7 @@ public:
    bool isBusy() const; // operation in progress, check back later
    int GetStatusCode() const; // report most-recently-sent status code (ONLY CALL IF NOT BUSY)
    bool isSuccessful() const; // report if most-recently-sent status code means a successful operation (ONLY CALL IF NOT BUSY)
-   CString GetLastMessage() const;
+   CString GetLastMessage() const; // most recently set status message (ONLY CALL IF NOT BUSY)
  
    // Will set up the the channel link(s) to go online
    // PRIMARY: no channel setup, just setup and verify connections and remember device name

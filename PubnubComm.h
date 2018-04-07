@@ -121,7 +121,6 @@ class APubnubComm
    bool ReadOverrideFile(const char* fileName); // returns true if any changes made to persistent settings
    void StoreMessage(bool clear, char* fmt, ...);
    
-
 public:
    APubnubComm(AComm* pComm);
    ~APubnubComm(void);
@@ -153,14 +152,19 @@ public:
    // PRIMARY: no channel setup, just setup and verify connections and remember device name
    // SECONDARY: will also setup receiver channel to listen on private device channel
    // returns false if immediate errors; check isBusy() to determine async operation
-   bool Login(const char* asDeviceName);
-   void Logout();
+   bool Login(const char* asDeviceName); // STATE: kDisonnected -> kConnecting -> kConnected
+   void Logout(); // STATE: kConnected -> kDisconnecting -> kDisonnected
 
    // PRIMARY: will open up a sender link to a particular SECONDARY (may also configure receiver to listen for Responses)
-   // SECONDARY: needs to get a request for this over the link, to configure the sender channel where to send Responses
+   // (SECONDARY: will execute the corresponding state changes as part of received commands)
    // returns false if immediate errors; check isBusy() to determine async operation
-   bool OpenLink(const char * remote_channel);
-   void CloseLink();
+   bool OpenLink(const char * remote_channel); // STATE: kConnected -> kLinking -> kChatting
+   void CloseLink(); // STATE: kChatting -> kUnlinking -> kConnected
+
+   // PRIMARY: will start/stop execution of scroll mode (activates/deactivates the Receiver listener loop)
+   // (SECONDARY: will execute the corresponding state changes as part of received commands)
+   bool StartScrollMode(); // STATE: kChatting -> kBusy(w.op=kScrollOn) -> kScrolling
+   void StopScrollMode(); // STATE: kScrolling -> kBusy(w.op=kScrollOff) -> kChatting
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
    void SendCommand(const char* message);

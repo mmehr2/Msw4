@@ -33,26 +33,15 @@ namespace {
    const std::string channel_separator = "-"; // avoid Channel name disallowed characters
    const std::string app_name = "MSW"; // prefix for all channel names by convention
 
-   //// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
-   //void pn_printf(char* fmt, ...)
-   //{
-   //   char buffer[10240];
-   //
-   //    va_list args;
-   //    va_start(args,fmt);
-   //    vsprintf(buffer,fmt,args);
-   //    va_end(args);
-   //
-   //    TRACE("%s\n", buffer);
-   //}
-
    bool RunUnitTests()
    {
       bool result = true;
       result &= PNBufferTransfer::UnitTest();
       return result;
    }
+}
 
+namespace {
    class RemoteIniFile {
       LPCTSTR secName;
       LPCTSTR fileName;
@@ -357,7 +346,8 @@ const char* APubnubComm::GetOperationName() const
    case kLogout: result = "LOGOUT"; break;
    case kConnect: result = "CONNECT"; break;
    case kDisconnect: result = "DISCONNECT"; break;
-   case kMessage: result = "MESSAGE"; break;
+   case kScrollOn: result = "SCROLL-ON"; break;
+   case kScrollOff: result = "SCROLL-OFF"; break;
    case kFileSend: result = "SENDFILE"; break;
    case kFileReceive: result = "RCVFILE"; break;
    case kFileCancel: result = "CANFILE"; break;
@@ -495,6 +485,24 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
       else
          this->SetState( kChatting, AComm::kUnableToUnpair );
        break;
+   case kBusy:
+      switch (fOperation) {
+      case kScrollOn:
+        // Start scrolling
+         if (what == remchannel::kOK)
+            this->SetState( kScrolling, AComm::kSuccess );
+         else
+            this->SetState( kChatting, AComm::kUnableToStartScroll );
+         break;
+      case kScrollOff:
+        // Stop scrolling
+         if (what == remchannel::kOK)
+            this->SetState( kChatting, AComm::kSuccess );
+         else
+            this->SetState( kScrolling, AComm::kUnableToStopScroll );
+         break;
+      }
+        break;
    }
 
    // log state change
@@ -773,6 +781,99 @@ void APubnubComm::CloseLink()
       PNC_MESSAGE_LOG("%s %s CORRECTLY SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
       this->OnTransactionComplete(remchannel::kSender, remchannel::kOK);
+   }
+}
+
+
+bool APubnubComm::StartScrollMode()
+{
+   fOperation = kScrollOn;
+   remchannel::type who = remchannel::kReceiver;
+   PNC_MESSAGE_LOGX("");
+
+   // report where we are each time
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
+   if (fLinked >= kScrolling || (fLinked == kBusy && fOperation == kScrollOn)) {
+      PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
+         (fLinked == kBusy) ? "DONE" : "IN PROGRESS");
+      // don't change statusCode or state here
+      this->OnTransactionComplete(who, remchannel::kOK);
+      return true;
+   }
+
+   bool result = true;
+   // This is where we need to set up the Sender for publishing (Init() call)
+   // STARTED SCROLLING: state is kScrolling
+   // TRANSITION STATES: turning on or off = kBusy (check fOperation)
+   // STOPPED SCROLLING: state is kChatting
+
+   // PRIMARY: make sure the sender can operate to receive response messages
+   this->SetState( kBusy, AComm::kWaiting );
+   bool res = pReceiver->Init();
+   bool busy = pReceiver->IsBusy();
+   const char* chname = pReceiver->GetName();
+   const char* tname = pReceiver->GetTypeName();
+   if (!res) {
+      // immediate failure
+      PNC_MESSAGE_LOG("%s %s IS UNABLE TO SETUP SCROLL LISTENER ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      
+      this->OnTransactionComplete(who, remchannel::kError);
+      result = false;
+   } else if (busy) {
+      // waiting to find out results
+      PNC_MESSAGE_LOG("%s %s WAITING TO SET UP SCROLL LISTENER ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+   } else {
+      // immediate success
+      PNC_MESSAGE_LOG("%s %s CORRECTLY SET UP SCROLL LISTENER ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      this->OnTransactionComplete(who, remchannel::kOK);
+   }
+
+   return result; // started sequence successfully
+}
+
+void APubnubComm::StopScrollMode()
+{
+   fOperation = kScrollOff;
+   remchannel::type who = remchannel::kReceiver;
+   PNC_MESSAGE_LOGX("");
+
+   // report where we are each time
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
+   if (fLinked == kChatting || (fLinked == kBusy && fOperation == kScrollOff)) {
+      PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
+         (fLinked == kConnected) ? "DONE" : "IN PROGRESS");
+      this->OnTransactionComplete(who, remchannel::kOK);
+      return; // already closed
+   }
+
+   // PRIMARY: Shut down the Receiver listen loop
+   this->SetState( kBusy, AComm::kWaiting );
+   bool res = pReceiver->DeInit();
+   bool busy = pReceiver->IsBusy();
+   const char* chname = pReceiver->GetName();
+   const char* tname = pReceiver->GetTypeName();
+   if (!res) {
+      // immediate failure
+      PNC_MESSAGE_LOG("%s %s IS UNABLE TO SHUT DOWN SCROLL LISTENER ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      
+      this->OnTransactionComplete(who, remchannel::kError);
+   } else if (busy) {
+      // waiting to find out results
+      PNC_MESSAGE_LOG("%s %s WAITING TO SHUT DOWN SCROLL LISTENER ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+   } else {
+      // immediate success
+      PNC_MESSAGE_LOG("%s %s CORRECTLY SHUT DOWN SCROLL LISTENER ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, chname);
+      this->OnTransactionComplete(who, remchannel::kOK);
    }
 }
 

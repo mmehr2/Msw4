@@ -139,6 +139,7 @@ LRESULT ARemoteDlg::OnUpdateStatus(WPARAM wp, LPARAM lp)
 {
    CString msg = gComm.GetLastMessage();
    TRACE(_T("Received UI status in dialog: %u, %X - Msg:\n%s\n"), wp, lp, (LPCTSTR)msg);
+   msg.Replace(_T("\n"), _T("\r\n")); // the UI edit control requires this substitution
    this->GetDlgItem(ID_NETMESSAGE)->SetWindowTextW(msg);
 
    actionButtonsEnabled = true;

@@ -84,6 +84,7 @@ class APubnubComm
 
    OpType fOperation; // what transaction we're working on
    int statusCode; // latest transaction result, for reporting to the UI level
+   std::string statusMessage; // string form of the above with details
 
    // inbound pubnub channel info
    // mainly used by Secondary to listen for incoming Command messages
@@ -118,6 +119,8 @@ class APubnubComm
    void Read();
    void Write();
    bool ReadOverrideFile(const char* fileName); // returns true if any changes made to persistent settings
+   void StoreMessage(bool clear, char* fmt, ...);
+   
 
 public:
    APubnubComm(AComm* pComm);

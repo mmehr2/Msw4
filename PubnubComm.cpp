@@ -412,6 +412,26 @@ const char* APubnubComm::GetConnectionStateName() const
    return result;
 }
 
+// function to capture pubnub_log output to the TRACE() window (ONLY FOR OUR CODE)
+#define PNC_MESSAGE_LOG(...) this->StoreMessage(false, __VA_ARGS__)
+#define PNC_MESSAGE_LOGX(...) this->StoreMessage(true, __VA_ARGS__)
+void APubnubComm::StoreMessage(bool clear, char* fmt, ...)
+{
+   const int bufsize = 10240;
+   static char buffer[bufsize];
+
+   va_list args;
+   va_start(args,fmt);
+   vsprintf_s(buffer,bufsize,fmt,args);
+   va_end(args);
+
+   if (clear)
+      this->statusMessage = buffer;
+   else
+      this->statusMessage += buffer;
+
+   TRACE("%s\n", buffer);
+}
 
 bool APubnubComm::isBusy() const
 {
@@ -480,7 +500,7 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
    // log state change
    const char* tname = (which == remchannel::kReceiver) ? pReceiver->GetTypeName() : pSender->GetTypeName();
    const char* cname = (which == remchannel::kReceiver) ? pReceiver->GetName() : pSender->GetName();
-   TRACE("%s %s IN %s OP IS NOW %s ON CHANNEL %s\n", 
+   PNC_MESSAGE_LOG("%s %s IN %s OP IS NOW %s ON CHANNEL %s\n", 
       this->GetConnectionTypeName(), tname, this->GetOperationName(), this->GetConnectionStateName(), cname);
 
    // fire state change up to the next level
@@ -491,12 +511,13 @@ bool APubnubComm::Login(const char* ourDeviceName_)
 {
    fOperation = kLogin;
    remchannel::type who = remchannel::kReceiver;
+   PNC_MESSAGE_LOGX("");
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked > kDisconnected) {
-      TRACE("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
+      PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
          (fLinked == kConnected) ? "LOGGED IN" : "LOGGING IN");
       // don't change statusCode or state here, just notify request completion
       //this->SetState( this->fLinked, this->statusCode );
@@ -505,7 +526,7 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    }
 
    if (fConnection == kNotSet) {
-      TRACE("DEVICE IS %s, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName());
+      PNC_MESSAGE_LOG("DEVICE IS %s, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName());
       this->SetState( this->fLinked, AComm::kUnconfigured );
       this->OnTransactionComplete( who, remchannel::kError );
       return false;
@@ -524,7 +545,7 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    if (this->isPrimary()) {
       // TBD - get proxy info if needed using special proxy thread and context (Issue #10-B)
       // NOTE: To save message traffic, Primary will only listen when a transaciton is in progress that needs it
-      TRACE("%s IS ONLINE AND READY.\n", this->GetConnectionTypeName());
+      PNC_MESSAGE_LOG("%s IS ONLINE AND READY.\n", this->GetConnectionTypeName());
       this->SetState( kConnected );
       this->OnTransactionComplete( who, remchannel::kOK );
       return result;
@@ -532,7 +553,7 @@ bool APubnubComm::Login(const char* ourDeviceName_)
 
    // SECONDARY:
    if (fLinked >= kConnected) {
-      TRACE("%s %s, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName(), this->GetOperationName());
+      PNC_MESSAGE_LOG("%s %s, LINK ALREADY LOGGED IN.\n", this->GetConnectionTypeName(), this->GetOperationName());
       // don't change state here
       //this->SetState( this->fLinked, this->statusCode );
       this->OnTransactionComplete( who, remchannel::kOK );
@@ -540,7 +561,7 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    }
 
    if (this->pReceiver->isUnnamed()) {
-      TRACE("%s %s: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), this->GetOperationName(), pReceiver->GetTypeName());
+      PNC_MESSAGE_LOG("%s %s: %s HAS NO CHANNEL NAME, UNABLE TO OPEN CHANNEL LINK.\n", this->GetConnectionTypeName(), this->GetOperationName(), pReceiver->GetTypeName());
       this->SetState( this->fLinked, AComm::kNoChannelName );
       this->OnTransactionComplete( who, remchannel::kError );
       return false;
@@ -551,19 +572,19 @@ bool APubnubComm::Login(const char* ourDeviceName_)
    this->SetState( kConnecting, AComm::kWaiting );
    if (!(pReceiver->Init())) {
       // immediate failure
-      TRACE("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s (STATE=%d)\n", 
+      PNC_MESSAGE_LOG("%s %s IS UNABLE TO CONNECT TO THE NET ON CHANNEL %s (STATE=%d)\n", 
          this->GetConnectionTypeName(), ourDeviceName_, pReceiver->GetName(), fLinked);
 
       this->OnTransactionComplete(who, remchannel::kError);
       result = false;
    } else if (pReceiver->IsBusy()) {
       // async completion
-      TRACE("%s LOGIN: %s IS WAITING TO LISTEN AS %s ON CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s LOGIN: %s IS WAITING TO LISTEN AS %s ON CHANNEL %s\n", 
          this->GetConnectionTypeName(), pReceiver->GetTypeName(), ourDeviceName_, pReceiver->GetName());
 
    } else {
       // immediate completion
-      TRACE("%s LOGIN: %s IS LISTENING AS %s ON CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s LOGIN: %s IS LISTENING AS %s ON CHANNEL %s\n", 
          this->GetConnectionTypeName(), pReceiver->GetTypeName(), ourDeviceName_, pReceiver->GetName());
 
       this->OnTransactionComplete(who, remchannel::kOK);
@@ -575,13 +596,14 @@ void APubnubComm::Logout()
 {
    fOperation = kLogout;
    remchannel::type who = remchannel::kReceiver;
+   PNC_MESSAGE_LOGX("");
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked < kConnected) {
-      TRACE("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
+      PNC_MESSAGE_LOG("%s LOGOUT REQUESTED, ALREADY %s OUT.\n", this->GetConnectionTypeName(), 
          (fLinked == kDisconnected) ? "LOGGED" : "LOGGING");
       //this->SetState( this->fLinked, this->statusCode );
       this->OnTransactionComplete(who, remchannel::kOK);
@@ -589,7 +611,7 @@ void APubnubComm::Logout()
    }
 
    if (pReceiver->isUnnamed()) {
-      TRACE("%s HAS NO %s LINK TO SHUT DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      PNC_MESSAGE_LOG("%s HAS NO %s LINK TO SHUT DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       this->SetState( this->fLinked, AComm::kNoChannelName );
       this->OnTransactionComplete(who, remchannel::kError);
       return;
@@ -598,7 +620,7 @@ void APubnubComm::Logout()
    // shut down any pSender link first
    //this->CloseLink();
    if (fLinked > kConnected) {
-      TRACE("%s LOGOUT ERROR: %s LINK STILL OPERATING, DISCONNECT FIRST.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      PNC_MESSAGE_LOG("%s LOGOUT ERROR: %s LINK STILL OPERATING, DISCONNECT FIRST.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       //this->SetState( this->fLinked, this->statusCode );
       this->OnTransactionComplete(who, remchannel::kError); // TBD - need to send status code w/o changing existing one
       return;
@@ -610,7 +632,7 @@ void APubnubComm::Logout()
    // PRIMARY:
    if (this->isPrimary()) {
       // NOTE: We do not use Primary at login time, so nothing to log out.
-      TRACE("%s IS OFFLINE.\n", this->GetConnectionTypeName());
+      PNC_MESSAGE_LOG("%s IS OFFLINE.\n", this->GetConnectionTypeName());
       this->SetState( kDisconnected, AComm::kSuccess );
       this->OnTransactionComplete(who, remchannel::kOK);
       return;
@@ -624,17 +646,17 @@ void APubnubComm::Logout()
    const char* chname = pReceiver->GetName();
    if (!res) {
       // immediate failure
-      TRACE("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s IS UNABLE TO SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
       this->OnTransactionComplete(who, remchannel::kError);
       // TBD - but this really will cause problems! what are failure scenarios here?
    } else if (busy) {
       // waiting to find out results
-      TRACE("%s WAITING TO SHUT DOWN CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s WAITING TO SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
    } else {
       // immediate success
-      TRACE("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s CORRECTLY SHUT DOWN CHANNEL %s\n", 
          this->GetConnectionTypeName(), chname);
       this->OnTransactionComplete(who, remchannel::kOK);
    }
@@ -644,13 +666,14 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
 {
    fOperation = kConnect;
    remchannel::type who = remchannel::kReceiver;
+   PNC_MESSAGE_LOGX("");
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked == kLinking || fLinked == kChatting) {
-      TRACE("%s CONNECT REQUESTED, ALREADY CONNECT%s.\n", this->GetConnectionTypeName(), 
+      PNC_MESSAGE_LOG("%s CONNECT REQUESTED, ALREADY CONNECT%s.\n", this->GetConnectionTypeName(), 
          (fLinked == kChatting) ? "ED" : "ING");
       // don't change statusCode or state here
       this->OnTransactionComplete(who, remchannel::kOK);
@@ -667,7 +690,7 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
 
    // PRIMARY: make sure the sender can operate to send messages
    if (fLinked >= kChatting) {
-      TRACE("%s CONNECT, LINK ALREADY PAIRED TO CHANNEL %s.\n", this->GetConnectionTypeName(), pSender->GetName());
+      PNC_MESSAGE_LOG("%s CONNECT, LINK ALREADY PAIRED TO CHANNEL %s.\n", this->GetConnectionTypeName(), pSender->GetName());
       // don't change state here
       this->OnTransactionComplete(who, remchannel::kOK);
       return result;
@@ -681,17 +704,17 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
    const char* tname = pSender->GetTypeName();
    if (!res) {
       // immediate failure
-      TRACE("%s %s IS UNABLE TO SETUP PAIRED LINK TO CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s %s IS UNABLE TO SETUP PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
       
       this->OnTransactionComplete(remchannel::kSender, remchannel::kError);
    } else if (busy) {
       // waiting to find out results
-      TRACE("%s %s WAITING TO SET UP PAIRED LINK TO CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s %s WAITING TO SET UP PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
    } else {
       // immediate success
-      TRACE("%s %s CORRECTLY SET UP PAIRED LINK TO CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s %s CORRECTLY SET UP PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
       this->OnTransactionComplete(remchannel::kSender, remchannel::kOK);
    }
@@ -703,13 +726,14 @@ void APubnubComm::CloseLink()
 {
    fOperation = kDisconnect;
    remchannel::type who = remchannel::kSender;
+   PNC_MESSAGE_LOGX("");
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
    if (fLinked < kChatting) {
-      TRACE("%s %s REQUESTED, ALREADY %s%s.\n", this->GetConnectionTypeName(), this->GetOperationName(), this->GetOperationName(), 
+      PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s%s.\n", this->GetConnectionTypeName(), this->GetOperationName(), this->GetOperationName(), 
          (fLinked == kConnected) ? "ED" : "ING");
       this->OnTransactionComplete(who, remchannel::kOK);
       return; // already closed
@@ -717,7 +741,7 @@ void APubnubComm::CloseLink()
 
    // shut down any higher states here (Scrolling, FileSend, Busy transactions w PQ)
    if (fLinked > kChatting) {
-      TRACE("%s DISCONNECT ERROR: %s LINK STILL OPERATING, SHUTTING DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
+      PNC_MESSAGE_LOG("%s DISCONNECT ERROR: %s LINK STILL OPERATING, SHUTTING DOWN.\n", this->GetConnectionTypeName(), pReceiver->GetTypeName());
       this->OnTransactionComplete(who, remchannel::kError);
       return;
    }
@@ -736,17 +760,17 @@ void APubnubComm::CloseLink()
    const char* tname = pSender->GetTypeName();
    if (!res) {
       // immediate failure
-      TRACE("%s %s IS UNABLE TO SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s %s IS UNABLE TO SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
       
       this->OnTransactionComplete(remchannel::kSender, remchannel::kError);
    } else if (busy) {
       // waiting to find out results
-      TRACE("%s %s WAITING TO SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s %s WAITING TO SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
    } else {
       // immediate success
-      TRACE("%s %s CORRECTLY SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
+      PNC_MESSAGE_LOG("%s %s CORRECTLY SHUT DOWN PAIRED LINK TO CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, chname);
       this->OnTransactionComplete(remchannel::kSender, remchannel::kOK);
    }
@@ -818,9 +842,10 @@ void TRACE_LAST_ERROR(LPCSTR , DWORD ) { }
 CString APubnubComm::GetLastMessage() const
 {
    static CString msg;
+   CA2T amsgThis(this->statusMessage.c_str());
    CA2T amsgSender(this->pSender->GetLastMessage());
    CA2T amsgReceiver(this->pReceiver->GetLastMessage());
-   msg.Format(_T("Last operation completed with code %d\nRCV:%s\nSND:%s\n"),
-      this->statusCode, (LPCTSTR)amsgReceiver, amsgSender.m_psz);
+   msg.Format(_T("%sLast operation completed with code %d\nRCV:%s\nSND:%s\n"),
+      (LPCTSTR)amsgThis, this->statusCode, (LPCTSTR)amsgReceiver, (LPCTSTR)amsgSender);
    return msg;
 }

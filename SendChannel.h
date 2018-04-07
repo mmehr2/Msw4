@@ -27,6 +27,7 @@ class SendChannel {
    std::string op_msg;
    pubnub_t * pContext;
    APubnubComm * pService;
+   std::string deviceName;
    std::string channelName;
    PNChannelPublishQueueing* pQueue;
    int pubRetryCount;
@@ -41,6 +42,8 @@ public:
       const std::string& main_key,
       const std::string& aux_key);
 
+   void SetDeviceName(const std::string& name) { deviceName = name; }
+   const char* GetDeviceName() const { return deviceName.c_str(); }
    void SetName(const std::string& name) { channelName = name; }
    const char* GetName() const { return channelName.c_str(); }
    bool isUnnamed() const { return channelName.empty(); }

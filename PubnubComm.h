@@ -142,6 +142,7 @@ public:
    bool isDisconnected() const { return fLinked == kDisconnected; }
    bool isConnected() const { return fLinked >= kConnected; }
    bool isConversing() const { return fLinked >= kChatting; }
+   CString GetConnectedName() const; // ID of the linked conversation or machine
 
    bool isBusy() const; // operation in progress, check back later
    int GetStatusCode() const; // report most-recently-sent status code (ONLY CALL IF NOT BUSY)

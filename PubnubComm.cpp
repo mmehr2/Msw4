@@ -440,6 +440,13 @@ bool APubnubComm::isBusy() const
    return result;
 }
 
+CString APubnubComm::GetConnectedName() const
+{
+   // need to return the same name as listed in the UI dialog box or the fUsername in the AComm::slaves member
+   CA2T tChannel( pSender->GetDeviceName() );
+   return tChannel.m_psz;
+}
+
 int APubnubComm::GetStatusCode() const
 {
    return this->statusCode;
@@ -706,6 +713,7 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
 
    this->SetState( kLinking, AComm::kWaiting );
    std::string secondaryName = this->MakeChannelName(pSenderName_);
+   pSender->SetDeviceName(pSenderName_);
    bool res = pSender->Init( secondaryName );
    bool busy = pSender->IsBusy();
    const char* chname = pSender->GetName();

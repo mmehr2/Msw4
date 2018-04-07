@@ -359,7 +359,7 @@ CString AComm::GetLastMessage(void) const {
 }
 
 CString AComm::GetSessionJid() const {
-   return fImpl->fChat ? fImpl->fChat->remote_jid().Str().c_str() : CString();
+   return fRemote->isConversing() ? fRemote->GetConnectedName() : CString();
 }
 
 bool AComm::Read() {

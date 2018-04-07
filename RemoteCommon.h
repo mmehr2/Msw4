@@ -15,7 +15,8 @@ enum OpType {
    kLogout,
    kConnect,
    kDisconnect,
-   kMessage,
+   kScrollOn,
+   kScrollOff,
    kFileSend,
    kFileReceive,
    kFileCancel,
@@ -29,11 +30,11 @@ enum ConnectionStatus {
    kLinking, // transient v
    kUnlinking, // transient ^
    kChatting, // paired for comm, but no commands in progress
+   kBusy, // transaction in progress
    kScrolling, // CMD: scrolling is in progress
    kFileSending, // CMD: file send is in progress
    kFileRcving, // CMD: file rcv is in progress
    kFileCanceling,
-   kBusy, // transaction in progress
 };
 
 namespace remchannel {

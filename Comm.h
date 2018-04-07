@@ -55,6 +55,8 @@ public:
       kUnableToPair,
       kUnableToUnpair,
       kAlreadyInProgress,
+      kUnableToStartScroll,
+      kUnableToStopScroll,
    };
 
    class ASlave

@@ -254,6 +254,43 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
    return result;
 }
 
+#ifdef NEW_FIX_TO_PUB_TTOK
+namespace {
+
+   std::vector<std::string> split( const char* data_, const char* delim )
+   {
+      std::vector<std::string> result;
+      CStringA data(data_);
+      int pos = 0;
+      CStringA token;
+      for (token = data.Tokenize(delim, pos); !token.IsEmpty(); ) {
+         result.push_back( (LPCSTR)token );
+      }
+      return result;
+   }
+
+   std::string LastTimeTokenFromReply( const char* data )
+   {
+      // should have "[code, \"reply\". "ttok"]" in the buffer; we want ttok
+      std::vector<std::string> r = split(data, "\"");
+      std::string ttoken;
+      // Now, r[0] is "[code", r[1] is reply, r[2] is ttok, r[3] is "]"
+      if (r.size() == 4 && r[3] == "]") {
+         //int code = atoi(&r[0][1]); // or similar
+         //const char* message = r[1].c_str();
+         ttoken = r[2];
+         //TRACE("PN pub reply with time token was [%d,%s,%s]\n", code, message, ttoken.c_str());
+      }
+      return ttoken;
+   }
+
+   std::string LastTimeTokenFromReply( pubnub_t* pContext )
+   {
+      const char* data = pubnub_get(pContext); // get full reply string
+      return LastTimeTokenFromReply(data);
+   }
+}
+#else
 // EXPERIMENTAL: There is a bug in 2.3.2 (and later?) that publish transactions don't record their time tokens, unlike subscribes do.
 // This is code to dive into the internals of the PN context and retrieve the reply buffer contents and parse it.
 // HIGHLY DEPENDENT ON LIBRARY VERSION - BUG IS REPORTED, MODIFY HERE WHEN FIXED! THIS MAY EVENTUALLY STOP WORKING!!!
@@ -263,7 +300,7 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
 //}
 //#undef min
 namespace {
-   std::string LastTimeTokenFromReply( const pubnub_t* pContext )
+   std::string LastTimeTokenFromReply( pubnub_t* pContext )
    {
       static char repbuf[256];
       size_t len = min(256, pContext->core.http_content_len);
@@ -280,6 +317,7 @@ namespace {
       return ttoken;
    }
 }
+#endif
 
 void SendChannel::OnPublishCallback(pubnub_res res)
 {
@@ -292,7 +330,7 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    op = pubnub_last_publish_result(this->pContext);
    op += pubnub_res_2_string(res);
    this->op_msg = op;
-   ttok = LastTimeTokenFromReply(pContext);
+   ttok = LastTimeTokenFromReply(this->pContext);
    last_tmtoken = ttok.c_str();
    // implement publish retry loop here
    if (res == PNR_OK) {

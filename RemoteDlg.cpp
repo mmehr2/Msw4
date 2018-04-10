@@ -45,7 +45,10 @@ BOOL ARemoteDlg::OnInitDialog()
    for (AComm::Slaves::iterator i = slaves.begin(); i != slaves.end(); ++i)
       fSlaves.AddString(i->fUsername);
 
-   fSlaves.SetCurSel(0);
+   int sel = fSlaves.FindString(-1, gComm.GetSessionJid());
+   if (sel == LB_ERR)
+      sel = 0;
+   fSlaves.SetCurSel(sel);
 
    this->EnableControls();
 

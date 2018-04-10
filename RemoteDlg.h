@@ -4,6 +4,7 @@
 #pragma once
 
 #include "resource.h"
+#include "Comm.h"
 
 
 class ARemoteDlg : public CDialog
@@ -34,13 +35,15 @@ private:
    afx_msg void OnLogin();
    afx_msg LRESULT OnKickIdle(WPARAM, LPARAM);
    afx_msg LRESULT OnUpdateStatus(WPARAM, LPARAM);
+   afx_msg LRESULT OnUpdateStatus2(WPARAM, LPARAM);
 
    virtual BOOL OnInitDialog();
    void EnableControls();
    bool SelIsConnected() const;
 
    HWND oldTarget; // where remote command notifications used to go
-   bool actionButtonsEnabled;
+   bool actionButtonsBusy; // should disable action buttons while their action is in progress
+   AComm::OpType opInProgress; // what are we doing with the actionButtons? different ways to tell when done
 
 public:
    CString fUsername;

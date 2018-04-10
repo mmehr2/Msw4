@@ -173,24 +173,30 @@ bool AComm::IsOnline() const {
 } 
 
 void AComm::Connect(LPCTSTR username, LPCTSTR password) {
-   //ASSERT(username && *username && password);
-   this->Disconnect(); // this is asynchronous...
 
+   if (fState >= kConnected) {
+      //this->Disconnect(); // this is asynchronous...
+      // already done
+      this->OnStateChange(kLogin, kSuccess);
+      return;
+   }
+
+   //ASSERT(username && *username && password);
    if (!(username && *username && password)) {
       TRACE("CANNOT CONFIGURE IP ADDRESS AT STARTUP - USE REMOTE DIALOG TO CONFIGURE LOCAL ADDRESS.\n");
       return;
    }
 
-   this->SetState(kConnecting);
    fUsername = username;
    fPassword = password;
    //fThread = ::AfxBeginThread(Connect, this);
 
    CT2A ascii(username); // convert from wide to narrow chars
-   std::string local_addr = ascii.m_psz;
+   //std::string local_addr = ascii.m_psz;
    //int port = _tstoi(password);
    //char buffer[128];
    //strncpy_s(buffer, local_addr.length(), local_addr.c_str(), 128); // debuggable buffer
+   this->SetState(kConnecting);
    fRemote->Login(ascii.m_psz);
    this->RemoteBusyWait();
    if (fRemote->isSuccessful())
@@ -201,6 +207,29 @@ void AComm::Connect(LPCTSTR username, LPCTSTR password) {
 
 UINT AComm::Connect(LPVOID /*param*/) {
    //AComm* pThis = reinterpret_cast<AComm*>(param);
+
+   // NOTE: This thread is reserved for proxy negotiation on startup (i.e. startup of the program).
+   // The call in pubnub requires much time. Do it here using private context object.
+   // Once done, this needs to be saved and a done flag set (with critical section).
+   // Then, when Login is finally called, it must fail with visible error if the proxy info is not ready.
+   // If it's ready, it can proceed to transfer the info to the Sender and Receiver contexts (SDK 2.3.2 cannot do this tho!).
+   // It still not, perhaps we need to trigger the individual contexts to each negotiate their own here (twice).
+   // This can still be done on startup for the two contexts instead of the private one, it just takes 2X longer.
+   // We still need to have the critical section and flag, however.
+
+   /* 2.3.2 Design:
+   > CRITICAL SECTION
+   > proxyNegotiations done flag (overall)
+   > result indicator (success/failure + error result code and/or message)
+   > NegotiateProxy() function for both SendChannel and ReceiveChannel (operates the same tho) - where to put it? - Common Base Class of course...
+   . Use wait call (sync?) to tell when done, since on private thread.
+   .. If successful with first call, start second.
+   .. If successful with second call, set done flag as successful.
+   .. If either one has errors, record errors and allow Login to check to get error response.
+   . On Login, fail without calling Init() if proxy is required and failed, or not ready yet. Report proper UI results.
+   .. If success and done, the proxy info is in place, so no problem.
+   . (Perhaps each context can check itself? So then each channel knows how to fail its Init() call if it has no proxy info when needed.)
+   */
 
    //fRemote->PublishQueueThreadFunction(fRemote);
    //char buffer[kMaxJid] = {0};
@@ -236,12 +265,17 @@ UINT AComm::Connect(LPVOID /*param*/) {
    return 0;
 }
 
-void AComm::OnStateChange(int statusCode) {
+void AComm::OnStateChange(OpType operation, Status statusCode) {
    // **NOTE**: this will be called on a non-UI thread in most cases 
    // for now, we will NOT make any local state changes here (CRITICAL SECTION NEEDED FOR THAT)
    // each function can examine the status code that caused this and change state accordingly
    // post the status message to the UI (no CS for that)
-   fRemote->SendMsg( WMA_UPDATE_STATUS, (WPARAM)statusCode );
+   fRemote->SendMsg( WMA_UPDATE_STATUS, (WPARAM)operation, (LPARAM)statusCode );
+}
+
+void AComm::ResendLastStatus() const
+{
+   fRemote->SendStatusReport();
 }
 
 void AComm::RemoteBusyWait() {
@@ -265,7 +299,14 @@ void AComm::Disconnect() {
    }
 
    // end any conversation, if it exists
-   this->EndChat();
+   if (fState == kChatting) {
+      this->EndChat(); // but need to ignore the UI sub-response
+      // and if failed to unpair, we must fail the disconnect, as well
+      if (fState == kChatting) {
+         this->OnStateChange(kLogout, kUnableToUnpair);
+         return;
+      }
+   }
 
    this->SetState(kDisconnecting);
    fRemote->Logout(); // but this is asynchronous ...
@@ -278,33 +319,85 @@ void AComm::Disconnect() {
       this->SetState(kConnected); // with failure code reported
 }
 
+bool AComm::IsContacted() const
+{
+   return fRemote->GetContactCode() == kSuccess;
+}
+
 bool AComm::StartChat(LPCTSTR target) {
    ASSERT(this->IsMaster());
-   // end the current one, if it exists
-   this->EndChat();
 
-   char buffer[kMaxJid] = {0}; // this is actually an IP address now for TEST version
+   char buffer[kMaxJid] = {0}; // this is device name of secondary
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
 
+   // verify that we are talking to this device or not; shut down conversation with other device if needed first
+   if (fState == kChatting) {
+      if (fRemote->GetConnectedName() != target) {
+         // end the current chat and continue to establish a new one
+         this->EndChat();
+      } else if (this->IsContacted()) {
+         // we are chatting with the right device, no need to kill it
+         // but we need to check if we completed the Contact command OK
+         // if we have, we need to trigger the completion transaction
+         this->OnStateChange(kContact, (Status)fRemote->GetStatusCode());
+         return true;
+      } else {
+         // else we can skip the OpenLink and go directly to the SendCommandBusy(kContact) call
+         goto JustContact;
+      }
+   } else if (fState != kConnected) {
+      // not able to start conversation if not online properly
+      // BUT SHOULD WE TRY ANYWAY??
+      // add status update line too
+      this->OnStateChange(kConnect, (Status)fRemote->GetStatusCode());
+      return false;
+   }
+
+   // Step 1 - open the channel link
    fRemote->OpenLink(buffer);
 
    this->RemoteBusyWait();
    bool result = fRemote->isSuccessful();
 
-   if (result)
-      this->SetState(kChatting);
+   if (result) {
+   }
    else
       this->SetState(kConnected); // with failure code reported
 
+  JustContact:
+   // Step 2 - send the contact command
+   fRemote->SendCommandBusy(kContact);
+
+   this->RemoteBusyWait();
+   result = fRemote->isSuccessful();
+   int ccode = fRemote->GetContactCode();
+
+   // We have a connection with the Secondary, but the Contact command might have had issues
+   this->SetState(kChatting);
+
+   CString msg, msg2 = fRemote->GetConnectedName();
+   if (!result) {
+      // button has to allow Connect again
+      msg.Format(_T("Unable to Connect to SECONDARY %s\n"), msg2);
+   } else if (ccode == kContactRejected) {
+      // button has to allow Connect again
+      // display status line
+      msg.Format(_T("SECONDARY %s has rejected connection request (busy).\n"), msg2);
+   } else if (ccode == kSuccess) {
+      // button can say Disconnect now
+      // display status line
+      msg.Format(_T("Connected to SECONDARY %s in %1.6lf sec\n"), msg2, fRemote->GetCommandTimeSecs());
+   } else {
+      // button has to allow Connect again
+      msg.Format(_T("Bad contact reply from SECONDARY %s\n"), msg2);
+   }
+   ::AfxMessageBox(msg);
    return result;
 }
 
 void AComm::EndChat() {
-   if (NULL != fImpl->fChat) {
-      fImpl->fChatSession->DestroyChat(fImpl->fChat);
-      fImpl->fChat = NULL;
-   }
 
+   // always do remote functions, to provide UI responses when done
    fRemote->CloseLink();
 
    this->RemoteBusyWait();
@@ -317,7 +410,7 @@ void AComm::EndChat() {
       this->SetState(kChatting); // with failure code reported
 }
 
-bool AComm::SendFile(LPCTSTR filename) {
+bool AComm::SendFile(LPCTSTR /*filename*/) {
    ASSERT(this->IsMaster());
    //if (fImpl->fFs.get() && fImpl->fChat) {
    //   char buffer[_MAX_PATH] = {0};
@@ -363,7 +456,7 @@ CString AComm::GetSessionJid() const {
 }
 
 bool AComm::Read() {
-   fUsername = theApp.GetProfileString(gStrComm, gStrCommUsername, _T("username@gmail.com"));
+   fUsername = theApp.GetProfileString(gStrComm, gStrCommUsername, _T(""));
    fPassword = theApp.GetProfileString(gStrComm, gStrCommPassword);
 
    fSlaves.clear();

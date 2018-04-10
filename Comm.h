@@ -27,6 +27,8 @@ public:
       kCueMarker        = 'c',
       kFrameInterval    = 'f',
 
+      kContactRemote    = 'C',
+
       // modifiers
       kOn            = 2,
       kOff           = 3,
@@ -43,6 +45,20 @@ public:
       kConnected, 
       kChatting
    };
+
+   enum OpType {
+      kNone,
+      kLogin,
+      kLogout,
+      kConnect,
+      kDisconnect,
+      kScrollOn,
+      kScrollOff,
+      kFileSend,
+      kFileReceive,
+      kFileCancel,
+      kContact,
+   };
    
    enum Status {
       kSuccess,
@@ -54,9 +70,13 @@ public:
       kUnableToLogout,
       kUnableToPair,
       kUnableToUnpair,
+      kUnableToSendCommand,
+      kUnableToGetResponse,
       kAlreadyInProgress,
       kUnableToStartScroll,
       kUnableToStopScroll,
+      kUnableToContact,
+      kContactRejected,
    };
 
    class ASlave
@@ -129,9 +149,11 @@ public:
    bool IsSlave() const;
    bool IsConnected() const;
    CString GetLastMessage() const;
+   bool IsContacted() const;
+   void ResendLastStatus() const;
 
-   // for use by remote comm implementation, when a transaction completes with a status code
-   void OnStateChange(int statusCode);
+   // for use by remote comm implementation, when a transaction completes an operation with a status code
+   void OnStateChange(OpType operation, Status statusCode);
    void RemoteBusyWait();
 
 private:

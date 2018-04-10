@@ -9,7 +9,7 @@
 
 ARemoteDlg::ARemoteDlg() : 
    CDialog(ARemoteDlg::IDD)
-      , actionButtonsEnabled(true)
+      , actionButtonsBusy(false)
 {
    fUsername = gComm.GetUsername();
    fPassword = gComm.GetPassword();
@@ -34,6 +34,7 @@ BEGIN_MESSAGE_MAP(ARemoteDlg, CDialog)
    ON_BN_CLICKED(ID_LOGIN, &ARemoteDlg::OnLogin)
    ON_MESSAGE(WM_KICKIDLE, &OnKickIdle)
    ON_MESSAGE(WMA_UPDATE_STATUS, &OnUpdateStatus)
+   ON_MESSAGE(WMA_UPDATE_CONTROLS, &OnUpdateStatus2)
 END_MESSAGE_MAP()
 
 BOOL ARemoteDlg::OnInitDialog()
@@ -51,8 +52,9 @@ BOOL ARemoteDlg::OnInitDialog()
    // set ourselves up to receive notification messages
    this->oldTarget = gComm.GetParent();
    gComm.SetParent( this->m_hWnd );
+
    // populate the network message box with the latest update
-   this->OnUpdateStatus(0, 0); // get actual parameter(s) last sent - statusCode and operationCode
+   gComm.ResendLastStatus(); // get actual parameter(s) last sent - statusCode and operationCode
 
    if (!gComm.IsMaster()) {
 
@@ -72,10 +74,11 @@ BOOL ARemoteDlg::OnInitDialog()
 
       // move some other controls up into that space
       // see here for some possibly-relevant info: https://jeffpar.github.io/kbarchive/kb/145/Q145994/
-      CRect converter(0, 0, 4, 8);
-      this->MapDialogRect(converter);
-      int baseUnitY = converter.bottom;
-      double baseRatio = baseUnitY / 8.0;
+      //CRect converter(0, 0, 4, 8);
+      //this->MapDialogRect(converter);
+      //int baseUnitY = converter.bottom;
+      //double baseRatio = baseUnitY / 8.0;
+
       CRect posListBox, posNetMsg, posClose/*, posListBox2, posNetMsg2, posClose2*/;
       this->GetDlgItem(rCtlSlaves)->GetWindowRect(posListBox); // in dialog units or pixels?
       //posListBox2 = posListBox;
@@ -110,17 +113,19 @@ void ARemoteDlg::OnConnect()
 
    // disable the button until operation completes with status
    this->GetDlgItem(ID_CONNECT)->EnableWindow(FALSE);
-   actionButtonsEnabled = false;
+   actionButtonsBusy = true;
 
-   if (this->SelIsConnected())
+   if (this->SelIsConnected() && gComm.IsContacted())
    {  // disconnect
+      this->opInProgress = AComm::kDisconnect;
       gComm.EndChat();
    }
    else
-   {  // connect
+   {  // connect (must contact through network)
       CString slave;
       fSlaves.GetText(sel, slave);
       CWaitCursor wait;
+      this->opInProgress = AComm::kContact;
       gComm.StartChat(slave);
    }
 }
@@ -137,12 +142,26 @@ void ARemoteDlg::OnAdd()
 
 LRESULT ARemoteDlg::OnUpdateStatus(WPARAM wp, LPARAM lp)
 {
-   CString msg = gComm.GetLastMessage();
-   TRACE(_T("Received UI status in dialog: %u, %X - Msg:\n%s\n"), wp, lp, (LPCTSTR)msg);
-   msg.Replace(_T("\n"), _T("\r\n")); // the UI edit control requires this substitution
+   CString msg, msg2 = gComm.GetLastMessage();
+   AComm::OpType opCode = (AComm::OpType)wp;
+   AComm::Status opStatus = (AComm::Status)lp;
+   msg.Format(_T("Most recent network status: %u on op %u\n%s\n"), opStatus, opCode, (LPCTSTR)msg2);
+   //TRACE(msg);
+   int n = msg.Replace(_T("\n"), _T("\r\n")); // the UI edit control requires this substitution
    this->GetDlgItem(ID_NETMESSAGE)->SetWindowTextW(msg);
 
-   actionButtonsEnabled = true;
+   // finish the busy transaction when the expected op code arrives with a result (save the res?)
+   if (opCode == this->opInProgress && opStatus != AComm::kWaiting) {
+      actionButtonsBusy = false;
+   }
+   TRACE("Received OP=%u STATUS=%u UI=%s MSG=%d lines\n", opCode, opStatus, (actionButtonsBusy ? "BUSY" : "IDLE"), n);
+   ::PostMessageA(this->m_hWnd, WMA_UPDATE_CONTROLS, wp, lp);
+   return 0;
+}
+
+LRESULT ARemoteDlg::OnUpdateStatus2(WPARAM, LPARAM)
+{
+   // kludge: delay the state checks until after op compmletes
    this->EnableControls();
    return 0;
 }
@@ -195,13 +214,28 @@ void ARemoteDlg::OnRemove()
 
 void ARemoteDlg::EnableControls()
 {  // enable buttons based on selection of a slave
+   // also Login and Connect depend on state now
    const int selectedSlave = fSlaves.GetCurSel();
-   if (actionButtonsEnabled) {
-      this->GetDlgItem(ID_LOGIN)->EnableWindow(TRUE);
-      this->GetDlgItem(ID_CONNECT)->EnableWindow(LB_ERR != selectedSlave);
+   BOOL isAnySlaveSel = LB_ERR != selectedSlave;
+   BOOL fLogin = TRUE;
+   BOOL fConnect = isAnySlaveSel;
+   BOOL fEdit = isAnySlaveSel;
+   BOOL fRemove = isAnySlaveSel;
+
+   if(!gComm.IsConnected()) {
+      fConnect = FALSE;
+      TRACE("Tried to shut off Connect button.\n");
    }
-   this->GetDlgItem(ID_EDIT)->EnableWindow(LB_ERR != selectedSlave);
-   this->GetDlgItem(ID_REMOVE)->EnableWindow(LB_ERR != selectedSlave);
+
+   if (actionButtonsBusy) {
+      fLogin = fConnect = FALSE;
+      TRACE("Action buttons are busy.\n");
+   }
+
+   this->GetDlgItem(ID_LOGIN)->EnableWindow(fLogin);
+   this->GetDlgItem(ID_CONNECT)->EnableWindow(fConnect);
+   this->GetDlgItem(ID_EDIT)->EnableWindow(fEdit);
+   this->GetDlgItem(ID_REMOVE)->EnableWindow(fRemove);
 }
 
 void ARemoteDlg::OnSlaveChange()
@@ -239,8 +273,14 @@ void ARemoteDlg::OnLogin()
 {  // or logout
    this->UpdateData();
    this->GetDlgItem(ID_LOGIN)->EnableWindow(FALSE);
-   actionButtonsEnabled = false;
-   gComm.IsConnected()? gComm.Disconnect() : gComm.Connect(fUsername, fPassword);
+   actionButtonsBusy = true;
+   if (gComm.IsConnected()) {
+      this->opInProgress = AComm::kLogout;
+      gComm.Disconnect();
+   } else {
+      this->opInProgress = AComm::kLogin;
+      gComm.Connect(fUsername, fPassword);
+   }
 }
 
 LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
@@ -250,7 +290,7 @@ LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
    this->GetDlgItem(ID_LOGIN)->SetWindowText(caption);
    this->GetDlgItem(ID_LOGIN)->UpdateWindow();
 
-   VERIFY(caption.LoadString(this->SelIsConnected() ? rStrDisconnect : rStrConnect));
+   VERIFY(caption.LoadString( (this->SelIsConnected() && gComm.IsContacted())  ? rStrDisconnect : rStrConnect));
    this->GetDlgItem(ID_CONNECT)->SetWindowText(caption);
    this->GetDlgItem(ID_CONNECT)->UpdateWindow();
 

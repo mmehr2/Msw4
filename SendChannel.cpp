@@ -59,12 +59,12 @@ SendChannel::SendChannel(APubnubComm *pSvc)
    : state(remchannel::kNone)
    , key("demo")
    , key2("demo")
-   , deviceUUID("")
+   , deviceName("")
+   , channelName("")
+   , uuid("")
    , op_msg("")
    , pContext(nullptr)
    , pService(pSvc)
-   , deviceName("")
-   , channelName("")
    , pQueue(nullptr)
    , pubRetryCount(0)
 {
@@ -103,6 +103,9 @@ void SendChannel::Setup(
    const std::string& main_key,
    const std::string& aux_key)
 {
+   this->key = main_key;
+   this->key2 = aux_key;
+   this->uuid = deviceUUID;
    pubnub_init(pContext, main_key.c_str(), aux_key.c_str()); // sender publishes on this channel only
    pubnub_set_transaction_timeout(pContext, PUBNUB_DEFAULT_NON_SUBSCRIBE_TIMEOUT);
    // if sender, we also need to fire up the publisher queueing mechanism for the channel

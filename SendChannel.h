@@ -16,12 +16,12 @@ class SendChannel {
    remchannel::state state;
    std::string key;
    std::string key2;
-   std::string deviceUUID;
+   std::string deviceName;
+   std::string channelName;
+   std::string uuid;
    std::string op_msg;
    pubnub_t * pContext;
    APubnubComm * pService;
-   std::string deviceName;
-   std::string channelName;
    PNChannelPublishQueueing* pQueue;
    int pubRetryCount;
 

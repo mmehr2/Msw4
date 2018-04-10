@@ -11,7 +11,7 @@ extern "C" {
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
 #include "pubnub_timers.h" // getting the last time token
-#include "pubnub_helper.h" // various publish helpers
+#include "pubnub_helper.h" // various error helpers
 }
 
 /*
@@ -63,6 +63,7 @@ SendChannel::SendChannel(APubnubComm *pSvc)
    , op_msg("")
    , pContext(nullptr)
    , pService(pSvc)
+   , deviceName("")
    , channelName("")
    , pQueue(nullptr)
    , pubRetryCount(0)
@@ -123,6 +124,7 @@ bool SendChannel::Init(const std::string& cname)
 
    // PRIMARY sender gets this at Connect time
    // SECONDARY sender gets this from remote PING command (for sending responses)
+   this->op_msg = "OK."; // clear the status message
    this->channelName = cname;
    state = remchannel::kIdle;
    return true;
@@ -132,6 +134,7 @@ bool SendChannel::Init(const std::string& cname)
 bool SendChannel::DeInit()
 {
    bool result = true;
+   this->op_msg = "OK."; // clear the status message
    RAII_CriticalSection cs(pQueue->GetCS());
    // empty anything in the publishing queue
    /*bool was_empty =*/ pQueue->shutdown();
@@ -174,6 +177,13 @@ bool SendChannel::IsBusy() const
    return result;
 }
 
+const char* SendChannel::GetLastMessage() const
+{
+   static CStringA msg;
+   msg.Format("(s%d,r%d,b%d) %s", state, pubRetryCount, pQueue->isBusy(), op_msg.c_str());
+   return (LPCSTR)msg;
+}
+
 bool SendChannel::Send(const char*message)
 {
    // ignore Send calls while disconnecting
@@ -183,6 +193,7 @@ bool SendChannel::Send(const char*message)
 
    if (pContext == nullptr)
       return false;
+   this->op_msg = ""; // clear the status message
    std::string msg = SendChannel::JSONify(message);
 
    // if the message queue is in BUSY state, it means we should send there
@@ -234,7 +245,7 @@ void SendChannel::ContinuePublishing()
    } else {
       // otherwise we're done and it's back to direct publishing mode
       pQueue->setBusy(false); // redundant! it's already tested false in the if stmt!
-      state = remchannel::kIdle;
+      state = shutting_down ? remchannel::kDisconnected : remchannel::kIdle;
    }
 }
 
@@ -334,7 +345,7 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    last_tmtoken = ttok.c_str();
    // implement publish retry loop here
    if (res == PNR_OK) {
-      TRACE("Publish succeeded (c=%d), moving on...\n", this->pubRetryCount);
+      TRACE("Publish succeeded (r=%d)\n", this->pubRetryCount);
       this->pubRetryCount = 1;
    } else {
       TRACE("Publishing failed with code: %d ('%s')\n", res, op.c_str());

@@ -9,7 +9,7 @@ extern "C" {
 #define PUBNUB_LOG_PRINTF(...) pn_printf(__VA_ARGS__)
 #include "pubnub_callback.h"
 #include "pubnub_timers.h" // getting the last time token
-#include "pubnub_blocking_io.h" // setting non blocking io (not needed maybe?)
+#include "pubnub_helper.h" // various error helpers
 }
 
 /*
@@ -61,12 +61,14 @@ MORE ON PROXY NEGOTIATIONS (Issue #10-B):
 ReceiveChannel::ReceiveChannel(APubnubComm *pSvc) 
    : state(remchannel::kNone)
    , key("demo")
+   , deviceName("")
    , channelName("")
    , uuid("")
+   , op_msg("")
    , pContext(nullptr)
    , pService(pSvc)
-   , op_msg("")
    , init_sub_pending(true)
+   , waitTimeSecs(true)
 {
    //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
@@ -103,9 +105,6 @@ void ReceiveChannel::Setup(
    this->key = sub_key;
    this->uuid = deviceUUID;
    pubnub_init(pContext, "", sub_key.c_str()); // receiver subscribes on this context only
-   //const float factor = 2.0; // try to find upper limit by searching (MAXINT doesn't work, is seemingly ignored)
-   const int tmout_msec = /*PUBNUB_DEFAULT_SUBSCRIBE_TIMEOUT*/MAXINT/*/factor*/; // or, 24.855 days for 32-bit int
-   pubnub_set_transaction_timeout(pContext, tmout_msec);
    pubnub_set_uuid(pContext, deviceUUID.c_str());
    pubnub_register_callback(pContext, &pn_callback, (void*) this);
    if (state == remchannel::kNone)
@@ -116,12 +115,13 @@ void ReceiveChannel::Setup(
 bool ReceiveChannel::Init(void)
 {
    if (IsBusy())
-      return false; // TBD - return value should be state-dependent here
+      return false; // TBD - return value should be state-dependent or tribool here
    // SECONDARY receiver gets this at Login time
    // PRIMARY receiver gets this at Connect time (or whenever a response is desired)
+   this->op_msg = ""; // clear the status message
    // for all calls after the first on a new context, set transaction timeouts and either listen (local) or return
    // if local, we kick off the first subscribe automatically (gets a time token)
-   //??@@@@@??//this->init_sub_pending = true; // makes sure we do a "real" subscribe too
+   // this->init_sub_pending = true; // makes sure we do a "real" subscribe too
       // NOTE: not needed, just handle empty responses (this is the time token under the hood)
    bool startedOK = Listen();
    // notify client of login completion + error status
@@ -132,11 +132,12 @@ bool ReceiveChannel::Init(void)
 // the job of this should be to close any connection. We should not need to free the context here, just the dtor.
 bool ReceiveChannel::DeInit()
 {
-   if (state <= remchannel::kDisconnecting) {
-      // no need to send this more than once
-      return true;
-   }
+   //if (state <= remchannel::kDisconnecting) {
+   //   // no need to send this more than once
+   //   return true;
+   //}
 
+   this->op_msg = ""; // clear the status message
    //pubnub_cancel(pContext);
    // set Comm state to kDisconnecting until the callback gets results
    bool result = true;
@@ -174,9 +175,22 @@ bool ReceiveChannel::IsBusy() const
    return result;
 }
 
-// start to listen on this channel
-bool ReceiveChannel::Listen(void)
+const char* ReceiveChannel::GetLastMessage() const
 {
+   static CStringA msg;
+   msg.Format("(s%d,r%d,w%d) %s", state, 0/*subRetryCount*/, waitTimeSecs, op_msg.c_str());
+   return (LPCSTR)msg;
+}
+
+// start to listen on this channel; if fails to start, needs separate error handling
+bool ReceiveChannel::Listen(unsigned int wait_secs)
+{
+   this->op_msg = ""; // clear the status message
+   bool restart = (wait_secs == 0);
+   const int tmout_msec = wait_secs ? 
+      wait_secs * 1000 : // convert to msec
+      MAXINT; /*or, 24.855 days for 32-bit int*/
+   pubnub_set_transaction_timeout(pContext, tmout_msec);
    pubnub_res res;
    res = pubnub_subscribe(pContext, this->channelName.c_str(), NULL);
    if (res != PNR_STARTED)
@@ -184,7 +198,8 @@ bool ReceiveChannel::Listen(void)
    const char* last_tmtoken = pubnub_last_time_token(pContext);
    int msec = pubnub_transaction_timeout_get(pContext);
    TRACE("LISTENING FOR %1.3lf sec, last token=%s\n", msec/1000.0, last_tmtoken);
-   state = remchannel::kIdle;
+   state = restart ? remchannel::kIdle : remchannel::kBusy;
+   this->waitTimeSecs = wait_secs;
    return true;
 }
 
@@ -229,46 +244,73 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       // TIMEOUT - listen again
       // disconnect
       // other errors - notify an error handler, then listen again OR replace context?
-      if (res == PNR_CANCELLED) {
+      switch (res) {
+      case PNR_CANCELLED:
          TRACE("SUB OPERATION CANCELLED.\n");
          if (state != remchannel::kDisconnecting)
             TRACE("CHANNEL DISCONNECTED AT STATE %d.\n", state);
          else
             TRACE("CHANNEL DISCONNECTED NORMALLY.\n");
-         state = remchannel::kDisconnected;
          // notify client of logout completion w/o errors
          pService->OnTransactionComplete(remchannel::kReceiver, remchannel::kOK);
+         op_msg += "Sub canceled.";
+         state = remchannel::kDisconnected;
+         // CANCEL COMPLETED - EXIT HERE
+         return;
+         break;
+      default:
+         {
+            // Other errors take normal exit path
+            CStringA op;
+            op.Format("Error code %d=%s.", res, pubnub_res_2_string(res));
+            op_msg += op;
+         }
+         break;
       }
-      return;
    } else if (this->init_sub_pending) {
       // call Listen() again now that we have the initial time token for this context
       this->init_sub_pending = false;
-      bool restartedOK = this->Listen();
-      // notify client of login completion + error status
-      pService->OnTransactionComplete(remchannel::kReceiver, restartedOK ? remchannel::kOK : remchannel::kError);
+      op_msg += "Internal reply received.";
+      bool restartedOK = this->Listen(this->waitTimeSecs);
+      // notify client of login completion if error status
+      if (!restartedOK) {
+         state = remchannel::kDisconnected;
+         pService->OnTransactionComplete(remchannel::kReceiver, remchannel::kError);
+      }
       return;
-   }
-   // get all the data if OK
-   while (nullptr != (data = pubnub_get(this->pContext)))
-   {
-      // dispatch the received data
-      // after a reconnect, there might be several
-      this->OnMessage(data);
+   } else {
+      // NORMAL SUB RETURN: get all the data
+      while (nullptr != (data = pubnub_get(this->pContext)))
+      {
+         // dispatch the received data
+         // after a reconnect, there might be several
+         this->OnMessage(data);
 
-      // stats: accumulate a list and count of messages processed here
-      std::string sd(data);
-      op += sd + sep;
-      ++msgctr;
-      sep = "; ";
+         // stats: accumulate a list and count of messages processed here
+         std::string sd(data);
+         op += sd + sep;
+         ++msgctr;
+         sep = "; ";
+      }
+      op = "Rx{" + op + "}";
+      op_msg += op;
+      // no more data to be read here (res is PNR_OK)
+      // call the time difference reporter here
+      const char* last_tmtoken = pubnub_last_time_token(this->pContext); // aseems to be vailable for sub transacs only
+      ReportTimeDifference(last_tmtoken, PBTT_SUBSCRIBE, res, op, cname, msgctr);
    }
-   op = "Rx{" + op + "}";
-   // no more data to be read here (res is PNR_OK)
-   // call the time difference reporter here
-   const char* last_tmtoken = pubnub_last_time_token(this->pContext); // aseems to be vailable for sub transacs only
-   ReportTimeDifference(last_tmtoken, PBTT_SUBSCRIBE, res, op, cname, msgctr);
 
    // TBD: do final error handling and decide if OK to continue
    // then reopen an active subscribe() to start the next data transaction
-   // NOTE: this is normal operation, and no transaction is in progress; if it fails, it's an async event worth noticing
-   this->Listen(); // TBD: check return code and deal with this re-subscribe error
+   bool error = res != PNR_OK;
+   bool reopen = msgctr == 0 && !error; // empty-message re-sub
+   bool restart = this->waitTimeSecs == 0;
+   if (restart || reopen) {
+      // NOTE: this is normal operation, and no transaction is in progress; if it fails, it's an async event worth noticing
+      this->Listen(this->waitTimeSecs); // TBD: check return code and deal with this re-subscribe error
+   } else {
+      this->state = remchannel::kDisconnected;
+      // notify client of transaction completion + normal status
+      pService->OnTransactionComplete(remchannel::kReceiver, error ? remchannel::kError : remchannel::kOK);
+   }
 }

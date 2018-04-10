@@ -82,9 +82,14 @@ class APubnubComm
    std::string pubAPIKey;
    std::string subAPIKey;
 
-   OpType fOperation; // what transaction we're working on
-   int statusCode; // latest transaction result, for reporting to the UI level
+   int fOperation; // what transaction we're working on (AComm::OpType)
+   int statusCode; // latest transaction result, for reporting to the UI level, using AComm::Status codes
    std::string statusMessage; // string form of the above with details
+   time_t cmdStartTime; // for timing execution of contact command (and others)
+   time_t cmdLocalEndTime; // when pub op returns
+   time_t cmdRemoteEndTime; // when sub op returns (round trip complete)
+   time_t cmdEndTime; // when transaction ends (theoretically same as RemoteEnd, but ...)
+   int contactCode; // result of Contact operation (OK, busy-reject, etc. - use AComm::Status codes)
 
    // inbound pubnub channel info
    // mainly used by Secondary to listen for incoming Command messages
@@ -119,7 +124,7 @@ class APubnubComm
    void Read();
    void Write();
    bool ReadOverrideFile(const char* fileName); // returns true if any changes made to persistent settings
-   void StoreMessage(bool clear, char* fmt, ...);
+   void StoreMessage(bool clear, char* fmt, ...); // for logging plus tracing, saves to statusMessage
    
 public:
    APubnubComm(AComm* pComm);
@@ -148,6 +153,8 @@ public:
    int GetStatusCode() const; // report most-recently-sent status code (ONLY CALL IF NOT BUSY)
    bool isSuccessful() const; // report if most-recently-sent status code means a successful operation (ONLY CALL IF NOT BUSY)
    CString GetLastMessage() const; // most recently set status message (ONLY CALL IF NOT BUSY)
+   double GetCommandTimeSecs() const;
+   int GetContactCode() const; // report most-recently-received results of Contact command (primary to secondary)
  
    // Will set up the the channel link(s) to go online
    // PRIMARY: no channel setup, just setup and verify connections and remember device name
@@ -169,6 +176,9 @@ public:
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
    void SendCommand(const char* message);
+   // same, but go busy and imply a transaction wait until done
+   bool SendCommandBusy(int opCode); // STATE: kChatting -> kBusy(w.op=...) -> kChatting
+   void SendStatusReport() const; // UI can get the current op/status to be re-sent
 
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);

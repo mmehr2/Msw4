@@ -9,19 +9,6 @@ enum ConnectionType {
    kNoChange, 
 };
 
-enum OpType {
-   kNone,
-   kLogin,
-   kLogout,
-   kConnect,
-   kDisconnect,
-   kScrollOn,
-   kScrollOff,
-   kFileSend,
-   kFileReceive,
-   kFileCancel,
-};
-
 enum ConnectionStatus {
    kDisconnected, // not online (logged out)
    kConnecting, // transient v

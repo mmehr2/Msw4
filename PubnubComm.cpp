@@ -2,6 +2,7 @@
 #include "PubnubComm.h"
 #include "SendChannel.h"
 #include "ReceiveChannel.h"
+#include "PubnubCallback.h"
 #include "Comm.h"
 #include "strings.h"
 #include "Msw.h"
@@ -143,8 +144,14 @@ APubnubComm::APubnubComm(AComm* pComm)
    , deviceUUID("")
    , pubAPIKey("")
    , subAPIKey("")
+   , fOperation(AComm::kNone)
    , statusCode(AComm::kSuccess)
-   , fOperation(kNone)
+   , statusMessage("")
+   , cmdStartTime(0)
+   , cmdLocalEndTime(0)
+   , cmdRemoteEndTime(0)
+   , cmdEndTime(0)
+   , contactCode(AComm::kUnableToContact)
    , pReceiver(nullptr)
    , pSender(nullptr)
    , pBuffer(nullptr)
@@ -341,16 +348,17 @@ const char* APubnubComm::GetOperationName() const
 {
    const char* result = "UNKNOWN";
    switch(this->fOperation) {
-   case kNone: result = "NONE"; break;
-   case kLogin: result = "LOGIN"; break;
-   case kLogout: result = "LOGOUT"; break;
-   case kConnect: result = "CONNECT"; break;
-   case kDisconnect: result = "DISCONNECT"; break;
-   case kScrollOn: result = "SCROLL-ON"; break;
-   case kScrollOff: result = "SCROLL-OFF"; break;
-   case kFileSend: result = "SENDFILE"; break;
-   case kFileReceive: result = "RCVFILE"; break;
-   case kFileCancel: result = "CANFILE"; break;
+   case AComm::kNone: result = "NONE"; break;
+   case AComm::kLogin: result = "LOGIN"; break;
+   case AComm::kLogout: result = "LOGOUT"; break;
+   case AComm::kConnect: result = "CONNECT"; break;
+   case AComm::kDisconnect: result = "DISCONNECT"; break;
+   case AComm::kScrollOn: result = "SCROLL-ON"; break;
+   case AComm::kScrollOff: result = "SCROLL-OFF"; break;
+   case AComm::kContact: result = "CONTACT"; break;
+   case AComm::kFileSend: result = "SENDFILE"; break;
+   case AComm::kFileReceive: result = "RCVFILE"; break;
+   case AComm::kFileCancel: result = "CANFILE"; break;
    }
    return result;
 }
@@ -360,7 +368,7 @@ const char* APubnubComm::GetConnectionStateName() const
    const char* result = "";
    switch (this->fLinked) {
    case kDisconnected:
-      result = "DISCONNECTED";
+      result = "OFFLINE";
       break;
    case kDisconnecting:
       result = "DISCONNECTING";
@@ -369,7 +377,7 @@ const char* APubnubComm::GetConnectionStateName() const
       result = "CONNECTING";
       break;
    case kConnected:
-      result = "CONNECTED";
+      result = "ONLINE";
       break;
    case kLinking:
       result = "PAIRING";
@@ -452,14 +460,28 @@ int APubnubComm::GetStatusCode() const
    return this->statusCode;
 }
 
+int APubnubComm::GetContactCode() const
+{
+   return this->contactCode;
+}
+
 bool APubnubComm::isSuccessful() const
 {
    return this->statusCode == AComm::kSuccess;
 }
 
+double APubnubComm::GetCommandTimeSecs() const
+{
+   // NOTE: get_local_timestamp() returns a high-resolution time in 100ns intervals (10^-7 sec)
+   double result = difftime(cmdEndTime, cmdStartTime); // bigger one first gives positive diffs, same as - op
+   result /= 1e7; // convert to secs (standard rep)
+   return result;
+}
+
 // This will finalize any of the four major busy operations, and report any state change to the parent, even those externally set by caller
 void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::result what)
 {
+   time_t timestamp = get_local_timestamp();
    switch(fLinked) {
    case kConnecting:
       // Logging in
@@ -491,42 +513,80 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
          this->SetState( kConnected, AComm::kSuccess );
       else
          this->SetState( kChatting, AComm::kUnableToUnpair );
-       break;
+      break;
    case kBusy:
       switch (fOperation) {
-      case kScrollOn:
-        // Start scrolling
+      case AComm::kScrollOn:
+         // Start scrolling
          if (what == remchannel::kOK)
             this->SetState( kScrolling, AComm::kSuccess );
          else
             this->SetState( kChatting, AComm::kUnableToStartScroll );
          break;
-      case kScrollOff:
-        // Stop scrolling
+      case AComm::kScrollOff:
+         // Stop scrolling
          if (what == remchannel::kOK)
             this->SetState( kChatting, AComm::kSuccess );
          else
             this->SetState( kScrolling, AComm::kUnableToStopScroll );
          break;
+      case AComm::kContact:
+      //case kOtherRoundTripOperation: // probably kFileXXX
+         // for all op-busy-wait-reply scenarios (list above)
+         // check who this is from, ignore the Sender if OK, wait for the Receiver to complete, catch errors
+         if (which == remchannel::kSender && what == remchannel::kError) {
+            // error in sender publish transaction
+            this->cmdLocalEndTime = timestamp; // remember time split for local
+            this->contactCode = AComm::kUnableToSendCommand;
+            this->SetState( kChatting, this->contactCode );
+         } else if (which == remchannel::kReceiver && what == remchannel::kError) {
+            // error in receiver subscribe response (timeout, etc.)
+            this->contactCode = AComm::kUnableToGetResponse;
+            this->SetState( kChatting, this->contactCode );
+         } else if (which == remchannel::kReceiver) {
+            // receiver got OK response with data (dispatched call by this point)
+            this->contactCode = AComm::kSuccess; // TBD - remove this when a reply actually gets checked for rejection
+            // but how to tell rejection (C3 response) vs. acceptance (C2 response)? this is done by the data response OnMessage() call
+            this->SetState( kChatting, this->contactCode );
+         } else {
+            // sender sent OK - intermediate step, don't fire to next level
+            this->cmdLocalEndTime = timestamp; // remember time split for local
+            this->cmdEndTime = timestamp; // update overall time
+            PNC_MESSAGE_LOG("%s %s SENT %s OP SUCCESSFULLY ON CHANNEL %s @ %1.6lf s\n", this->GetConnectionTypeName(), 
+               pSender->GetTypeName(), this->GetOperationName(), pSender->GetName(), this->GetCommandTimeSecs());
+            return;
+         }
+         break;
       }
-        break;
+      break;
    }
+
+   // save the overall transaction end time
+   this->cmdEndTime = timestamp;
 
    // log state change
    const char* tname = (which == remchannel::kReceiver) ? pReceiver->GetTypeName() : pSender->GetTypeName();
    const char* cname = (which == remchannel::kReceiver) ? pReceiver->GetName() : pSender->GetName();
-   PNC_MESSAGE_LOG("%s %s IN %s OP IS NOW %s ON CHANNEL %s\n", 
-      this->GetConnectionTypeName(), tname, this->GetOperationName(), this->GetConnectionStateName(), cname);
+   PNC_MESSAGE_LOG("%s %s ENDED %s OP WITH %s ON CHANNEL %s @ %1.6lf s\n", this->GetConnectionTypeName(), tname, 
+      this->GetOperationName(), this->GetConnectionStateName(), cname, this->GetCommandTimeSecs());
 
    // fire state change up to the next level
-   fComm->OnStateChange(this->statusCode); // to change its own state and post a status message to the UI; needed: status codes
+   this->SendStatusReport();
+}
+
+void APubnubComm::SendStatusReport() const
+{
+   // to change its own state and post a status message to the UI
+   fComm->OnStateChange( (AComm::OpType)fOperation, (AComm::Status)statusCode ); 
 }
 
 bool APubnubComm::Login(const char* ourDeviceName_)
 {
-   fOperation = kLogin;
+   fOperation = AComm::kLogin;
    remchannel::type who = remchannel::kReceiver;
    PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
@@ -609,9 +669,11 @@ bool APubnubComm::Login(const char* ourDeviceName_)
 
 void APubnubComm::Logout()
 {
-   fOperation = kLogout;
+   fOperation = AComm::kLogout;
    remchannel::type who = remchannel::kReceiver;
    PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
@@ -679,9 +741,11 @@ void APubnubComm::Logout()
 
 bool APubnubComm::OpenLink(const char * pSenderName_)
 {
-   fOperation = kConnect;
+   fOperation = AComm::kConnect;
    remchannel::type who = remchannel::kReceiver;
    PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
@@ -740,9 +804,11 @@ bool APubnubComm::OpenLink(const char * pSenderName_)
 
 void APubnubComm::CloseLink()
 {
-   fOperation = kDisconnect;
+   fOperation = AComm::kDisconnect;
    remchannel::type who = remchannel::kSender;
    PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
@@ -795,15 +861,17 @@ void APubnubComm::CloseLink()
 
 bool APubnubComm::StartScrollMode()
 {
-   fOperation = kScrollOn;
+   fOperation = AComm::kScrollOn;
    remchannel::type who = remchannel::kReceiver;
    PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
-   if (fLinked >= kScrolling || (fLinked == kBusy && fOperation == kScrollOn)) {
+   if (fLinked >= kScrolling || (fLinked == kBusy && fOperation == AComm::kScrollOn)) {
       PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
          (fLinked == kBusy) ? "DONE" : "IN PROGRESS");
       // don't change statusCode or state here
@@ -846,15 +914,17 @@ bool APubnubComm::StartScrollMode()
 
 void APubnubComm::StopScrollMode()
 {
-   fOperation = kScrollOff;
+   fOperation = AComm::kScrollOff;
    remchannel::type who = remchannel::kReceiver;
    PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
 
    // report where we are each time
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
    TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
 
-   if (fLinked == kChatting || (fLinked == kBusy && fOperation == kScrollOff)) {
+   if (fLinked == kChatting || (fLinked == kBusy && fOperation == AComm::kScrollOff)) {
       PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
          (fLinked == kConnected) ? "DONE" : "IN PROGRESS");
       this->OnTransactionComplete(who, remchannel::kOK);
@@ -906,6 +976,86 @@ void APubnubComm::SendCommand(const char * message)
    TRACE("\n");
 }
 
+bool APubnubComm::SendCommandBusy(int op)
+{
+   fOperation = op;
+   remchannel::type who = remchannel::kReceiver;
+   PNC_MESSAGE_LOGX("");
+   // save when we started the transaction
+   cmdStartTime = get_local_timestamp();
+   const unsigned int WAIT_TIME_SECS = 30;
+
+   // report where we are each time
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pReceiver->GetTypeName(), pReceiver->GetName());
+   TRACE("%s STATE=%s FOR %s %s ON %s\n", this->GetOperationName(), this->GetConnectionStateName(), this->GetConnectionTypeName(), pSender->GetTypeName(), pSender->GetName());
+
+   if (fLinked == kBusy && fOperation == op) {
+      PNC_MESSAGE_LOG("%s %s REQUESTED, ALREADY %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
+         (fLinked == kBusy) ? "DONE" : "IN PROGRESS");
+      // don't change statusCode or state here
+      this->OnTransactionComplete(who, remchannel::kOK);
+      return true;
+   }
+
+   bool result = true;
+   if (fLinked < kChatting) {
+      PNC_MESSAGE_LOG("%s %s REQUESTED, CANNOT START IN STATE %s.\n", this->GetConnectionTypeName(), this->GetOperationName(), 
+         this->GetConnectionStateName());
+      this->SetState( this->fLinked, AComm::kUnableToContact );
+      this->OnTransactionComplete(who, remchannel::kError);
+      return false;
+   }
+
+   // PRIMARY: make sure the sender can operate to receive response messages
+   this->SetState( kBusy, AComm::kWaiting );
+   bool res = pReceiver->Listen(WAIT_TIME_SECS); // special single non-loop version of subscribe, specifies wait in secs
+   bool busy = pReceiver->IsBusy();
+   const char* chname = pReceiver->GetName();
+   const char* tname = pReceiver->GetTypeName();
+   if (!res) {
+      // immediate failure of Listen() -- check error codes
+      PNC_MESSAGE_LOG("%s %s IS UNABLE TO WAIT FOR CMD %s ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, this->GetOperationName(), chname);
+      this->contactCode = AComm::kUnableToGetResponse;
+      this->OnTransactionComplete(who, remchannel::kError);
+      result = false;
+   } else if (busy) {
+      // waiting to find out results, OK to proceed with send
+      PNC_MESSAGE_LOG("%s %s SETTING UP RESPONSE LISTENER FOR %s CMD ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, this->GetOperationName(), chname);
+      // now send the op-related message to the sender, which is configured if we're kChatting
+      static char buffer[256];
+      switch (op) {
+      case AComm::kContact:
+         sprintf_s(buffer, 256, "%c%d,%s", AComm::kContactRemote, AComm::kOn, pSender->GetName());
+         break;
+      default:
+         buffer[0] = 0;
+         break;
+      }
+      // send the command that will trigger the response eventually
+      bool res = pSender->Send(buffer);
+      if (!res) {
+         // can't send command? reject the operation here
+         this->contactCode = AComm::kUnableToSendCommand;
+         this->OnTransactionComplete(remchannel::kSender, remchannel::kError);
+      } else {
+         // send started OK? now we wait for the replies to come back from the Sender and Receiver
+         // proper end will be from the Receiver reply which SHOULD call OTC() after the Sender reply comes in
+         // we need to continue after the Sender reply, which will also call OTC(), and deal with out-of-order arrival
+         this->contactCode = AComm::kWaiting;
+      }
+   } else {
+      // immediate success - also not an option, can't have a reply before we send, can we? but stale replies ...
+      PNC_MESSAGE_LOG("%s %s PREMATURE RETURN FROM LISTEN REPLY TO CMD %s ON CHANNEL %s\n", 
+         this->GetConnectionTypeName(), tname, this->GetOperationName(), chname);
+      this->contactCode = AComm::kUnableToGetResponse;
+      this->OnTransactionComplete(who, remchannel::kError);
+   }
+
+   return result; // started sequence successfully
+}
+
 #include "Msw.h"
 #include "RtfHelper.h"
 #include "ScrollDialog.h"
@@ -922,15 +1072,17 @@ void APubnubComm::OnMessage(const char * message)
    const long arg1 = (s[0]) ? ::atoi(&s[1]) : 0;
    const char* comma = strchr(s.c_str(), ',');
    const long arg2 = comma ? ::atoi(&comma[1]) : 0;
+   const std::string arg2S = comma ? &comma[1] : "";
    switch (command) {
-      /*g*/ case AComm::kScroll:          this->SendCmd(rCmdToggleScrollMode, arg1); break;
-      /*t*/ case AComm::kTimer:           this->SendCmd(((AComm::kReset == arg1) ? rCmdTimerReset : rCmdToggleTimer), arg1); break;
-      /*s*/ case AComm::kScrollSpeed:     this->SendMsg(AMswApp::sSetScrollSpeedMsg, arg1); break;
-      /*p*/ case AComm::kScrollPos:       this->SendMsg(AMswApp::sSetScrollPosMsg, arg1); break;
-      /*y*/ case AComm::kScrollPosSync:   this->SendMsg(AMswApp::sSetScrollPosSyncMsg, arg1); break;
-      /*m*/ case AComm::kScrollMargins:   theApp.SetScrollMargins(arg1, arg2); break;
-      /*c*/ case AComm::kCueMarker:       ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
-      /*f*/ case AComm::kFrameInterval:   AScrollDialog::gMinFrameInterval = arg1; break;
+      case AComm::kScroll:          /*g*/ this->SendCmd(rCmdToggleScrollMode, arg1); break;
+      case AComm::kTimer:           /*t*/ this->SendCmd(((AComm::kReset == arg1) ? rCmdTimerReset : rCmdToggleTimer), arg1); break;
+      case AComm::kScrollSpeed:     /*s*/ this->SendMsg(AMswApp::sSetScrollSpeedMsg, arg1); break;
+      case AComm::kScrollPos:       /*p*/ this->SendMsg(AMswApp::sSetScrollPosMsg, arg1); break;
+      case AComm::kScrollPosSync:   /*y*/ this->SendMsg(AMswApp::sSetScrollPosSyncMsg, arg1); break;
+      case AComm::kScrollMargins:   /*m*/ theApp.SetScrollMargins(arg1, arg2); break;
+      case AComm::kCueMarker:       /*c*/ ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
+      case AComm::kFrameInterval:   /*f*/ AScrollDialog::gMinFrameInterval = arg1; break;
+      case AComm::kContactRemote:   /*C*/ TRACE("%s Received Contact Command: %d,%s\n", this->GetConnectionTypeName(), arg1, arg2S.c_str()); break;
    }
 }
 

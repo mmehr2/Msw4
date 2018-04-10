@@ -12,13 +12,6 @@ extern "C" {
    void pn_printf(char* fmt, ...);
 }
 
-// fwd.ref to free functions used in callback API target
-extern void pn_callback(pubnub_t* pn, pubnub_trans t, pubnub_res res, void* pData);
-extern const char* GetPubnubTransactionName(pubnub_trans t);
-extern const char* GetPubnubResultName(pubnub_res res);
-//extern void TRACE_LAST_ERROR(LPCSTR fname, DWORD line);
-extern time_t get_local_timestamp();
-
 class SendChannel {
    remchannel::state state;
    std::string key;
@@ -47,7 +40,7 @@ public:
    void SetName(const std::string& name) { channelName = name; }
    const char* GetName() const { return channelName.c_str(); }
    bool isUnnamed() const { return channelName.empty(); }
-   const char* GetLastMessage() const { return op_msg.c_str(); }
+   const char* GetLastMessage() const;
 
    // start online operation (sub listens, pub may send a ping)
    bool Init(const std::string& channelName); // sender

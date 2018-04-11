@@ -440,10 +440,22 @@ bool AComm::SendFile(LPCTSTR /*filename*/) {
    //   VERIFY(::sprintf_s(buffer, _countof(buffer), "%S", filename) < mCountOf(buffer));
    //   fImpl->fFs->SendFile(buffer, fImpl->fChat->remote_jid());
    //}
+
+   // PRIMARY -- NOTE: This is for all the various things that need to precede an actual Pubnub scrolling session:
+   // Step 1 - send Preferences message (video settings, etc.) from dialog box
+   // Step 2 - turn on scrolling mode (2-way back-channel reception)
+   fRemote->StartScrollMode();
+   // Step 3 - send the script/file transfer start message (other messages triggered by Secondary as needed to get data)
+   // Step 4 - wait for Secondary xfer done response before returning (which starts scrolling)
    return true;
 }
 
 bool AComm::SendCommand(Command cmd, int param1, int param2) {
+   // special handling for scroll shutoff command (just before last command is sent)
+   if (cmd == AComm::kScroll && param1 == AComm::kOff) {
+      fRemote->StopScrollMode();
+   }
+
    char buffer[32] = {0};
    VERIFY(::sprintf_s(buffer, "%d,%d", param1, param2) < mCountOf(buffer));
    return this->SendCommand(cmd, buffer);

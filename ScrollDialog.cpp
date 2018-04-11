@@ -530,7 +530,19 @@ if (fSpeed && (elapsed > (currentFrameInterval + kAcceptablePause)))
 
 #ifdef _REMOTE
          // send out synchronization message
-         if (gComm.IsMaster()) {
+         // NOTE: This is the only message currently that provides feedback to the control system
+         // It is designed to be sent from the Secondary BACK to the Primary and adjust the speed and position of the Primary accordingly.
+         // By making it feed-forward, we are just exacerbating the problems inherent in the system.
+         //
+         // Feeding back the position makes it an I (integral) control mechanism.
+         // We can also consider feeding back the current speed of the Secondary (P - proportional control), and
+         //   if we wanted to add D-differential control, we should calculate the rate of change to the speed as well by deltas from previous speeds.
+         // With proper coefficients, this would be a regular polynomial PID controller design, with all the problems thereof.
+         // There are also many known workarounds and new ideas in the field of industrial process control design that might be relevant.
+         //
+         // Currently, it seems that the Ki coefficient is 1.0 (no modification of the value from Secondary to Primary that I can tell).
+         // The T (sample period) is every 1.0 secs, as is the peropd of updating the timer for speed measurements (P and S both)
+         if (!gComm.IsMaster()) {
             gComm.SendCommand(AComm::kScrollPosSync, fRtfHelper.GetCurrentUserPos());
          }
 #endif // _REMOTE

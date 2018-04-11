@@ -1202,10 +1202,12 @@ void TRACE_LAST_ERROR(LPCSTR , DWORD ) { }
 CString APubnubComm::GetLastMessage() const
 {
    static CString msg;
+   CA2T amsgOp(this->GetOperationName());
+   CA2T amsgState(this->GetConnectionStateName());
    CA2T amsgThis(this->statusMessage.c_str());
    CA2T amsgSender(this->pSender->GetLastMessage());
    CA2T amsgReceiver(this->pReceiver->GetLastMessage());
-   msg.Format(_T("%sLast operation completed with code %d\nRCV:%s\nSND:%s\n"),
-      (LPCTSTR)amsgThis, this->statusCode, (LPCTSTR)amsgReceiver, (LPCTSTR)amsgSender);
+   msg.Format(_T("%sLast operation %s completed with code %d, state:%s\nRCV:%s\nSND:%s\n"),
+      (LPCTSTR)amsgThis, (LPCTSTR)amsgOp, this->statusCode, (LPCTSTR)amsgState, (LPCTSTR)amsgReceiver, (LPCTSTR)amsgSender);
    return msg;
 }

@@ -249,6 +249,7 @@ void SendChannel::ContinuePublishing()
       // otherwise we're done and it's back to direct publishing mode
       pQueue->setBusy(false); // redundant! it's already tested false in the if stmt!
       state = shutting_down ? remchannel::kDisconnected : remchannel::kIdle;
+      TRACE("Set final Sender state %s.\n", shutting_down ? "Disconnected" : "Idle");
    }
 }
 

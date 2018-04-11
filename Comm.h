@@ -58,6 +58,7 @@ public:
       kFileReceive,
       kFileCancel,
       kContact,
+      kContactCancel,
    };
    
    enum Status {

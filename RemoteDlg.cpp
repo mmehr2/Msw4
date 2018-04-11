@@ -128,7 +128,7 @@ void ARemoteDlg::OnConnect()
       CString slave;
       fSlaves.GetText(sel, slave);
       CWaitCursor wait;
-      this->opInProgress = AComm::kContact;
+      this->opInProgress = AComm::kConnect; //kContact; // use this until the Test command is automated into the Connect call
       gComm.StartChat(slave);
    }
 }

@@ -955,6 +955,18 @@ void APubnubComm::StopScrollMode()
    }
 }
 
+void APubnubComm::SendCommand(int opCode)
+{
+   const char* cmd = nullptr;
+   switch(opCode) {
+   case AComm::kContactCancel:
+      cmd = this->FormatCommand( AComm::kContactRemote, AComm::kOff );
+      break;
+   }
+   if (cmd)
+      SendCommand(cmd);
+}
+
 void APubnubComm::SendCommand(const char * message)
 {
    //bool result = true;
@@ -1024,17 +1036,9 @@ bool APubnubComm::SendCommandBusy(int op)
       PNC_MESSAGE_LOG("%s %s SETTING UP RESPONSE LISTENER FOR %s CMD ON CHANNEL %s\n", 
          this->GetConnectionTypeName(), tname, this->GetOperationName(), chname);
       // now send the op-related message to the sender, which is configured if we're kChatting
-      static char buffer[256];
-      switch (op) {
-      case AComm::kContact:
-         sprintf_s(buffer, 256, "%c%d,%s", AComm::kContactRemote, AComm::kOn, pSender->GetName());
-         break;
-      default:
-         buffer[0] = 0;
-         break;
-      }
+      const char* cmd = this->FormatCommand( AComm::kContact, AComm::kOn, 0, pReceiver->GetName());
       // send the command that will trigger the response eventually
-      bool res = pSender->Send(buffer);
+      bool res = pSender->Send(cmd);
       if (!res) {
          // can't send command? reject the operation here
          this->contactCode = AComm::kUnableToSendCommand;
@@ -1054,6 +1058,101 @@ bool APubnubComm::SendCommandBusy(int op)
    }
 
    return result; // started sequence successfully
+}
+
+const char* APubnubComm::FormatCommand( int opCode, int arg1, int arg2, const std::string& argS )
+{
+   static char buffer[256];
+   switch (opCode) {
+   case AComm::kContact:
+      sprintf_s(buffer, 256, "%c%d,%s", AComm::kContactRemote, arg1, argS.c_str());
+      break;
+   default:
+      buffer[0] = 0;
+      break;
+   }
+   return buffer;
+}
+
+void APubnubComm::OnContactMessage(int onOff, const std::string& channel_name )
+{
+   TRACE("%s Received Contact Command: %d,%s\n", this->GetConnectionTypeName(), onOff, channel_name.c_str());
+
+   if (this->isSecondary()) {
+      switch (onOff) {
+      case AComm::kOn:
+         TRACE("Received CONTACT-ON from Primary on channel %s.\n", this->GetConnectionTypeName(), channel_name.c_str());
+         {
+         // secondary machine receives primary's chanel name
+         bool accepted = true;
+         // check if we are not in proper state to be listening (huh? how??)
+         // check if already have a conversation and reject a new one (check chatting state)
+         if (this->fLinked == AComm::kChatting) {
+            TRACE("%s CANNOT ACCEPT CONNECT REQUEST, ALREADY IN CONVERSATION WITH %s\n", this->GetConnectionTypeName(), pSender->GetName());
+            // remember to send this channel name back in the reply
+            accepted = false;
+         }
+         // else verify channel name and reject if badly formatted, wrong company name, bad onOff command
+         // else proceed with ACCEPT
+         if (accepted) {
+            // set kChatting state if we are now in OK conversation
+            this->contactCode = AComm::kSuccess;
+            this->SetState( kChatting, this->contactCode );
+            // set up the Sender channel with the Primary name if OK (extract device name too?)
+            pSender->Init( channel_name );
+            // send Contact command reply (open-ended, no loop) with ACCEPT or REJECT status if we can
+            const char* cmd = this->FormatCommand(AComm::kContact, accepted ? AComm::kOn : AComm::kOff, 0, pReceiver->GetName() );
+            pSender->Send(cmd);
+         } else {
+            // SPECIAL CASE: we need to send the command to a channel different than what we are currently sending on
+            TRACE("UNSUPPORTED CASE: SENDING REJECTION MESSAGE TO CHANNEL %s WHILE TALKING ON CHANNEL %s\n",
+               channel_name.c_str(), pSender->GetName() );
+            // set up another SenderChannel, init with channel_name, and send command with kOff (and Sender chname in use?)
+         }
+         // NOTE: this is sent in response to data; there is no transaction in progress until this comes in
+         }
+         break;
+      case AComm::kOff:
+         this->contactCode = AComm::kSuccess;
+         TRACE("Received CONTACT-CANCEL from Primary on channel %s.\n", this->GetConnectionTypeName(), channel_name.c_str());
+         // verify if the channel is one we are talking to, and we are actually talking
+         // ignore other combinations (reject command silently for now - log it tho)
+         if (fLinked == AComm::kChatting && channel_name == pSender->GetName()) {
+            pSender->DeInit();
+            if (pSender->IsBusy()) {
+               this->SetState(kUnlinking, AComm::kWaiting);
+            } else {
+               this->SetState(kConnected, AComm::kSuccess);
+            }
+         }
+         break;
+      default:
+         this->contactCode = AComm::kUnableToContact;
+         TRACE("Received BAD CODE %d from Primary on channel %s.\n", this->GetConnectionTypeName(), onOff, channel_name.c_str());
+         break;
+      }
+   } else if (this->isPrimary()) {
+      // primary receives secondary's reply (kOn is ACCEPT, kOff is REJECT (busy))
+      bool isSecondaryBusy = false;
+      // set contactCode according to final status (onOff)
+      // able to finally complete round-trip operation now
+      switch (onOff) {
+      case AComm::kOn:
+         this->contactCode = AComm::kSuccess;
+         TRACE("Received ACCEPT from Secondary on channel %s.\n", channel_name.c_str());
+         break;
+      case AComm::kOff:
+         this->contactCode = AComm::kContactRejected;
+         isSecondaryBusy = true;
+         TRACE("Received REJECT from Secondary on channel %s.\n", channel_name.c_str());
+         break;
+      default:
+         this->contactCode = AComm::kUnableToContact;
+         TRACE("Received BAD CODE %d from Secondary on channel %s.\n", onOff, channel_name.c_str());
+         break;
+      }
+      // NOTE: transaction should be finished elsewhere, this is only the response to the command data
+   }
 }
 
 #include "Msw.h"
@@ -1082,7 +1181,7 @@ void APubnubComm::OnMessage(const char * message)
       case AComm::kScrollMargins:   /*m*/ theApp.SetScrollMargins(arg1, arg2); break;
       case AComm::kCueMarker:       /*c*/ ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
       case AComm::kFrameInterval:   /*f*/ AScrollDialog::gMinFrameInterval = arg1; break;
-      case AComm::kContactRemote:   /*C*/ TRACE("%s Received Contact Command: %d,%s\n", this->GetConnectionTypeName(), arg1, arg2S.c_str()); break;
+      case AComm::kContactRemote:   /*C*/ this->OnContactMessage(arg1, arg2S.c_str()); break;
    }
 }
 

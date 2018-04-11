@@ -319,9 +319,16 @@ void AComm::Disconnect() {
       this->SetState(kConnected); // with failure code reported
 }
 
+#define USE_CONTACT
+//#define USE_CONTACT2
+
 bool AComm::IsContacted() const
 {
+#ifdef USE_CONTACT2
    return fRemote->GetContactCode() == kSuccess;
+#else
+   return true;
+#endif
 }
 
 bool AComm::StartChat(LPCTSTR target) {
@@ -360,20 +367,21 @@ bool AComm::StartChat(LPCTSTR target) {
    bool result = fRemote->isSuccessful();
 
    if (result) {
+      // We have a connection with the Secondary, but the Contact command might have had issues
+      this->SetState(kChatting);
    }
    else
       this->SetState(kConnected); // with failure code reported
 
-  JustContact:
+JustContact:
+#ifdef USE_CONTACT
+   // NEEDS DEBUGGING - make it a separate TEST command button for now
    // Step 2 - send the contact command
    fRemote->SendCommandBusy(kContact);
 
    this->RemoteBusyWait();
    result = fRemote->isSuccessful();
    int ccode = fRemote->GetContactCode();
-
-   // We have a connection with the Secondary, but the Contact command might have had issues
-   this->SetState(kChatting);
 
    CString msg, msg2 = fRemote->GetConnectedName();
    if (!result) {
@@ -392,16 +400,31 @@ bool AComm::StartChat(LPCTSTR target) {
       msg.Format(_T("Bad contact reply from SECONDARY %s\n"), msg2);
    }
    ::AfxMessageBox(msg);
+#endif // USE_CONTACT
+
    return result;
 }
 
 void AComm::EndChat() {
+   bool result;
+
+   if (this->IsContacted()) {
+      // tell the paired secondary we are going away (release it for others)
+      fRemote->SendCommand(kContactCancel);
+      // wait until published, proceed whether or not it was successfully sent
+      this->RemoteBusyWait();
+      result = fRemote->isSuccessful();
+      if (result)
+         TRACE("SUCCESSFULLY SENT UNPAIR COMMAND TO SECONDARY REMOTE.\n");
+      else
+         TRACE("UNABLE TO SEND UNPAIR COMMAND TO SECONDARY REMOTE.\n");
+   }
 
    // always do remote functions, to provide UI responses when done
    fRemote->CloseLink();
 
    this->RemoteBusyWait();
-   bool result = fRemote->isSuccessful();
+   result = fRemote->isSuccessful();
 
    if (result)
       this->SetState(kConnected); // no longer chatting

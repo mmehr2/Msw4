@@ -125,6 +125,7 @@ class APubnubComm
    void Write();
    bool ReadOverrideFile(const char* fileName); // returns true if any changes made to persistent settings
    void StoreMessage(bool clear, char* fmt, ...); // for logging plus tracing, saves to statusMessage
+   const char* FormatCommand( int opCode, int arg1 = (-1), int arg2 =(-1), const std::string& argS = "" );
    
 public:
    APubnubComm(AComm* pComm);
@@ -176,6 +177,7 @@ public:
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
    void SendCommand(const char* message);
+   void SendCommand(int opCode); // send a conventional operation message
    // same, but go busy and imply a transaction wait until done
    bool SendCommandBusy(int opCode); // STATE: kChatting -> kBusy(w.op=...) -> kChatting
    void SendStatusReport() const; // UI can get the current op/status to be re-sent
@@ -185,6 +187,9 @@ public:
 
    // called by Sender/Receiver callback when async operation (transaction start/cancel) completes
    void OnTransactionComplete(remchannel::type which, remchannel::result what);
+
+   // message response routines
+   void OnContactMessage( int onOff, const std::string& channel_name );
 
    // Post a result message to the parent window (for UI action)
    // NOTE: this is based on chat code taken from old implementation by Steve Cox

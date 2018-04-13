@@ -51,4 +51,14 @@ namespace remchannel {
    };
 
    extern const std::string JSON_PREFIX, JSON_SUFFIX;
+   extern const char* GetTypeName( type t );
+   extern const char* GetStateName( state s );
 }
+
+namespace rem {
+
+   extern const char* GetConnectionTypeName( ConnectionType t );
+   extern const char* GetConnectionStateName( ConnectionStatus s );
+
+}
+

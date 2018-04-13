@@ -106,7 +106,7 @@ void ReceiveChannel::Setup(
    this->uuid = deviceUUID;
    pubnub_init(pContext, "", sub_key.c_str()); // receiver subscribes on this context only
    pubnub_set_uuid(pContext, deviceUUID.c_str());
-   pubnub_register_callback(pContext, &pn_callback, (void*) this);
+   pubnub_register_callback(pContext, &rem::pn_callback, (void*) this);
    if (state == remchannel::kNone)
       state = remchannel::kDisconnected;
    // else what? it's possible to use this for reconfiguration
@@ -178,7 +178,7 @@ bool ReceiveChannel::IsBusy() const
 const char* ReceiveChannel::GetLastMessage() const
 {
    static CStringA msg;
-   msg.Format("(s%d,r%d,w%d) %s", state, 0/*subRetryCount*/, waitTimeSecs, op_msg.c_str());
+   msg.Format("(s%s,r%d,w%d) %s", remchannel::GetStateName(state), 0/*subRetryCount*/, waitTimeSecs, op_msg.c_str());
    return (LPCSTR)msg;
 }
 
@@ -297,7 +297,7 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       // no more data to be read here (res is PNR_OK)
       // call the time difference reporter here
       const char* last_tmtoken = pubnub_last_time_token(this->pContext); // aseems to be vailable for sub transacs only
-      ReportTimeDifference(last_tmtoken, PBTT_SUBSCRIBE, res, op, cname, msgctr);
+      rem::ReportTimeDifference(last_tmtoken, PBTT_SUBSCRIBE, res, op, cname, msgctr);
    }
 
    // TBD: do final error handling and decide if OK to continue

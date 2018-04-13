@@ -24,6 +24,8 @@ class SendChannel {
    APubnubComm * pService;
    PNChannelPublishQueueing* pQueue;
    int pubRetryCount;
+   std::string overrideChannelName;
+   std::string lastPubMessage;
 
 public:
    SendChannel(APubnubComm *pSvc);
@@ -37,8 +39,7 @@ public:
 
    void SetDeviceName(const std::string& name) { deviceName = name; }
    const char* GetDeviceName() const { return deviceName.c_str(); }
-   void SetName(const std::string& name) { channelName = name; }
-   const char* GetName() const { return channelName.c_str(); }
+   const char* GetName() const;
    bool isUnnamed() const { return channelName.empty(); }
    const char* GetLastMessage() const;
 
@@ -59,7 +60,7 @@ public:
    void OnTimeCallback(pubnub_res res);
 
    // For use by PubnubComm client (ultimately UI thread)
-   bool Send(const char* data);
+   bool Send(const char* data, const char* override_channel = nullptr);
 
    const char* GetTypeName() const;
    // NOTE: 'safe' commands do not contain any escapable JSON string characters or non-ASCII chars

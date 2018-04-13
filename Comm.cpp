@@ -320,12 +320,13 @@ void AComm::Disconnect() {
 }
 
 #define USE_CONTACT
-//#define USE_CONTACT2
+#define USE_CONTACT2
 
 bool AComm::IsContacted() const
 {
 #ifdef USE_CONTACT2
-   return fRemote->GetContactCode() == kSuccess;
+   int ccode = fRemote->GetContactCode();
+   return ccode == kSuccess;
 #else
    return true;
 #endif
@@ -410,7 +411,7 @@ void AComm::EndChat() {
 
    if (this->IsContacted()) {
       // tell the paired secondary we are going away (release it for others)
-      fRemote->SendCommand(kContactCancel);
+      fRemote->SendCommandBusy(kContactCancel);
       // wait until published, proceed whether or not it was successfully sent
       this->RemoteBusyWait();
       result = fRemote->isSuccessful();

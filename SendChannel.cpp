@@ -67,6 +67,8 @@ SendChannel::SendChannel(APubnubComm *pSvc)
    , pService(pSvc)
    , pQueue(nullptr)
    , pubRetryCount(0)
+   , overrideChannelName("")
+   , lastPubMessage("")
 {
    //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
    //// spin count is how many loops to spin before actually waiting (on a multiprocesssor system)
@@ -112,9 +114,10 @@ void SendChannel::Setup(
    if (!pQueue)
       pQueue = new PNChannelPublishQueueing();
    pubnub_set_uuid(pContext, deviceUUID.c_str());
-   pubnub_register_callback(pContext, &pn_callback, (void*) this);
+   pubnub_register_callback(pContext, &rem::pn_callback, (void*) this);
    if (state == remchannel::kNone)
       state = remchannel::kDisconnected;
+   TRACE("SENDER SETUP TO STATE %s\n", remchannel::GetStateName(this->state));
    // else what? it's possible to use this for reconfiguration
 }
 
@@ -122,6 +125,7 @@ bool SendChannel::Init(const std::string& cname)
 {
    // ignore Init calls while disconnecting or busy, but post a deferred Init?
    if (IsBusy()) {
+      TRACE("SENDER CANNOT INIT WHILE BUSY IN STATE %s\n", remchannel::GetStateName(this->state));
       return false;
    }
 
@@ -130,6 +134,7 @@ bool SendChannel::Init(const std::string& cname)
    this->op_msg = "OK."; // clear the status message
    this->channelName = cname;
    state = remchannel::kIdle;
+   TRACE("SENDER INITIALIZED TO STATE %s\n", remchannel::GetStateName(this->state));
    return true;
 }
 
@@ -148,6 +153,7 @@ bool SendChannel::DeInit()
    switch (state) {
    case remchannel::kDisconnecting:
       result = false; // wait until result done (how can we get here? two DeInit() calls while waiting for async cancel!)
+      TRACE("SENDER DEINITIALIZING TO STATE %s\n", remchannel::GetStateName(this->state));
       break;
    case remchannel::kBusy:
       // op in progress: cancel it
@@ -155,11 +161,13 @@ bool SendChannel::DeInit()
       state = remchannel::kDisconnecting; // this is still a busy state if IsBusy() is used for testing
       // NOTE: since callback may run synchronously on this thread, set the state 1st
       pubnub_cancel(pContext);
+      TRACE("SENDER BUSY CANCEL SENT TO STATE %s\n", remchannel::GetStateName(this->state));
       break;
    default:
       // nothing to cancel, we just go "offline" (TBD - do we forget the channel we were using here?)
       state = remchannel::kDisconnected;
       pQueue->setBusy(false);
+      TRACE("SENDER DEINITIALIZED TO STATE %s\n", remchannel::GetStateName(this->state));
       break;
    }
    return result;
@@ -180,24 +188,36 @@ bool SendChannel::IsBusy() const
    return result;
 }
 
+const char* SendChannel::GetName() const
+{
+   if (this->overrideChannelName.empty())
+      return this->channelName.c_str();;
+   return this->overrideChannelName.c_str();
+}
+
 const char* SendChannel::GetLastMessage() const
 {
    static CStringA msg;
-   msg.Format("(s%d,r%d,b%d) %s", state, pubRetryCount, pQueue->isBusy(), op_msg.c_str());
+   msg.Format("(s%s,r%d,b%d) %s", remchannel::GetStateName(state), pubRetryCount, pQueue->isBusy(), op_msg.c_str());
    return (LPCSTR)msg;
 }
 
-bool SendChannel::Send(const char*message)
+bool SendChannel::Send(const char* message, const char* override_channel)
 {
    // ignore Send calls while disconnecting
    if (state == remchannel::kDisconnecting) {
       return false;
    }
 
-   if (pContext == nullptr)
-      return false;
+   ASSERT(pContext);
+   if (override_channel != nullptr)
+      this->overrideChannelName = override_channel;
+   else
+      this->overrideChannelName.clear();
    this->op_msg = ""; // clear the status message
    std::string msg = SendChannel::JSONify(message);
+   if (strlen(message) == 0)
+      TRACE("SENDER ABOUT TO SEND EMPTY MESSAGE\n");
 
    // if the message queue is in BUSY state, it means we should send there
    RAII_CriticalSection rcs(pQueue->GetCS()); // lock queued access
@@ -219,7 +239,8 @@ bool SendChannel::SendBare(const char*message)
    pubnub_res res;
 
    //RAII_CriticalSection acs(pService->GetCS()); // lock queued access
-   res = pubnub_publish(pContext, this->channelName.c_str(), message);
+   res = pubnub_publish(pContext, this->GetName(), message);
+   this->lastPubMessage = message;
    if (res != PNR_STARTED) {
       return false; // error reporting at higher level
    }
@@ -240,16 +261,21 @@ void SendChannel::ContinuePublishing()
    bool shutting_down = false;
    if (state == remchannel::kDisconnecting)
       shutting_down = true;
+   // we've successfully sent the previous item, clear the override channel, if any
+   // NOTE: This means the override is only good for the next send, including its retries.
+   this->overrideChannelName.clear();
    // if the queue has more items,
    // ACTUALLY, just test if the PQ is in BUSY mode or not
    if (!shutting_down && pQueue->isBusy()) {
       // request to publish the next one
       pQueue->pop_publish(this);
+      // if busy flag has been cleared here, we need to change state too
+      if (!pQueue->isBusy())
+         state = remchannel::kIdle;
    } else {
       // otherwise we're done and it's back to direct publishing mode
       pQueue->setBusy(false); // redundant! it's already tested false in the if stmt!
       state = shutting_down ? remchannel::kDisconnected : remchannel::kIdle;
-      TRACE("Set final Sender state %s.\n", shutting_down ? "Disconnected" : "Idle");
    }
 }
 
@@ -272,22 +298,10 @@ std::string SendChannel::JSONify( const std::string& input, bool is_safe )
 #ifdef NEW_FIX_TO_PUB_TTOK
 namespace {
 
-   std::vector<std::string> split( const char* data_, const char* delim )
-   {
-      std::vector<std::string> result;
-      CStringA data(data_);
-      int pos = 0;
-      CStringA token;
-      for (token = data.Tokenize(delim, pos); !token.IsEmpty(); ) {
-         result.push_back( (LPCSTR)token );
-      }
-      return result;
-   }
-
    std::string LastTimeTokenFromReply( const char* data )
    {
       // should have "[code, \"reply\". "ttok"]" in the buffer; we want ttok
-      std::vector<std::string> r = split(data, "\"");
+      std::vector<std::string> r = rem::split(data, "\"");
       std::string ttoken;
       // Now, r[0] is "[code", r[1] is reply, r[2] is ttok, r[3] is "]"
       if (r.size() == 4 && r[3] == "]") {
@@ -348,29 +362,30 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    ttok = LastTimeTokenFromReply(this->pContext);
    last_tmtoken = ttok.c_str();
    // implement publish retry loop here
-   if (res == PNR_OK) {
+   if (res == PNR_OK || res == PNR_CANCELLED) {
       TRACE("Publish succeeded (r=%d)\n", this->pubRetryCount);
       this->pubRetryCount = 1;
    } else {
-      TRACE("Publishing failed with code: %d ('%s')\n", res, op.c_str());
+      TRACE("Publishing {%s} failed with code: %d ('%s')\n", lastPubMessage.c_str(), res, op.c_str());
       switch (pubnub_should_retry(res)) {
       case pbccFalse:
-         TRACE(" There is no benefit to retry\n");
+         TRACE(" There is no benefit to retry; mostly programming errors.\n");
          this->pubRetryCount = 1;
          result = remchannel::kError;
          break;
       case pbccTrue:
          TRACE(" Retrying #%d...\n", this->pubRetryCount);
          this->pubRetryCount++;
+         break;
       case pbccNotSet:
-         TRACE(" We decided not to retry since it could make things worse.\n");
+         TRACE(" We decided not to retry (timeout, TCP reset) since it could make things worse.\n");
          this->pubRetryCount = 1;
          result = remchannel::kError;
          break;
       }
    }
    // call the time difference reporter here
-   ReportTimeDifference(last_tmtoken, PBTT_PUBLISH, res, op, cname, this->pubRetryCount);
+   rem::ReportTimeDifference(last_tmtoken, PBTT_PUBLISH, res, op, cname, this->pubRetryCount);
    // TBD: do final error handling and decide if OK to continue
    // then decide how to continue
    // TBD: also limit MAX number of retries, or add a wait, or something
@@ -380,8 +395,8 @@ void SendChannel::OnPublishCallback(pubnub_res res)
       remchannel::state oldState = state;
       this->ContinuePublishing();
       // notify client of completion of async Logout w/o errors
-      if (oldState == remchannel::kDisconnecting)
-         pService->OnTransactionComplete(remchannel::kSender, result);
+      //if (oldState == remchannel::kDisconnecting)
+      pService->OnTransactionComplete(remchannel::kSender, result);
    }
 }
 

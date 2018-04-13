@@ -110,6 +110,7 @@ class APubnubComm
 
    // helpers
    std::string MakeChannelName( const std::string& deviceName ) const;
+   bool IsSameCompany( const std::string& channel_name ) const;
    const char* GetConnectionName() const;
    const char* GetConnectionTypeName() const;
    const char* GetConnectionStateName() const;
@@ -126,6 +127,7 @@ class APubnubComm
    bool ReadOverrideFile(const char* fileName); // returns true if any changes made to persistent settings
    void StoreMessage(bool clear, char* fmt, ...); // for logging plus tracing, saves to statusMessage
    const char* FormatCommand( int opCode, int arg1 = (-1), int arg2 =(-1), const std::string& argS = "" );
+   const char* FormatOperation(int opCode); // format a conventional operation message
    
 public:
    APubnubComm(AComm* pComm);
@@ -177,7 +179,7 @@ public:
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
    void SendCommand(const char* message);
-   void SendCommand(int opCode); // send a conventional operation message
+   //void SendCommand(int opCode); // send a conventional operation message
    // same, but go busy and imply a transaction wait until done
    bool SendCommandBusy(int opCode); // STATE: kChatting -> kBusy(w.op=...) -> kChatting
    void SendStatusReport() const; // UI can get the current op/status to be re-sent

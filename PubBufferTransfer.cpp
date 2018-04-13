@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "PubBufferTransfer.h"
+#include "PubnubCallback.h"
 
 #include <algorithm>
 
@@ -243,7 +244,6 @@ size_t PNBufferTransfer::getBytes(BYTE* pData, size_t countBytes)
 }
 
 #include <ctime>
-extern time_t get_local_timestamp();
 
 class TestTimer {
    time_t tStart;
@@ -253,11 +253,11 @@ public:
    TestTimer(const char* descr)
    {
       description = descr;
-      tStart = get_local_timestamp();
+      tStart = rem::get_local_timestamp();
    }
    ~TestTimer()
    {
-      time_t tEnd = get_local_timestamp();
+      time_t tEnd = rem::get_local_timestamp();
       double td = difftime(tEnd, tStart) / 1.0e7;
       TRACE("%s timediff = %1.6lfs.\n", description.c_str(), td);
    }

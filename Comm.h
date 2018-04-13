@@ -63,8 +63,9 @@ public:
    
    enum Status {
       kSuccess,
+      kFailure,
       kWaiting = 50,
-      kFailure = 100,
+      kGenericErrorStatus = 100,
       kUnconfigured,
       kNoChannelName,
       kUnableToLogin,
@@ -78,6 +79,8 @@ public:
       kUnableToStopScroll,
       kUnableToContact,
       kContactRejected,
+      kBadFormat,
+      kOutsideDomain,
    };
 
    class ASlave

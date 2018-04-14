@@ -1268,12 +1268,14 @@ void TRACE_LAST_ERROR(LPCSTR , DWORD ) { }
 CString APubnubComm::GetLastMessage() const
 {
    static CString msg;
-   CA2T amsgOp(this->GetOperationName());
-   CA2T amsgState(this->GetConnectionStateName());
-   CA2T amsgThis(this->statusMessage.c_str());
-   CA2T amsgSender(this->pSender->GetLastMessage());
-   CA2T amsgReceiver(this->pReceiver->GetLastMessage());
-   msg.Format(_T("%sLast operation %s completed with code %d, state:%s\nRCV:%s\nSND:%s\n"),
-      (LPCTSTR)amsgThis, (LPCTSTR)amsgOp, this->statusCode, (LPCTSTR)amsgState, (LPCTSTR)amsgReceiver, (LPCTSTR)amsgSender);
+   CStringA msg2, msg3="";
+   std::string chns = pSender->GetName();
+   if (!chns.empty())
+      msg3.Format("CONNECTED with %s on channel %s.\n", pSender->GetDeviceName(), chns.c_str());
+   msg2.Format("%s%sLast operation %s completed with code %d, state:%s\nRCV:%s\nSND:%s\n",
+      (LPCSTR)msg3, this->statusMessage.c_str(), this->GetOperationName(), this->statusCode, 
+      this->GetConnectionStateName(), this->pReceiver->GetLastMessage(), this->pSender->GetLastMessage());
+   CA2T amsg(msg2);
+   msg = amsg.m_psz;
    return msg;
 }

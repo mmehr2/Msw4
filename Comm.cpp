@@ -319,8 +319,8 @@ void AComm::Disconnect() {
       this->SetState(kConnected); // with failure code reported
 }
 
-#define USE_CONTACT
-#define USE_CONTACT2
+//#define USE_CONTACT
+//#define USE_CONTACT2
 
 bool AComm::IsContacted() const
 {
@@ -343,12 +343,14 @@ bool AComm::StartChat(LPCTSTR target) {
       if (fRemote->GetConnectedName() != target) {
          // end the current chat and continue to establish a new one
          this->EndChat();
+#ifdef USE_CONTACT
       } else if (this->IsContacted()) {
          // we are chatting with the right device, no need to kill it
          // but we need to check if we completed the Contact command OK
          // if we have, we need to trigger the completion transaction
          this->OnStateChange(kContact, (Status)fRemote->GetStatusCode());
          return true;
+#endif // USE_CONTACT
       } else {
          // else we can skip the OpenLink and go directly to the SendCommandBusy(kContact) call
          goto JustContact;
@@ -409,6 +411,7 @@ JustContact:
 void AComm::EndChat() {
    bool result;
 
+#ifdef USE_CONTACT
    if (this->IsContacted()) {
       // tell the paired secondary we are going away (release it for others)
       fRemote->SendCommandBusy(kContactCancel);
@@ -420,6 +423,7 @@ void AComm::EndChat() {
       else
          TRACE("UNABLE TO SEND UNPAIR COMMAND TO SECONDARY REMOTE.\n");
    }
+#endif // USE_CONTACT
 
    // always do remote functions, to provide UI responses when done
    fRemote->CloseLink();

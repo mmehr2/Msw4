@@ -61,6 +61,11 @@ public:
 
    void DetectProblematicProcesses();
 
+#ifdef _REMOTE
+   CStringA StringifyOptions(void) const;
+   void DestringifyOptions(const CStringA& input);
+#endif
+
 	//{{AFX_VIRTUAL(AMswApp)
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();

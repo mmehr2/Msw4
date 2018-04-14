@@ -771,9 +771,7 @@ LRESULT AMainFrame::OnUpdateSettings(WPARAM wParam, LPARAM /*lParam*/)
 {
    CStringA s( (LPCSTR)wParam );
    TRACE("UPDATE SETTINGS MESSAGE: %s\n", (LPCSTR)s);
-   APrefsDlg dlg(_T("Data from Remote"));
-   dlg.Deserialize(s);
-   SaveSettings(dlg);
+   theApp.DestringifyOptions(s);
    return 0;
 }
 

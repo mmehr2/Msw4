@@ -444,6 +444,7 @@ bool AComm::SendFile(LPCTSTR /*filename*/) {
 
    // PRIMARY -- NOTE: This is for all the various things that need to precede an actual Pubnub scrolling session:
    // Step 1 - send Preferences message (video settings, etc.) from dialog box
+   fRemote->SendOperation(kPrefsSend);
    // Step 2 - turn on scrolling mode (2-way back-channel reception)
    fRemote->StartScrollMode();
    // Step 3 - send the script/file transfer start message (other messages triggered by Secondary as needed to get data)

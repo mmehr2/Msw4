@@ -28,6 +28,7 @@ public:
       kFrameInterval    = 'f',
 
       kContactRemote    = 'C',
+      kPreferences      = 'P',
 
       // modifiers
       kOn            = 2,
@@ -59,6 +60,7 @@ public:
       kFileCancel,
       kContact,
       kContactCancel,
+      kPrefsSend,
    };
    
    enum Status {

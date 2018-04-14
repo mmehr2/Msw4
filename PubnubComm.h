@@ -90,6 +90,7 @@ class APubnubComm
    time_t cmdRemoteEndTime; // when sub op returns (round trip complete)
    time_t cmdEndTime; // when transaction ends (theoretically same as RemoteEnd, but ...)
    int contactCode; // result of Contact operation (OK, busy-reject, etc. - use AComm::Status codes)
+   CStringA fPreferences; // store the string version of the app's preferences for transfer between machines
 
    // inbound pubnub channel info
    // mainly used by Secondary to listen for incoming Command messages
@@ -179,7 +180,7 @@ public:
 
    // PRIMARY: called to send a message via the interface to the SECONDARY
    void SendCommand(const char* message);
-   //void SendCommand(int opCode); // send a conventional operation message
+   void SendOperation(int opCode); // send a conventional operation message
    // same, but go busy and imply a transaction wait until done
    bool SendCommandBusy(int opCode); // STATE: kChatting -> kBusy(w.op=...) -> kChatting
    void SendStatusReport() const; // UI can get the current op/status to be re-sent
@@ -192,6 +193,7 @@ public:
 
    // message response routines
    void OnContactMessage( int onOff, const std::string& channel_name );
+   void OnPreferences( const std::string& prefs );
 
    // Post a result message to the parent window (for UI action)
    // NOTE: this is based on chat code taken from old implementation by Steve Cox

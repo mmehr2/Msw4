@@ -857,3 +857,141 @@ void AMswApp::DetectProblematicProcesses()
       }
    }
 }
+
+#ifdef _REMOTE
+#include <sstream>
+#include <string>
+#include <vector>
+
+namespace {
+   // Format: single string, series of strings separated by commas, each one contains a format type char, name, '=', and a value
+   class PrefSerial {
+      std::vector<std::string> items;
+   public:
+      PrefSerial() { }
+
+      void addInt(const char* name, UINT i);
+      void addString(const char* name, const char *s);
+
+      std::string Dump() const;
+
+      static const char DELIM_IN;
+      static const char DELIM_OUT;
+   };
+
+   const char PrefSerial::DELIM_IN = '='; // field separator
+   const char PrefSerial::DELIM_OUT = ','; // record separator
+
+   void PrefSerial::addInt( const char* name, UINT i )
+   {
+      std::ostringstream os;
+      //os << 'i';
+      os << name;
+      os << DELIM_IN;
+      os << i;
+      items.push_back( os.str() );
+   }
+
+   void PrefSerial::addString( const char* name, const char* s )
+   {
+      std::ostringstream os;
+      //os << 's';
+      os << name;
+      os << DELIM_IN;
+      os << s;
+      items.push_back( os.str() );
+   }
+
+   std::string PrefSerial::Dump() const
+   {
+      std::ostringstream os;
+      std::vector<std::string>::const_iterator it;
+      for ( it = items.begin(); it!=items.end(); ++it) {
+         if (it != items.begin())
+            os << DELIM_OUT;
+         os << *it;
+      }
+      return os.str();
+   }
+}
+
+CStringA AMswApp::StringifyOptions(void) const
+{
+   CStringA result;
+   PrefSerial ps;
+
+   ps.addInt("cpc", fClearPaperclips ? 1 : 0);
+   ps.addInt("rt", fResetTimer ? 1 : 0);
+   ps.addInt("mt", fManualTimer ? 1 : 0);
+   ps.addInt("cps", fCharsPerSecond);
+   ps.addInt("iem", fInverseEditMode ? 1 : 0);
+   CT2A ascii(fFontLanguage);
+   ps.addString("fl", ascii.m_psz);
+
+   ps.addInt("lb", fLButtonAction);
+   ps.addInt("rb", fRButtonAction);
+   ps.addInt("rsc", fReverseSpeedControl ? 1 : 0);
+
+   ps.addInt("c", fColorOut ? 1 : 0);
+   ps.addInt("iv", fInverseOut ? 1 : 0);
+   ps.addInt("sd", fShowDividers ? 1 : 0);
+   ps.addInt("ss", fShowSpeed ? 1 : 0);
+   ps.addInt("ssp", fShowPos ? 1 : 0);
+   ps.addInt("st", fShowTimer ? 1 : 0);
+   ps.addInt("lo", fLoop ? 1 : 0);
+   ps.addInt("li", fLink ? 1 : 0);
+   ps.addInt("rtl", fMirror ? 1 : 0);
+
+   result = ps.Dump().c_str();
+   return result;
+}
+
+void AMswApp::DestringifyOptions(const CStringA& input)
+{
+   //
+   //CStringA ntoken, vtoken;
+   //char ctype;
+   //int pos = 0;
+   //ntoken = input.Tokenize(PrefSerial::DELIM_IN.c_str(), pos);
+   //if (pos == -1) return;
+   //vtoken = input.Tokenize(PrefSerial::DELIM_OUT.c_str(), pos);
+   std::string inp(input);
+   std::istringstream is(inp);
+   char /*ctype,*/ inc, outc;
+   const int MAX_SIZE_TOKEN = 80; // fontLanguage string - has no = or , chars and is <80 long? and NO UNICODE
+   char name[MAX_SIZE_TOKEN], value[MAX_SIZE_TOKEN];
+   while (is) {
+      //is >> ctype;   if (!is) return;
+      is.get(name, MAX_SIZE_TOKEN, PrefSerial::DELIM_IN);   if (!is) return;
+      is >> inc;   if (!is) return;
+      is.get(value, MAX_SIZE_TOKEN, PrefSerial::DELIM_OUT);   if (!is) return;
+      is >> outc;   if (!is) return;
+      if (inc != PrefSerial::DELIM_IN) return;
+      if (outc != PrefSerial::DELIM_OUT) return;
+      std::string sname(name);
+      int val = atoi(value);
+
+      if (sname == "cpc") { fClearPaperclips = (val ? 1 : 0); continue; }
+      if (sname == "rt") { fResetTimer = (val ? 1 : 0); continue; }
+      if (sname == "mt") { fManualTimer = (val ? 1 : 0); continue; }
+      if (sname == "cps") { fCharsPerSecond = val; continue; }
+      if (sname == "iem") { fInverseEditMode = (val ? 1 : 0); continue; }
+      if (sname == "fl") { fFontLanguage = (value); continue; }
+
+      if (sname == "lb") { fLButtonAction = (val); continue; }
+      if (sname == "rb") { fRButtonAction = (val); continue; }
+      if (sname == "rsc") { fReverseSpeedControl = (val ? 1 : 0); continue; }
+
+      if (sname == "c") { fColorOut = (val ? 1 : 0); continue; }
+      if (sname == "iv") { fInverseOut = (val ? 1 : 0); continue; }
+      if (sname == "sd") { fShowDividers = (val ? 1 : 0); continue; }
+      if (sname == "ss") { fShowSpeed = (val ? 1 : 0); continue; }
+      if (sname == "ssp") { fShowPos = (val ? 1 : 0); continue; }
+      if (sname == "st") { fShowTimer = (val ? 1 : 0); continue; }
+      if (sname == "lo") { fLoop = (val ? 1 : 0); continue; }
+      if (sname == "li") { fLink = (val ? 1 : 0); continue; }
+      if (sname == "rtl") { fMirror = (val ? 1 : 0); continue; }
+   }
+}
+
+#endif // _REMOTE

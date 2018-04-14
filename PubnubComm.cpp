@@ -988,6 +988,12 @@ void APubnubComm::StopScrollMode()
    }
 }
 
+void APubnubComm::SendOperation(int op)
+{
+   const char* cmd = this->FormatOperation(op);
+   this->SendCommand(cmd);
+}
+
 void APubnubComm::SendCommand(const char * message)
 {
    //bool result = true;
@@ -1091,23 +1097,36 @@ const char* APubnubComm::FormatOperation(int opCode)
    case AComm::kContactCancel:
       cmd = this->FormatCommand( AComm::kContactCancel, AComm::kOff, 0, pReceiver->GetName() );
       break;
+   case AComm::kPrefsSend:
+      cmd = this->FormatCommand( AComm::kPrefsSend, 0, 0, (LPCSTR)theApp.StringifyOptions() );
+      break;
    }
    return cmd;
 }
 
 const char* APubnubComm::FormatCommand( int opCode, int arg1, int arg2, const std::string& argS )
 {
-   static char buffer[256];
+   const int BUF_SIZE = 1024;
+   static char buffer[BUF_SIZE];
    switch (opCode) {
    case AComm::kContact:
    case AComm::kContactCancel:
-      sprintf_s(buffer, 256, "%c%d,%s", AComm::kContactRemote, arg1, argS.c_str());
+      sprintf_s(buffer, BUF_SIZE, "%c%d,%s", AComm::kContactRemote, arg1, argS.c_str());
+      break;
+   case AComm::kPrefsSend:
+      sprintf_s(buffer, BUF_SIZE, "%c%s", AComm::kPreferences, argS.c_str());
       break;
    default:
       buffer[0] = 0;
       break;
    }
    return buffer;
+}
+
+void APubnubComm::OnPreferences( const std::string& prefs )
+{
+   this->fPreferences = prefs.c_str();
+   this->SendMsg( WMA_UPDATE_SETTINGS, (WPARAM)(LPCSTR)fPreferences );
 }
 
 void APubnubComm::OnContactMessage(int onOff, const std::string& channel_name )
@@ -1228,6 +1247,7 @@ void APubnubComm::OnMessage(const char * message)
       case AComm::kCueMarker:       /*c*/ ARtfHelper::sCueMarker.SetPosition(-1, arg1); break;
       case AComm::kFrameInterval:   /*f*/ AScrollDialog::gMinFrameInterval = arg1; break;
       case AComm::kContactRemote:   /*C*/ this->OnContactMessage(arg1, arg2S.c_str()); break;
+      case AComm::kPreferences:     /*P*/ this->OnPreferences(&s[1]); break;
    }
 }
 

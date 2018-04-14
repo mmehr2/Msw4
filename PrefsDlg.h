@@ -29,10 +29,6 @@ public:  // data
    AGeneralPrefsDlg fGeneralPage;
    AScrollPrefsDlg fScrollPage;
    AVideoPage fVideoPage;
-
-   CStringA Serialize() const;
-   void Deserialize( const CStringA& cs );
-   bool UnitTestSerial() const;
 };
 
 

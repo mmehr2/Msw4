@@ -35,6 +35,7 @@ BEGIN_MESSAGE_MAP(ARemoteDlg, CDialog)
    ON_MESSAGE(WM_KICKIDLE, &OnKickIdle)
    ON_MESSAGE(WMA_UPDATE_STATUS, &OnUpdateStatus)
    ON_MESSAGE(WMA_UPDATE_CONTROLS, &OnUpdateStatus2)
+   ON_BN_CLICKED(ID_TEST, &ARemoteDlg::OnBnClickedTest)
 END_MESSAGE_MAP()
 
 BOOL ARemoteDlg::OnInitDialog()
@@ -300,3 +301,9 @@ LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
    return 0;
 }
 
+
+
+void ARemoteDlg::OnBnClickedTest()
+{
+   TRACE("TEST BUTTON\n");
+}

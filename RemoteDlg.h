@@ -50,4 +50,5 @@ public:
    CString fPassword;
    CListBox fSlaves;
    virtual void OnOK();
+   afx_msg void OnBnClickedTest();
 };

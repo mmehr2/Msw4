@@ -19,6 +19,8 @@
 #define ID_CONNECT                      9
 #define ID_CONNECT2                     10
 #define ID_LOGIN                        10
+#define ID_LOGIN2                       11
+#define ID_TEST                         11
 #define rGrammar                        99
 #define IDP_OLE_INIT_FAILED             100
 #define rMainFrame                      101
@@ -384,7 +386,6 @@
 #define rCtlRemoteName                  1052
 #define rCtlCcEnable                    1052
 #define ID_NETMESSAGE                   1053
-#define IDC_REMOTE_GROUP                1054
 #define ID_REMOTE_GROUP                 1054
 #define rCmdToggleInverseEdit           1099
 #define rCmdViewNtsc                    1100

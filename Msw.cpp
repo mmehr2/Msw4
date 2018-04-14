@@ -965,7 +965,11 @@ void AMswApp::DestringifyOptions(const CStringA& input)
       is.get(name, MAX_SIZE_TOKEN, PrefSerial::DELIM_IN);   if (!is) return;
       is >> inc;   if (!is) return;
       is.get(value, MAX_SIZE_TOKEN, PrefSerial::DELIM_OUT);   if (!is) return;
-      is >> outc;   if (!is) return;
+      is >> outc;
+      // NOTE: the comma is not available on the last setting, it should be EOF at this point
+      if (is.eof())
+         outc = PrefSerial::DELIM_OUT;
+      else if (!is) return;
       if (inc != PrefSerial::DELIM_IN) return;
       if (outc != PrefSerial::DELIM_OUT) return;
       std::string sname(name);

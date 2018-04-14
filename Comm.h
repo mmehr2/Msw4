@@ -157,6 +157,7 @@ public:
    CString GetLastMessage() const;
    bool IsContacted() const;
    void ResendLastStatus() const;
+   void RunTest(LPCTSTR params);
 
    // for use by remote comm implementation, when a transaction completes an operation with a status code
    void OnStateChange(OpType operation, Status statusCode);

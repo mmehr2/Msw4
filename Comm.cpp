@@ -479,6 +479,13 @@ bool AComm::SendCommand(Command cmd, const std::string& param) {
    return false;
 }
 
+void AComm::RunTest(LPCTSTR params_) 
+{
+   CT2A params_X(params_);
+   CStringA params = params_X.m_psz;
+   fRemote->OnMessage(params_X);
+}
+
 void AComm::SetParent(HWND parent) {
    fImpl->SetParent(parent);
    fRemote->SetParent(parent);

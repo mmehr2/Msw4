@@ -305,5 +305,7 @@ LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
 
 void ARemoteDlg::OnBnClickedTest()
 {
-   TRACE("TEST BUTTON\n");
+   TRACE("SENDING TEST DATA %s TO INTERNALS\n", fPassword);
+   UpdateData(TRUE); // read the dialog box into member variables
+   gComm.RunTest(fPassword);
 }

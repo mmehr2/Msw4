@@ -419,6 +419,7 @@ LRESULT AScrollDialog::OnScroll(WPARAM, LPARAM)
    ATimer clock;
    DWORD prevFrameTime = clock.Now();
    DWORD lastTimerUpdate = prevFrameTime;
+   DWORD lastTimerUpdateRemote = prevFrameTime;
 
 #if MS_DEMO
    const DWORD kEntryTime = prevFrameTime;
@@ -527,6 +528,14 @@ if (fSpeed && (elapsed > (currentFrameInterval + kAcceptablePause)))
       {
          this->DrawTimer();
          lastTimerUpdate = prevFrameTime;
+      }
+
+      // update the remote scroll position N times every second
+      int NTimesPerSec = theApp.fScrollPosSyncUpdatesPerSecond;
+      int msecPerUpdate = 1000 / NTimesPerSec;
+      if ((prevFrameTime - lastTimerUpdateRemote) > msecPerUpdate)
+      {
+         lastTimerUpdateRemote = prevFrameTime;
 
 #ifdef _REMOTE
          // send out synchronization message

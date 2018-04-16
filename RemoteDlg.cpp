@@ -305,7 +305,19 @@ LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
 
 void ARemoteDlg::OnBnClickedTest()
 {
-   TRACE("SENDING TEST DATA %s TO INTERNALS\n", fPassword);
    UpdateData(TRUE); // read the dialog box into member variables
+   TRACE(_T("SENDING TEST DATA %s TO INTERNALS\n"), fPassword);
+   CString marker = _T("=");
+   LPCTSTR pos = wcsstr(fPassword, marker);
+   if (pos != nullptr) {
+      int idx = pos - fPassword;
+      CString name = fPassword.Left(idx);
+      CString val = fPassword.Mid(idx+wcslen(marker));
+      if (name == _T("PPS")) {
+         int n = _wtoi(val);
+         theApp.fScrollPosSyncUpdatesPerSecond = n;
+         TRACE("Set SCROLL-POS-SYNC UPDATE TO %d PER SECOND.\n", n);
+      }
+   }
    gComm.RunTest(fPassword);
 }

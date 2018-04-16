@@ -64,6 +64,7 @@ public:
 #ifdef _REMOTE
    CStringA StringifyOptions(void) const;
    void DestringifyOptions(const CStringA& input);
+   int fScrollPosSyncUpdatesPerSecond;
 #endif
 
 	//{{AFX_VIRTUAL(AMswApp)

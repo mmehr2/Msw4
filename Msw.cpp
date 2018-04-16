@@ -111,6 +111,9 @@ AMswApp::AMswApp() :
    fInverseEditMode(false),
    fFontLanguage("Western"),
    fCuePointer(0)
+#ifdef _REMOTE
+   , fScrollPosSyncUpdatesPerSecond(1)
+#endif//def _REMOTE
 {
 	_tsetlocale(LC_ALL, _T(""));
 

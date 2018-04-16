@@ -90,16 +90,6 @@ const char* SendChannel::GetTypeName() const
    return "SENDER";
 }
 
-#define NEWLIMS
-#ifdef NEWLIMS
-#undef max
-#include <limits>
-static const int MAXINT = std::numeric_limits<int>().max();
-#else
-#include <climits>
-static const int MAXINT = INT_MAX;
-#endif
-
 void SendChannel::Setup(
    const std::string& deviceUUID,
    const std::string& main_key,

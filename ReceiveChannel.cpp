@@ -92,10 +92,10 @@ const char* ReceiveChannel::GetTypeName() const
 #ifdef NEWLIMS
 #undef max
 #include <limits>
-static const int MAXINT = std::numeric_limits<int>().max();
+static const int MAXINTGR = std::numeric_limits<int>().max();
 #else
 #include <climits>
-static const int MAXINT = INT_MAX;
+static const int MAXINTGR = INT_MAX;
 #endif
 
 void ReceiveChannel::Setup(
@@ -189,7 +189,7 @@ bool ReceiveChannel::Listen(unsigned int wait_secs)
    bool restart = (wait_secs == 0);
    const int tmout_msec = wait_secs ? 
       wait_secs * 1000 : // convert to msec
-      MAXINT; /*or, 24.855 days for 32-bit int*/
+      MAXINTGR; /*or, 24.855 days for 32-bit int*/
    pubnub_set_transaction_timeout(pContext, tmout_msec);
    pubnub_res res;
    res = pubnub_subscribe(pContext, this->channelName.c_str(), NULL);

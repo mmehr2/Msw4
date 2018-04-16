@@ -755,8 +755,8 @@ END
 //
 
 rVersionInfo VERSIONINFO
- FILEVERSION 4,0,1,26117
- PRODUCTVERSION 4,0,1,26117
+ FILEVERSION 4,0,2,26118
+ PRODUCTVERSION 4,0,2,26118
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -773,12 +773,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Magic Teleprompting"
             VALUE "FileDescription", "MagicScroll for Windows"
-            VALUE "FileVersion", "4, 0, 1, 26117"
+            VALUE "FileVersion", "4.0.2.26118"
             VALUE "InternalName", "MagicScroll"
-            VALUE "LegalCopyright", "Copyright© 2006 MagicTeleprompting 1994-2006.  All rights reserved."
+            VALUE "LegalCopyright", "Copyright© 2018 MagicTeleprompting 1994-2018.  All rights reserved."
             VALUE "OriginalFilename", "MSW.exe"
             VALUE "ProductName", "MagicScroll for Windows"
-            VALUE "ProductVersion", "4, 0, 1, 26117"
+            VALUE "ProductVersion", "4.0.2.26118"
         END
     END
     BLOCK "VarFileInfo"

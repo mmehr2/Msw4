@@ -31,6 +31,8 @@ _UpgradeReport_*/
 *.tmp
 *.TMP
 *.temp
+*.bin
+*.BIN
 
 # Redundant copies
 Copy*of*.*
@@ -55,6 +57,10 @@ DemoU/
 DemoReleaseU/
 Trial/
 ipch/
+
+# Events project
+EvtGen/*.h
+MswEvents.rc
 
 # Project subfolders
 RegGen/

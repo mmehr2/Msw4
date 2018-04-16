@@ -21,6 +21,8 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 
+#include "EvtGen\MswEvents.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -228,6 +230,9 @@ BOOL AMswApp::InitInstance()
    // MLM: For pubnub to save money - don't connect until login on RemoteDialog
    //gComm.Connect(gComm.GetUsername(), gComm.GetPassword());
 #endif // _REMOTE
+
+   // notify the Windows ETW system that the event provider is shutting down (event logging)
+   EventRegisterMagicScrollForWindows_Event_Provider();
 
    // This code replaces the MFC created menus with 
    // the Ownerdrawn versions 
@@ -580,6 +585,9 @@ int AMswApp::ExitInstance()
    gComm.Disconnect();
    gComm.SetParent(NULL);
 #endif // _REMOTE
+
+   // notify the Windows ETW system that the event provider is shutting down
+   EventUnregisterMagicScrollForWindows_Event_Provider();
 
 	return CWinApp::ExitInstance();
 }

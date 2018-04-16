@@ -19,7 +19,6 @@
 #define ID_CONNECT                      9
 #define ID_CONNECT2                     10
 #define ID_LOGIN                        10
-#define ID_LOGIN2                       11
 #define ID_TEST                         11
 #define rGrammar                        99
 #define IDP_OLE_INIT_FAILED             100
@@ -602,7 +601,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        228
+#define _APS_NEXT_RESOURCE_VALUE        230
 #define _APS_NEXT_COMMAND_VALUE         33057
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           103

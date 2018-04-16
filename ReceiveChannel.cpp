@@ -3,6 +3,7 @@
 #include "ReceiveChannel.h"
 #include "PubnubCallback.h"
 #include <string>
+#include "EvtGen\MswEvents.h"
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
@@ -230,6 +231,13 @@ std::string ReceiveChannel::UnJSONify( const std::string& input )
    return result;
 }
 
+void ReceiveChannel::LogETWEvent( const std::string& data )
+{
+   SYSTEMTIME tss;
+   ::GetSystemTime(&tss);
+   EventWriteSubCompletion(&tss, data.c_str());
+}
+
 void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
 {
    std::string op;
@@ -255,6 +263,7 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
          pService->OnTransactionComplete(remchannel::kReceiver, remchannel::kOK);
          op_msg += "Sub canceled.";
          state = remchannel::kDisconnected;
+         this->LogETWEvent(op_msg);
          // CANCEL COMPLETED - EXIT HERE
          return;
          break;
@@ -275,8 +284,10 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       // notify client of login completion if error status
       if (!restartedOK) {
          state = remchannel::kDisconnected;
+         op_msg += " Restart error.";
          pService->OnTransactionComplete(remchannel::kReceiver, remchannel::kError);
       }
+      this->LogETWEvent(op_msg);
       return;
    } else {
       // NORMAL SUB RETURN: get all the data
@@ -307,10 +318,13 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
    bool restart = this->waitTimeSecs == 0;
    if (restart || reopen) {
       // NOTE: this is normal operation, and no transaction is in progress; if it fails, it's an async event worth noticing
-      this->Listen(this->waitTimeSecs); // TBD: check return code and deal with this re-subscribe error
+      bool r2 = this->Listen(this->waitTimeSecs); // TBD: check return code and deal with this re-subscribe error
+      if (!r2)
+         op_msg += " Restart error in sub.";
    } else {
       this->state = remchannel::kDisconnected;
       // notify client of transaction completion + normal status
       pService->OnTransactionComplete(remchannel::kReceiver, error ? remchannel::kError : remchannel::kOK);
    }
+   this->LogETWEvent(op_msg);
 }

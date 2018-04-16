@@ -13,7 +13,8 @@
 // See these sources for detailed information regarding the
 // Microsoft Foundation Classes product.
 
-#define WINVER 0x0500
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
 
 #ifndef _UNICODE
 #  define VC_EXTRALEAN        // use stripped down Win32 headers

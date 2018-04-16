@@ -170,7 +170,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseR|Win32'">$(Configuration)\</IntDir>
     <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">false</PreBuildEventUseInBuild>
-    <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseR|Win32'">false</PreBuildEventUseInBuild>
+    <PreBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseR|Win32'">true</PreBuildEventUseInBuild>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseR|Win32'">false</LinkIncremental>
     <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">true</PostBuildEventUseInBuild>
@@ -443,6 +443,12 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command> mc -um $(ProjectDir)\EvtGen\MswEvents.man -h $(ProjectDir)\EvtGen  -z MswEvents</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Run the Message Compiler to compile the Event manifest.</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseU|Win32'">
     <PreBuildEvent>
@@ -508,8 +514,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseR|Win32'">
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command> mc -um $(ProjectDir)\EvtGen\MswEvents.man -h $(ProjectDir)\EvtGen  -z MswEvents</Command>
+      <Message>Run the Message Compiler to compile the Event manifest.</Message>
     </PreBuildEvent>
     <CustomBuildStep>
       <Message>
@@ -1651,9 +1657,11 @@
     <ClCompile Include="spellchecker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="EvtGen\MswEvents.rc" />
     <ResourceCompile Include="Msw.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="EvtGen\MswEvents.h" />
     <ClInclude Include="PubnubCallback.h" />
     <ClInclude Include="ReceiveChannel.h" />
     <ClInclude Include="SendChannel.h" />
@@ -1867,6 +1875,7 @@ echo. &gt;&gt;HTMLDefines.h
     <ClInclude Include="3rd Party\libjingle\talk\session\chat\xmpp_message.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="EvtGen\MSG00001.bin" />
     <None Include="res\BLIP.BMP" />
     <None Include="res\bookmark.ico" />
     <None Include="res\checkboxes.bmp" />

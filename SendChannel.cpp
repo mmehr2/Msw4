@@ -5,6 +5,7 @@
 #include <string>
 #include "PubMessageQueue.h"
 #include "PubnubCallback.h"
+#include "EvtGen\MswEvents.h"
 
 #define PUBNUB_CALLBACK_API
 extern "C" {
@@ -376,13 +377,19 @@ void SendChannel::OnPublishCallback(pubnub_res res)
    }
    // call the time difference reporter here
    rem::ReportTimeDifference(last_tmtoken, PBTT_PUBLISH, res, op, cname, this->pubRetryCount);
+   // log ETW event for this
+   CStringA pubstr;
+   pubstr.Format("{%s} res=%d ('%s')", lastPubMessage.c_str(), res, op.c_str());
+   SYSTEMTIME tss;
+   ::GetSystemTime(&tss);
+   EventWritePubCompleteOK(&tss, pubstr);
    // TBD: do final error handling and decide if OK to continue
    // then decide how to continue
    // TBD: also limit MAX number of retries, or add a wait, or something
    if (this->pubRetryCount >= 2)
       this->PublishRetry();
    else if (this->pubRetryCount == 1) {
-      remchannel::state oldState = state;
+      //remchannel::state oldState = state;
       this->ContinuePublishing();
       // notify client of completion of async Logout w/o errors
       //if (oldState == remchannel::kDisconnecting)

@@ -318,6 +318,7 @@ void ARemoteDlg::OnBnClickedTest()
          theApp.fScrollPosSyncUpdatesPerSecond = n;
          TRACE("Set SCROLL-POS-SYNC UPDATE TO %d PER SECOND.\n", n);
       }
+   } else {
+      gComm.RunTest(fPassword);
    }
-   gComm.RunTest(fPassword);
 }

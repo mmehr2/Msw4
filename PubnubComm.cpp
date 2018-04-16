@@ -1104,7 +1104,7 @@ const char* APubnubComm::FormatOperation(int opCode)
    return cmd;
 }
 
-const char* APubnubComm::FormatCommand( int opCode, int arg1, int arg2, const std::string& argS )
+const char* APubnubComm::FormatCommand( int opCode, int arg1, int /*arg2*/, const std::string& argS )
 {
    const int BUF_SIZE = 1024;
    static char buffer[BUF_SIZE];

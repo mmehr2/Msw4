@@ -337,6 +337,7 @@ bool AComm::StartChat(LPCTSTR target) {
 
    char buffer[kMaxJid] = {0}; // this is device name of secondary
    VERIFY(::sprintf_s(buffer, sizeof(buffer), "%S", target) < sizeof(buffer));
+   bool result = true;
 
    // verify that we are talking to this device or not; shut down conversation with other device if needed first
    if (fState == kChatting) {
@@ -367,7 +368,7 @@ bool AComm::StartChat(LPCTSTR target) {
    fRemote->OpenLink(buffer);
 
    this->RemoteBusyWait();
-   bool result = fRemote->isSuccessful();
+   result = fRemote->isSuccessful();
 
    if (result) {
       // We have a connection with the Secondary, but the Contact command might have had issues

@@ -531,8 +531,8 @@ if (fSpeed && (elapsed > (currentFrameInterval + kAcceptablePause)))
       }
 
       // update the remote scroll position N times every second
-      int NTimesPerSec = theApp.fScrollPosSyncUpdatesPerSecond;
-      int msecPerUpdate = 1000 / NTimesPerSec;
+      DWORD NTimesPerSec = theApp.fScrollPosSyncUpdatesPerSecond;
+      DWORD msecPerUpdate = 1000 / NTimesPerSec;
       if ((prevFrameTime - lastTimerUpdateRemote) > msecPerUpdate)
       {
          lastTimerUpdateRemote = prevFrameTime;
@@ -701,6 +701,9 @@ void AScrollDialog::OnToggleScroll()
 #ifdef _REMOTE
    if (gComm.IsMaster()) {
       gComm.SendCommand(AComm::kScroll, AComm::kOff);
+   } else {
+      // get Primary to redraw its cue marker after receiving the final shutdown
+      gComm.SendCommand(AComm::kCueMarker, ARtfHelper::sCueMarker.GetPosition().y);
    }
 #endif // _REMOTE
 

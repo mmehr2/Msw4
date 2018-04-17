@@ -297,20 +297,44 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       rem::ReportTimeDifference(last_tmtoken, PBTT_SUBSCRIBE, res, op, cname, msgctr);
    }
 
-   // TBD: do final error handling and decide if OK to continue
+   // do final error handling and decide if OK to continue
    // then reopen an active subscribe() to start the next data transaction
-   bool error = res != PNR_OK;
+   bool error = res != PNR_OK && res != PNR_CANCELLED && res != PNR_STARTED;
+   bool restartable_error = error && pubnub_should_retry(res) == pbccTrue;
+   bool programmer_error = error && pubnub_should_retry(res) == pbccFalse;
+   bool timeout_reset_error = error && pubnub_should_retry(res) == pbccNotSet;
    bool reopen = msgctr == 0 && !error; // empty-message re-sub
    bool restart = this->waitTimeSecs == 0;
-   if (restart || reopen) {
+   if (!restart) {
+      if (restartable_error)
+         op_msg += " Restart from problem.";
+      else
+      if (timeout_reset_error)
+         op_msg += " Unable to restart from failure.";
+      else
+      if (programmer_error)
+         op_msg += " Unable to restart from programming issue.";
+   } else {
+      if (restartable_error)
+         op_msg += " Restart from problem.";
+      else
+      if (timeout_reset_error)
+         op_msg += " Restart from failure.";
+      else
+      if (programmer_error)
+         op_msg += " Restart from programming issue.";
+   }
+   std::string opMsgSaved = this->op_msg;
+   if (restart || reopen || restartable_error) {
       // NOTE: this is normal operation, and no transaction is in progress; if it fails, it's an async event worth noticing
       bool r2 = this->Listen(this->waitTimeSecs); // TBD: check return code and deal with this re-subscribe error
       if (!r2)
-         op_msg += " Restart error in sub.";
+         opMsgSaved += " Restart error in sub.";
    } else {
       this->state = remchannel::kDisconnected;
       // notify client of transaction completion + normal status
       pService->OnTransactionComplete(remchannel::kReceiver, error ? remchannel::kError : remchannel::kOK);
    }
-   this->LogETWEvent(op_msg);
+   // log events as saved before possibly being cleared by Listen()
+   this->LogETWEvent(opMsgSaved);
 }

@@ -68,7 +68,6 @@ ReceiveChannel::ReceiveChannel(APubnubComm *pSvc)
    , op_msg("")
    , pContext(nullptr)
    , pService(pSvc)
-   , init_sub_pending(true)
    , waitTimeSecs(true)
 {
    //::InitializeCriticalSectionAndSpinCount(&cs, 0x400);
@@ -276,19 +275,6 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
          }
          break;
       }
-   } else if (this->init_sub_pending) {
-      // call Listen() again now that we have the initial time token for this context
-      this->init_sub_pending = false;
-      op_msg += "Internal reply received.";
-      bool restartedOK = this->Listen(this->waitTimeSecs);
-      // notify client of login completion if error status
-      if (!restartedOK) {
-         state = remchannel::kDisconnected;
-         op_msg += " Restart error.";
-         pService->OnTransactionComplete(remchannel::kReceiver, remchannel::kError);
-      }
-      this->LogETWEvent(op_msg);
-      return;
    } else {
       // NORMAL SUB RETURN: get all the data
       while (nullptr != (data = pubnub_get(this->pContext)))

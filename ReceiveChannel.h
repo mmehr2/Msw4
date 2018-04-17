@@ -16,7 +16,6 @@ class ReceiveChannel {
    std::string op_msg;
    pubnub_t * pContext;
    APubnubComm * pService;
-   bool init_sub_pending; // requires first sub for time token (see C SDK docs for subscribe() and elsewhere)
    unsigned int waitTimeSecs; // whether the channel will loop on subscribes (0) or just wait for one (>0), set by last Listen()
 
    void LogETWEvent(const std::string& data);

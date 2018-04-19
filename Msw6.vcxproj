@@ -801,6 +801,7 @@
   <ItemGroup>
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat.cc" />
     <ClCompile Include="3rd Party\libjingle\talk\session\chat\xmpp_chat_session_client.cc" />
+    <ClCompile Include="PubnubLagTest.cpp" />
     <ClCompile Include="ReceiveChannel.cpp" />
     <ClCompile Include="SendChannel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugU|Win32'">true</ExcludedFromBuild>
@@ -1663,6 +1664,7 @@
   <ItemGroup>
     <ClInclude Include="EvtGen\MswEvents.h" />
     <ClInclude Include="PubnubCallback.h" />
+    <ClInclude Include="PubnubLagTest.h" />
     <ClInclude Include="ReceiveChannel.h" />
     <ClInclude Include="SendChannel.h" />
     <ClInclude Include="CustomSocket.h" />

@@ -457,6 +457,22 @@ bool AComm::SendFile(LPCTSTR /*filename*/) {
    return true;
 }
 
+bool AComm::TestLineConditions()
+{
+   bool result;
+   fRemote->SendCommandBusy(AComm::kTestNet1);
+   this->RemoteBusyWait();
+   result = fRemote->isSuccessful();
+   TRACE("PHASE 1 LINE TEST RETURNED %s\n", result ? "OK" : "ERROR");
+   if (result) {
+      fRemote->SendCommandBusy(AComm::kTestNet2);
+      this->RemoteBusyWait();
+      result = fRemote->isSuccessful();
+      TRACE("PHASE 2 LINE TEST RETURNED %s\n", result ? "OK" : "ERROR");
+   }
+   return result;
+}
+
 bool AComm::SendCommand(Command cmd, int param1, int param2) {
    // special handling for scroll shutoff command (just before last command is sent)
    if (cmd == AComm::kScroll && param1 == AComm::kOff) {

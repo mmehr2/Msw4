@@ -29,6 +29,7 @@ public:
 
       kContactRemote    = 'C',
       kPreferences      = 'P',
+      kTestNetwork      = 'T',
 
       // modifiers
       kOn            = 2,
@@ -61,6 +62,8 @@ public:
       kContact,
       kContactCancel,
       kPrefsSend,
+      kTestNet1,
+      kTestNet2,
    };
    
    enum Status {
@@ -158,6 +161,7 @@ public:
    bool IsContacted() const;
    void ResendLastStatus() const;
    void RunTest(LPCTSTR params);
+   bool TestLineConditions();
 
    // for use by remote comm implementation, when a transaction completes an operation with a status code
    void OnStateChange(OpType operation, Status statusCode);

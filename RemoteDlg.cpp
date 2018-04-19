@@ -306,10 +306,13 @@ LRESULT ARemoteDlg::OnKickIdle(WPARAM, LPARAM)
 void ARemoteDlg::OnBnClickedTest()
 {
    UpdateData(TRUE); // read the dialog box into member variables
-   TRACE(_T("SENDING TEST DATA %s TO INTERNALS\n"), fPassword);
    CString marker = _T("=");
    LPCTSTR pos = wcsstr(fPassword, marker);
-   if (pos != nullptr) {
+   if (fPassword.IsEmpty()) {
+      // NO DATA - report line test conditions
+      gComm.TestLineConditions();
+   } else if (pos != nullptr) {
+      // DATA OF FORM X=Y - parse it and make assignments
       int idx = pos - fPassword;
       CString name = fPassword.Left(idx);
       CString val = fPassword.Mid(idx+wcslen(marker));
@@ -319,6 +322,8 @@ void ARemoteDlg::OnBnClickedTest()
          TRACE("Set SCROLL-POS-SYNC UPDATE TO %d PER SECOND.\n", n);
       }
    } else {
+      // ALL OTHER DATA - send directly to test program
+      TRACE(_T("SENDING TEST DATA %s TO INTERNALS\n"), fPassword);
       gComm.RunTest(fPassword);
    }
 }

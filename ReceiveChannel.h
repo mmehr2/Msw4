@@ -14,6 +14,7 @@ class ReceiveChannel {
    std::string channelName;
    std::string uuid;
    std::string op_msg;
+   std::string tm_token;
    pubnub_t * pContext;
    APubnubComm * pService;
    unsigned int waitTimeSecs; // whether the channel will loop on subscribes (0) or just wait for one (>0), set by last Listen()
@@ -33,6 +34,7 @@ public:
    const char* GetDeviceName() const { return deviceName.c_str(); }
    bool isUnnamed() const { return channelName.empty(); }
    const char* GetLastMessage() const;
+   const char* GetServerTimeToken() const { return tm_token.c_str(); }
 
    // start online operation (sub listens, pub may send a ping)
    bool Init(); // receiver

@@ -66,6 +66,7 @@ ReceiveChannel::ReceiveChannel(APubnubComm *pSvc)
    , channelName("")
    , uuid("")
    , op_msg("")
+   , tm_token("0")
    , pContext(nullptr)
    , pService(pSvc)
    , waitTimeSecs(true)
@@ -244,6 +245,7 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
    int msgctr = 0;
    std::string sep = "";
    const char* cname = this->GetName();
+   this->tm_token = pubnub_last_time_token(this->pContext); // seems to be available for sub transacs only
 
    // CUSTOM CALLBACK FOR SUBSCRIBERS
    if (res != PNR_OK) {
@@ -293,8 +295,7 @@ void ReceiveChannel::OnSubscribeCallback(pubnub_res res)
       op_msg += op;
       // no more data to be read here (res is PNR_OK)
       // call the time difference reporter here
-      const char* last_tmtoken = pubnub_last_time_token(this->pContext); // aseems to be vailable for sub transacs only
-      rem::ReportTimeDifference(last_tmtoken, PBTT_SUBSCRIBE, res, op, cname, msgctr);
+      rem::ReportTimeDifference(this->tm_token.c_str(), PBTT_SUBSCRIBE, res, op, cname, msgctr);
    }
 
    // do final error handling and decide if OK to continue

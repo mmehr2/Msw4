@@ -137,12 +137,20 @@ namespace rem {
       return result;
    }
 
-   /*extern*/ time_t get_local_timestamp()
+   time_t get_local_timestamp()
    {
       FILETIME ft;
       ::GetSystemTimeAsFileTime(&ft);
       time_t result = FileTimetToTimetEx(ft);
       return result;
+   }
+
+   std::string get_local_time_token()
+   {
+      time_t tstamp = get_local_timestamp();
+      CStringA tt;
+      tt.Format("%017lld", tstamp);
+      return (LPCSTR)tt;
    }
 
    // remember most recent previous values of system and local hi-res timestamps (100ns precision or secs/10^7)

@@ -370,6 +370,8 @@ const char* APubnubComm::GetOperationName() const
    case AComm::kFileSend: result = "SENDDATA"; break;
    case AComm::kFileReceive: result = "RCVDATA"; break;
    case AComm::kFileCancel: result = "CANDATA"; break;
+   case AComm::kTestNet1: result = "NETTEST1"; break;
+   case AComm::kTestNet2: result = "NETTEST2"; break;
    }
    return result;
 }
@@ -565,6 +567,8 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
          break;
       case AComm::kContact:
       case AComm::kContactCancel:
+      case AComm::kTestNet1:
+      case AComm::kTestNet2:
       //case kOtherRoundTripOperation: // probably kFileXXX
          // for all op-busy-wait-reply scenarios (list above)
          // check who this is from, ignore the Sender if OK, wait for the Receiver to complete, catch errors
@@ -1100,6 +1104,16 @@ const char* APubnubComm::FormatOperation(int opCode)
    case AComm::kPrefsSend:
       cmd = this->FormatCommand( AComm::kPrefsSend, 0, 0, (LPCSTR)theApp.StringifyOptions() );
       break;
+   case AComm::kTestNet1:
+      // this is for the 1st of 2 outbound messages
+      this->lagTest.primaryLocalTokenPL1 = rem::get_local_time_token();
+      cmd = this->FormatCommand( AComm::kTestNet1, 1, 0, pReceiver->GetName() );
+      break;
+   case AComm::kTestNet2:
+      // this is for the 2nd of 2 outbound messages
+      this->lagTest.primaryLocalTokenPL2 = rem::get_local_time_token();
+      cmd = this->FormatCommand( AComm::kTestNet2, 2, 0, pReceiver->GetName() );
+      break;
    }
    return cmd;
 }
@@ -1116,6 +1130,10 @@ const char* APubnubComm::FormatCommand( int opCode, int arg1, int /*arg2*/, cons
    case AComm::kPrefsSend:
       sprintf_s(buffer, BUF_SIZE, "%c%s", AComm::kPreferences, argS.c_str());
       break;
+   case AComm::kTestNet1:
+   case AComm::kTestNet2:
+      sprintf_s(buffer, BUF_SIZE, "%c%d,%s", AComm::kTestNetwork, arg1, argS.c_str());
+      break;
    default:
       buffer[0] = 0;
       break;
@@ -1127,6 +1145,62 @@ void APubnubComm::OnPreferences( const std::string& prefs )
 {
    this->fPreferences = prefs.c_str();
    this->SendMsg( WMA_UPDATE_SETTINGS, (WPARAM)(LPCSTR)fPreferences );
+}
+
+void APubnubComm::OnTestNetworkConditions(int phase, const std::string& data )
+{
+   TRACE("%s Received Network Test Command: %d,%s\n", this->GetConnectionTypeName(), phase, data.c_str());
+   const char * DELIMITER = ",";
+
+   if (this->isSecondary()) {
+      // SECONDARY
+      TRACE("RESPONDING TO PHASE %d LAG TIME MEASUREMENT\n", phase);
+      // data is the channel to use for back-sending, phase is useful only to the receiver
+      const char* chname = data.c_str();
+      // step 1 - get local timestamp SL
+      std::string ltok = rem::get_local_time_token();
+      // step 2 - get server time token from this subscribe transaction as SK
+      std::string stok = pReceiver->GetServerTimeToken();
+      // step 3 - create string as "SK,SL"
+      std::string tokens = stok + DELIMITER + ltok;
+      // step 4 - format and send the message back to the given channel, echoing back the phase number
+      const char* cmd = FormatCommand(AComm::kTestNet1, phase, 0, tokens);
+      pSender->Send( cmd, chname );
+   } else {
+      // PRIMARY
+      std::vector<std::string> tks;
+      int code = AComm::kSuccess;
+      if (phase == 1) {
+         // take primary local time PL2 (PL1 was saved at starting time)
+         //this->lagTest.primaryLocalTokenPL2 = rem::get_local_time_token();
+         // save current server token as K2
+         this->lagTest.serverTokenK2 = pReceiver->GetServerTimeToken();
+         // split the data payload into tokens
+         tks = rem::split(data.c_str(), DELIMITER);
+         if (tks.size() >= 2) {
+            // 1st token is server K1
+            this->lagTest.serverTokenK1 = tks[0];
+            // 2nd token is secondary local SL1
+            this->lagTest.secondaryLocalTokenSL1 = tks[1];
+         } 
+         else
+            code = AComm::kBadFormat;
+      } else if (phase == 2) {
+         // split the data payload into tokens
+         tks = rem::split(data.c_str(), DELIMITER);
+         if (tks.size() >= 2) {
+            // 1st token is server K3
+            this->lagTest.serverTokenK3 = tks[0];
+            // 2nd token is secondary local SL2
+            this->lagTest.secondaryLocalTokenSL2 = tks[1];
+         }
+         else
+            code = AComm::kBadFormat;
+      }
+      // signal successful completion of phase operation
+      // NOTE: we use contactCode because busy-op was designed for contact operation, TBD needs better design or naming
+      this->contactCode = code;
+   }
 }
 
 void APubnubComm::OnContactMessage(int onOff, const std::string& channel_name )
@@ -1248,6 +1322,7 @@ void APubnubComm::OnMessage(const char * message)
       case AComm::kFrameInterval:   /*f*/ AScrollDialog::gMinFrameInterval = arg1; break;
       case AComm::kContactRemote:   /*C*/ this->OnContactMessage(arg1, arg2S.c_str()); break;
       case AComm::kPreferences:     /*P*/ this->OnPreferences(&s[1]); break;
+      case AComm::kTestNetwork:     /*T*/ this->OnTestNetworkConditions(arg1, arg2S.c_str()); break;
    }
 }
 
@@ -1268,14 +1343,76 @@ void TRACE_LAST_ERROR(LPCSTR , DWORD ) { }
 CString APubnubComm::GetLastMessage() const
 {
    static CString msg;
-   CStringA msg2, msg3="";
+   CStringA msg2, msg3="", msg4="";
    std::string chns = pSender->GetName();
+   if (this->lagTest.IsReportable()) {
+      msg4.Format("Most recent Network Lag test: Primary=%1.7lf Secondary=%1.7lf secs\n", 
+         this->lagTest.PrimaryLagTimeMsec(), this->lagTest.SecondaryLagTimeMsec() );
+   }
    if (!chns.empty())
       msg3.Format("CONNECTED with %s on channel %s.\n", pSender->GetDeviceName(), chns.c_str());
    msg2.Format("%s%sLast operation %s completed with code %d, state:%s\nRCV:%s\nSND:%s\n",
-      (LPCSTR)msg3, this->statusMessage.c_str(), this->GetOperationName(), this->statusCode, 
+      (LPCSTR)msg4, (LPCSTR)msg3, this->statusMessage.c_str(), this->GetOperationName(), this->statusCode, 
       this->GetConnectionStateName(), this->pReceiver->GetLastMessage(), this->pSender->GetLastMessage());
    CA2T amsg(msg2);
    msg = amsg.m_psz;
    return msg;
+}
+
+/*static*/ time_t ServerLagTimeTestClient::TokenAsHiresTime( const std::string& token )
+{
+   return _atoi64(token.c_str());
+}
+
+/*static*/ std::string ServerLagTimeTestClient::HiresTimeAsToken( time_t tstamp )
+{
+   static char buffer[32];
+   ctime_s(buffer, 32, &tstamp);
+   return buffer;
+}
+
+/*static*/ double ServerLagTimeTestClient::CalcTimeStats( 
+   const std::string& svr1, 
+   const std::string& svr2, 
+   const std::string& loc1, 
+   const std::string& loc2 )
+{
+   double result = 0.0;
+   time_t svrt1 = TokenAsHiresTime(svr1);
+   time_t svrt2 = TokenAsHiresTime(svr2);
+   time_t loct1 = TokenAsHiresTime(loc1);
+   time_t loct2 = TokenAsHiresTime(loc2);
+   double dsvr = difftime(svrt2, svrt1); // should be smaller
+   double dloc = difftime(loct2, loct1); // should be larger
+   result = abs(dloc - dsvr);
+   result /= 1e4; // convert from hires 100ns counts to msec
+   return result;
+}
+
+double ServerLagTimeTestClient::PrimaryLagTimeMsec() const
+{
+   // implements equation involving K1, K2, PL1, PL2
+   double result = CalcTimeStats( this->serverTokenK1, this->serverTokenK2,
+      this->primaryLocalTokenPL1, this->primaryLocalTokenPL2);
+   return result;
+}
+
+double ServerLagTimeTestClient::SecondaryLagTimeMsec() const
+{
+   // implements equation involving K2, K3, SL1, SL2
+   double result = CalcTimeStats( this->serverTokenK2, this->serverTokenK3,
+      this->secondaryLocalTokenSL1, this->secondaryLocalTokenSL2);
+   return result;
+}
+
+bool ServerLagTimeTestClient::IsReportable() const
+{
+   if (this->primaryLocalTokenPL1.empty())   return false;
+   if (this->primaryLocalTokenPL2.empty())   return false;
+   if (this->secondaryLocalTokenSL1.empty())   return false;
+   if (this->secondaryLocalTokenSL2.empty())   return false;
+   if (this->serverTokenK1.empty())   return false;
+   if (this->serverTokenK2.empty())   return false;
+   if (this->serverTokenK3.empty())   return false;
+   return true;
 }

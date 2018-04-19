@@ -1106,6 +1106,7 @@ const char* APubnubComm::FormatOperation(int opCode)
       break;
    case AComm::kTestNet1:
       // this is for the 1st of 2 outbound messages
+      this->lagTest.StartTest();
       this->lagTest.primaryLocalTokenPL1 = rem::get_local_time_token();
       cmd = this->FormatCommand( AComm::kTestNet1, 1, 0, pReceiver->GetName() );
       break;
@@ -1415,4 +1416,15 @@ bool ServerLagTimeTestClient::IsReportable() const
    if (this->serverTokenK2.empty())   return false;
    if (this->serverTokenK3.empty())   return false;
    return true;
+}
+
+void ServerLagTimeTestClient::StartTest()
+{
+   this->primaryLocalTokenPL1.clear();
+   this->primaryLocalTokenPL2.clear();
+   this->secondaryLocalTokenSL1.clear();
+   this->secondaryLocalTokenSL2.clear();
+   this->serverTokenK1.clear();
+   this->serverTokenK2.clear();
+   this->serverTokenK3.clear();
 }

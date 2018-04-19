@@ -86,6 +86,7 @@ public:
    double PrimaryLagTimeMsec() const;
    double SecondaryLagTimeMsec() const;
    bool IsReportable() const;
+   void StartTest();
 };
 
 class APubnubComm

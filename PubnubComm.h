@@ -52,7 +52,7 @@ IN THIS VERSION:
    f. Logout can fail if the Sender Disconnect fails to publish, or the Receiver cancel fails to work. State changes?
 
 NOTE: All async replies that post status changes must be funneled through the fComm object before being posted to the parent window.
-   This will allow fComm to change its state accordingly as well. The function that does this is @@@TBD@@@.
+   This will allow fComm to change its state accordingly as well.
 */
 
 #include <afx.h> // for HWND
@@ -68,6 +68,43 @@ class ReceiveChannel;
 extern "C" {
 #include "pubnub_api_types.h"
 }
+
+class PubnubTransferClient {
+   // hi-level data to orchestrate the script transfer
+public:
+   std::string scriptName;
+   long scriptCapacity; // in bytes
+   size_t scriptSize; // in bytes
+   size_t blockSize;
+   size_t numBlocks;
+   size_t numFullBlocks;
+   size_t lastBlockSize;
+   size_t currentBlockNumber;
+   std::string currentPayload;
+   PubnubTransferClient()
+      : scriptCapacity(0)
+      , scriptSize(0)
+      , blockSize(0)
+      , numBlocks(0)
+      , numFullBlocks(0)
+      , lastBlockSize(0)
+      , currentBlockNumber(0)
+      , currentPayload("")
+   {
+   }
+   void SetBlockStats( size_t ssize, size_t bsize, size_t nblks )
+   {
+      ASSERT(bsize > 0);
+      scriptSize = ssize;
+      blockSize = bsize;
+      numBlocks = nblks;
+      numFullBlocks = scriptSize / blockSize; // e.g for 10/5 we get 2 but 9/5 only gives 1
+      lastBlockSize = scriptSize % blockSize; // if nonzero, this represents another block
+      ASSERT(numBlocks == numFullBlocks + (lastBlockSize > 0 ? 1 : 0));
+   }
+   void SetTransferPayload(int optype);
+   void ParsePayload(int optype);
+};
 
 class APubnubComm
 {
@@ -103,8 +140,9 @@ class APubnubComm
    // if we use Secondary response messages, it would be used for sending those
    SendChannel* pSender;
 
-   // object to use for script transfers (Primary: sender, Secondary: receiver)
+   // objects to use for script transfers (Primary: sender, Secondary: receiver)
    PNBufferTransfer* pBuffer; // bulk transfer interface
+   PubnubTransferClient xfer;  // control the logistics
 
    // accumulate stats for network lag time test function
    ServerLagTimeTestClient lagTest;
@@ -188,6 +226,8 @@ public:
    // same, but go busy and imply a transaction wait until done
    bool SendCommandBusy(int opCode); // STATE: kChatting -> kBusy(w.op=...) -> kChatting
    void SendStatusReport() const; // UI can get the current op/status to be re-sent
+   void SetScriptName( LPCTSTR name );
+   PNBufferTransfer* PrepareDataTransfer( long capacity );
 
    // SECONDARY: called to dispatch any received message from the interface to the parent window
    void OnMessage(const char* message);
@@ -198,7 +238,10 @@ public:
    // message response routines
    void OnContactMessage( int onOff, const std::string& channel_name );
    void OnPreferences( const std::string& prefs );
-   void OnTestNetworkConditions( int onOff, const std::string& data );
+   void OnTestNetworkConditions( int phase, const std::string& data );
+   void OnFileTransfer( int onOff, const std::string& payload );
+   void OnBlockTransfer( int nBlock, const std::string& data );
+   void OnFileTransferComplete( int code );
 
    // Post a result message to the parent window (for UI action)
    // NOTE: this is based on chat code taken from old implementation by Steve Cox

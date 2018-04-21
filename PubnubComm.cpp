@@ -407,8 +407,8 @@ namespace rem {
       case kUnlinking: result = "UNPAIRING"; break;
       case kChatting: result = "PAIRED"; break;
       case kScrolling: result = "SCROLLING"; break;
-      case kFileSending: result = "FILE SENDING"; break;
-      case kFileRcving: result = "FILE RECEIVING"; break;
+      case kFileSending: result = "SENDING DATA"; break;
+      case kFileReceiving: result = "RECEIVING DATA"; break;
       case kFileCanceling: result = "CANCELING FILE"; break;
       case kBusy: result = "IN TRANSACTION"; break;
       }
@@ -475,6 +475,8 @@ bool APubnubComm::isBusy() const
    case kLinking:
    case kUnlinking:
    case kBusy:
+   case kFileSending:
+   case kFileCanceling:
       result = true;
       break;
    default:
@@ -548,6 +550,31 @@ void APubnubComm::OnTransactionComplete(remchannel::type which, remchannel::resu
          this->SetState( kConnected, AComm::kSuccess );
       else
          this->SetState( kChatting, AComm::kUnableToUnpair );
+      break;
+   case kFileSending:
+      // File transfer in progress
+      // file transfer is completed by the receiver
+      if (which == remchannel::kSender && what == remchannel::kError) {
+         // error in sender publish transaction
+         this->cmdLocalEndTime = timestamp; // remember time split for local
+         this->contactCode = AComm::kUnableToSendCommand;
+         this->SetState( kScrolling, this->contactCode );
+      } else if (which == remchannel::kReceiver && what == remchannel::kError) {
+         // error in receiver subscribe response (timeout, etc.)
+         this->contactCode = AComm::kUnableToGetResponse;
+         this->SetState( kScrolling, this->contactCode );
+      } else if (which == remchannel::kReceiver) {
+         // receiver got a response with data (dispatched call by this point)
+         // The response code number is now stored in the contactCode, and other data may also be stored
+         this->SetState( kScrolling, this->contactCode );
+      } else {
+         // sender sent OK - intermediate step, don't fire to next level
+         this->cmdLocalEndTime = timestamp; // remember time split for local
+         this->cmdEndTime = timestamp; // update overall time
+         PNC_MESSAGE_LOG("%s %s SENT %s OP SUCCESSFULLY ON CHANNEL %s @ %1.6lf s\n", this->GetConnectionTypeName(), 
+            pSender->GetTypeName(), this->GetOperationName(), pSender->GetName(), this->GetCommandTimeSecs());
+         return;
+      }
       break;
    case kBusy:
       switch (fOperation) {
@@ -1094,6 +1121,8 @@ bool APubnubComm::SendCommandBusy(int op)
 const char* APubnubComm::FormatOperation(int opCode)
 {
    const char* cmd = nullptr;
+   size_t temp;
+   CStringA tempS;
    switch(opCode) {
    case AComm::kContact:
       cmd = this->FormatCommand( AComm::kContact, AComm::kOn, 0, pReceiver->GetName() );
@@ -1115,8 +1144,75 @@ const char* APubnubComm::FormatOperation(int opCode)
       this->lagTest.primaryLocalTokenPL2 = rem::get_local_time_token();
       cmd = this->FormatCommand( AComm::kTestNet2, 2, 0, pReceiver->GetName() );
       break;
+   case AComm::kFileSend:
+      // make sure that the buffer variables are set
+      temp = pBuffer->splitBuffer();
+      xfer.SetBlockStats( pBuffer->size(), pBuffer->blockSize(), temp );
+      xfer.SetTransferPayload( opCode );
+      cmd = this->FormatCommand( AComm::kFileSend, AComm::kOn, 0, xfer.currentPayload.c_str() );
+      break;
+   case AComm::kFileCancel:
+      xfer.SetTransferPayload( opCode );
+      cmd = this->FormatCommand( AComm::kFileCancel, AComm::kOff, 0, xfer.currentPayload.c_str() );
+      break;
+   case AComm::kFileReceive:
+      xfer.SetTransferPayload( opCode );
+      cmd = this->FormatCommand( AComm::kFileReceive, xfer.currentBlockNumber, 0, xfer.currentPayload.c_str() );
+      break;
    }
    return cmd;
+}
+
+void PubnubTransferClient::SetTransferPayload( int opCode )
+{
+   CStringA tempS;
+   switch (opCode) {
+   case AComm::kFileSend:
+      // scriptSize,blockSize,numBlocks,name as string
+      tempS.Format("%u,%u,%u,%s", scriptSize, blockSize, numBlocks, scriptName.c_str());
+      currentPayload = tempS;
+      break;
+   case AComm::kFileCancel:
+      currentPayload = "";
+      break;
+   case AComm::kFileReceive:
+      // set externally, don't modify
+      break;
+   default:
+      currentPayload = "";
+      break;
+   }
+}
+
+void PubnubTransferClient::ParsePayload( int opCode )
+{
+   switch (opCode) {
+   case AComm::kFileSend:
+      // scriptSize,blockSize,numBlocks,name as string
+      {
+         rem::StringVector vals = rem::split( this->currentPayload.c_str(), "," );
+         int nv = vals.size();
+         size_t ssize = nv>0 ? atoi(vals[0].c_str()) : 0;
+         size_t bsize = nv>1 ? atoi(vals[1].c_str()) : 0;
+         size_t nb = nv>2 ? atoi(vals[2].c_str()) : 0;
+         if (nv > 4) {
+            // must have had a ',' in the name
+            rem::StringVector x(vals.begin() + 3, vals.end());
+            scriptName = rem::join( x, "," );
+         } else if (nv > 3) {
+            scriptName = vals[3];
+         }
+         if (nv > 2)
+            this->SetBlockStats(ssize, bsize, nb);
+      }
+      break;
+   case AComm::kFileCancel:
+   case AComm::kFileReceive:
+   default:
+      scriptName = "";
+      SetBlockStats(0, 1, 0);
+      break;
+   }
 }
 
 const char* APubnubComm::FormatCommand( int opCode, int arg1, int /*arg2*/, const std::string& argS )
@@ -1134,6 +1230,13 @@ const char* APubnubComm::FormatCommand( int opCode, int arg1, int /*arg2*/, cons
    case AComm::kTestNet1:
    case AComm::kTestNet2:
       sprintf_s(buffer, BUF_SIZE, "%c%d,%s", AComm::kTestNetwork, arg1, argS.c_str());
+      break;
+   case AComm::kFileSend:
+   case AComm::kFileCancel:
+      sprintf_s(buffer, BUF_SIZE, "%c%d,%s", AComm::kFileTransfer, arg1, argS.c_str());
+      break;
+   case AComm::kFileReceive:
+      sprintf_s(buffer, BUF_SIZE, "%cd,%s", AComm::kBlockTransfer, arg1, argS.c_str());
       break;
    default:
       buffer[0] = 0;
@@ -1202,6 +1305,104 @@ void APubnubComm::OnTestNetworkConditions(int phase, const std::string& data )
       // NOTE: we use contactCode because busy-op was designed for contact operation, TBD needs better design or naming
       this->contactCode = code;
    }
+}
+
+PNBufferTransfer* APubnubComm::PrepareDataTransfer(long capacityBytes)
+{
+   // this sets up pBuffer to do data loading from the UI
+   // it returns the pBuffer pointer so that the UI can do the load incrementally
+   this->xfer.scriptCapacity = capacityBytes;
+   pBuffer->initForCoding( capacityBytes );
+   return pBuffer;
+}
+
+void APubnubComm::SetScriptName( LPCTSTR name_ )
+{
+   CT2A name(name_);
+   this->xfer.scriptName = name;
+}
+
+void APubnubComm::OnFileTransfer(int onOff, const std::string& payload )
+{
+   TRACE("%s Received File Xfer Command: %d,%s\n", this->GetConnectionTypeName(), onOff, payload.c_str());
+
+   if (this->isSecondary()) {
+      // SECONDARY:
+      if (onOff == AComm::kOn) {
+         // if ON:
+         //    set kFileReceiving state
+         this->fLinked = kFileReceiving;
+         //    unpack the start transfer data (number of bytes, size of block, name of script)
+         this->xfer.currentPayload = payload;
+         this->xfer.ParsePayload( AComm::kFileSend );
+         //    determine if blocks are needed and if not, send the copmletion response
+         if (this->xfer.numBlocks == 0) {
+            // send file completion immediately
+            this->OnFileTransferComplete( AComm::kSuccess );
+         } else {
+            //    set up the transfer operation
+            pBuffer->initForDecoding( this->xfer.numBlocks, this->xfer.blockSize );
+            //    request first block of data from remote
+            this->xfer.currentBlockNumber = 0;
+            this->xfer.currentPayload = ""; // unused in request
+            this->SendOperation( AComm::kFileReceive );
+         }
+      } else {
+         // if OFF (cancel):
+         //    set kFileCanceling state if anything in progress to wait for, else
+         //    set kScrolling state again
+      }
+   } else {
+      // PRIMARY:
+      // receive the overall completion response and finish off the transaction (remote sends the completion code)
+      this->contactCode = onOff;
+   }
+}
+
+void APubnubComm::OnBlockTransfer(int nBlock, const std::string& payload )
+{
+   TRACE("%s Received Block Xfer Command: %d,%s\n", this->GetConnectionTypeName(), nBlock, payload.c_str());
+
+   if (this->isPrimary()) {
+      // PRIMARY: receive request for block number I of N
+      // get the string version from the transfer object
+      this->xfer.currentPayload = pBuffer->getBufferSubstring(nBlock);
+      // format and send the response back
+      const char* cmd = FormatOperation( AComm::kFileReceive );
+      this->SendCommand(cmd); // what to do about publish failures during xfer?
+   } else {
+      // SECONDARY: save the data block and request next, if any
+      // first, verify if the number of the block sent matches what we are expecting
+      if (size_t(nBlock) != this->xfer.currentBlockNumber) {
+         // trigger completion handler with error
+         this->OnFileTransferComplete( AComm::kBadFormat );
+      } else {
+         pBuffer->addCodedString( payload );
+         // decide what is the next action (another block request, or overall file completion) and do it
+         this->xfer.currentBlockNumber++;
+         if (this->xfer.currentBlockNumber == this->xfer.numBlocks) {
+            // send completion with success code
+            // trigger completion handler with success
+            this->OnFileTransferComplete( AComm::kSuccess );
+         } else {
+            // need another block; request it
+            this->xfer.currentPayload = ""; // unused in request
+            this->SendOperation( AComm::kFileReceive );
+            // operation is not complete yet
+         }
+      }
+   }
+}
+
+void APubnubComm::OnFileTransferComplete(int completionOp )
+{
+   // set the local overall state back, operation is complete
+   this->fLinked = kChatting;
+   TRACE("DATA TRANSFER COMPLETED FOR SCRIPT \"%s\"\n", this->xfer.scriptName);
+   // notify the UI that we have a full buffer and a name, it's time to save the script
+   /*size_t numBytes =*/ pBuffer->startRead();
+   this->SendMsg( WMA_UPDATE_DATA, (WPARAM)completionOp, (LPARAM)pBuffer );
+   // NOTE: the final reply message will be sent at the end of any transfer
 }
 
 void APubnubComm::OnContactMessage(int onOff, const std::string& channel_name )
@@ -1324,6 +1525,8 @@ void APubnubComm::OnMessage(const char * message)
       case AComm::kContactRemote:   /*C*/ this->OnContactMessage(arg1, arg2S.c_str()); break;
       case AComm::kPreferences:     /*P*/ this->OnPreferences(&s[1]); break;
       case AComm::kTestNetwork:     /*T*/ this->OnTestNetworkConditions(arg1, arg2S.c_str()); break;
+      case AComm::kFileTransfer:    /*F*/ this->OnFileTransfer(arg1, arg2S.c_str()); break;
+      case AComm::kBlockTransfer:   /*B*/ this->OnBlockTransfer(arg1, arg2S.c_str()); break;
    }
 }
 
@@ -1352,7 +1555,7 @@ CString APubnubComm::GetLastMessage() const
    }
    if (!chns.empty())
       msg3.Format("CONNECTED with %s on channel %s.\n", pSender->GetDeviceName(), chns.c_str());
-   msg2.Format("%s%sLast operation %s completed with code %d, state:%s\nRCV:%s\nSND:%s\n",
+   msg2.Format("%s%s%sLast operation %s completed with code %d, state:%s\nRCV:%s\nSND:%s\n",
       (LPCSTR)msg4, (LPCSTR)msg3, this->statusMessage.c_str(), this->GetOperationName(), this->statusCode, 
       this->GetConnectionStateName(), this->pReceiver->GetLastMessage(), this->pSender->GetLastMessage());
    CA2T amsg(msg2);

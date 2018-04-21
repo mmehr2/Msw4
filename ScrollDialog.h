@@ -64,6 +64,9 @@ private: // methods
    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
    afx_msg void OnTimerReset();
    afx_msg BOOL OnDeviceChange(UINT nEventType, DWORD_PTR dwData);
+#ifdef _REMOTE
+	afx_msg LRESULT OnUpdateData(WPARAM wParam, LPARAM lParam);
+#endif//def _REMOTE
 
    void HandleButton(int action);
    int GetSpeed(int &deltaPixels, int &frameInterval);

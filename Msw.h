@@ -160,3 +160,4 @@ extern AComm gComm;
 #define WMA_UPDATE_SETTINGS		(WM_APP+2)
 #define WMA_UPDATE_STATUS		(WM_APP+3)
 #define WMA_UPDATE_CONTROLS		(WM_APP+4)
+#define WMA_UPDATE_DATA		(WM_APP+5)

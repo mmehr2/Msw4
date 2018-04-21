@@ -20,8 +20,8 @@ enum ConnectionStatus {
    kBusy, // transaction in progress
    kScrolling, // CMD: scrolling is in progress
    kFileSending, // CMD: file send is in progress
-   kFileRcving, // CMD: file rcv is in progress
-   kFileCanceling,
+   kFileReceiving, // CMD: file rcv is in progress
+   kFileCanceling, // CMD: file cancel is in progress
 };
 
 namespace remchannel {

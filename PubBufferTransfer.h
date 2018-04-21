@@ -48,6 +48,11 @@ class PNBufferTransfer {
    void reserve( size_t num_bytes );
    BYTE* bufferStart();
    const BYTE* bufferStart() const;
+
+   size_t chunkSizeUsed;
+   size_t chunkSizeLast;
+
+public:
    // buffer std::vector simulation routines
    size_t size() const { return numUsed; }
    size_t capacity() const { return bufferCapacity; }
@@ -55,7 +60,7 @@ class PNBufferTransfer {
    BYTE* end() { return begin() + size(); }
    const BYTE* begin() const { return bufferStart(); }
    const BYTE* end() const { return begin() + size(); }
-public:
+
    PNBufferTransfer();
    ~PNBufferTransfer();
 
@@ -73,12 +78,14 @@ public:
 
    // step 3 - incrementally produce or consume transfer blocks
    // sender - needs block count up front; it gets this from splitting the buffer
-   size_t split_buffer(size_t section_size); // returns # of chunks generated
+   size_t splitBuffer(size_t section_size = -1); // returns # of chunks generated
+   size_t blockSize() const { return chunkSizeUsed; }
+   size_t lastBlockSize() const { return chunkSizeLast; }
    // receiver - start the read operation that getBytes() will use; returns size() of buffer
    size_t startRead();
 
    // step 4 - extract results when done
-   // sender - gets the Nth block as a string to add to the publishing queue (PQ)
+   // sender - gets the Nth block as a string to add to the publishing queue (PQ)0
    // the plan is to do the individual encoding here, since this will be called on the sub callback thread
    // NOTE: DO NOT ADD BYTES IN BETWEEN CALLS TO THIS FUNCTION
    std::string getBufferSubstring(size_t n);

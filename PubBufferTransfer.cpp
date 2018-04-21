@@ -105,9 +105,11 @@ size_t PNBufferTransfer::addBytes(const BYTE* pData, size_t countBytes)
    return countTransferred;
 }
 
-size_t PNBufferTransfer::split_buffer(size_t section_size)
+size_t PNBufferTransfer::splitBuffer(size_t section_size)
 {
-   if (section_size <= 0)
+   if (section_size == size_t(-1))
+      section_size = MAX_MESSAGE;
+   else if (section_size <= 0)
       return 0; // and no change to the previous contents of chunks
 
    chunks.clear();
@@ -116,6 +118,8 @@ size_t PNBufferTransfer::split_buffer(size_t section_size)
    const size_t chksize = min(section_size, MAX_MESSAGE);
    const size_t num_full_chunks = bsize / chksize;
    const size_t last_chunk_size = bsize % chksize;
+   this->chunkSizeUsed = chksize;
+   this->chunkSizeLast = last_chunk_size;
    //const size_t num_last_chunks = (last_chunk_size != 0);
    //TRACE("PNBT:encode will process %uB as %u chunks of %uB each and %d chunks of %uB\n",
    //   bsize, num_full_chunks, chksize, num_last_chunks, last_chunk_size);
@@ -309,7 +313,7 @@ inline size_t countSplits(size_t sz, size_t splitsz)
    for (int j = 0; j != sizeof sizes/sizeof sizes[0]; ++j) 
    {
       int SPLIT_SIZE = sizes[j];
-      size_t num = test.split_buffer(SPLIT_SIZE);
+      size_t num = test.splitBuffer(SPLIT_SIZE);
       if (SPLIT_SIZE == 0) {
          if (num != 0) {
             tt.addResult(result, "failed a SIZE=0 SPLIT TEST");
@@ -332,7 +336,7 @@ inline size_t countSplits(size_t sz, size_t splitsz)
 
    // test overall encoding process with decoding (test passes if buffers the same)
    int SPLIT_SIZE = maxBlockSize;
-   int x = test.split_buffer(SPLIT_SIZE);
+   int x = test.splitBuffer(SPLIT_SIZE);
    PNBufferTransfer test2;
    test2.initForDecoding(x, SPLIT_SIZE);
    for (int k = 0; k < x; ++k) {

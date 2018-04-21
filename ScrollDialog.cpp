@@ -6,6 +6,7 @@
 #include "MainFrm.h"
 #include "MswView.h"
 #include "RtfMemFile.h"
+#include "PubBufferTransfer.h"
 
 #include <dbt.h>
 #include <math.h>
@@ -118,6 +119,9 @@ BEGIN_MESSAGE_MAP(AScrollDialog, CDialog)
    ON_REGISTERED_MESSAGE(AMswApp::sSetScrollSpeedMsg, &OnSetScrollSpeed)
    ON_REGISTERED_MESSAGE(AMswApp::sSetScrollPosMsg, &OnSetScrollPos)
    ON_REGISTERED_MESSAGE(AMswApp::sSetScrollPosSyncMsg, &OnSetScrollPosSync)
+#ifdef _REMOTE
+	ON_MESSAGE(WMA_UPDATE_DATA, OnUpdateData)
+#endif // _REMOTE
 END_MESSAGE_MAP()
 
 IMPLEMENT_DYNAMIC(AScrollDialog, CDialog)
@@ -182,7 +186,7 @@ void AScrollDialog::ResizeChildControls()
 
 static DWORD CALLBACK MemFileOutCallBack(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
 {
-   ((CFile*)dwCookie)->Write(pbBuff, cb);
+   ((PNBufferTransfer*)dwCookie)->addBytes(pbBuff, cb);
    *pcb = cb;
    return 0;
 }
@@ -324,12 +328,17 @@ BOOL AScrollDialog::OnInitDialog()
    if (gComm.IsMaster())
    {  // spit out the file to be scrolled, and send it to the remote installation
       LPCTSTR fileName = _T("MswScript.rtf");
-      CFile scrollFile(fileName, CFile::modeCreate | CFile::modeWrite);
+      if (fScripts.size() >= 1) {
+         fileName = fScripts[0].GetName();
+      }
+      //CFile scrollFile(fileName, CFile::modeCreate | CFile::modeWrite);
+      long capacityBytes = e.GetTextLengthEx( GTL_CLOSE | GTL_NUMBYTES );
+      PNBufferTransfer* pXfer = gComm.SetupTransfer( capacityBytes );
       EDITSTREAM editStream;
-      editStream.dwCookie = (DWORD_PTR)&scrollFile;
+      editStream.dwCookie = (DWORD_PTR)pXfer;
       editStream.pfnCallback = MemFileOutCallBack;
       e.StreamOut(SF_RTF, editStream);
-      scrollFile.Close();
+      //scrollFile.Close();
 
       gComm.SendFile(fileName);
       gComm.SendCommand(AComm::kScroll, AComm::kOn);
@@ -359,6 +368,30 @@ BOOL AScrollDialog::OnInitDialog()
 
    return TRUE;  // return TRUE unless you set the focus to a control
 }
+
+#ifdef _REMOTE
+
+static DWORD CALLBACK MemFileInCallBack(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb)
+{
+   *pcb = ((PNBufferTransfer*)dwCookie)->getBytes(pbBuff, cb);
+   return 0;
+}
+
+LRESULT AScrollDialog::OnUpdateData(WPARAM ccode, LPARAM buffer)
+{
+   // transfer the new data in the buffer provided into the edit control and rename the doc if needed
+   PNBufferTransfer* pXfer = reinterpret_cast<PNBufferTransfer*>(buffer);
+   EDITSTREAM editStream;
+   editStream.dwCookie = (DWORD_PTR)pXfer;
+   editStream.pfnCallback = MemFileInCallBack;
+   fRichEdit.StreamIn(SF_RTF, editStream);
+
+   // the final completion message is triggered here instead of from the lower levels
+   gComm.SendCommand( AComm::kFileTransfer, ccode );
+   return 0;
+}
+
+#endif // _REMOTE
 
 BOOL AScrollDialog::OnEraseBkgnd(CDC* pDC)
 {

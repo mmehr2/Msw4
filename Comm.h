@@ -12,6 +12,7 @@
 // classes
 
 class ACommImpl;
+class PNBufferTransfer;
 
 class AComm
 {
@@ -30,6 +31,8 @@ public:
       kContactRemote    = 'C',
       kPreferences      = 'P',
       kTestNetwork      = 'T',
+      kFileTransfer     = 'F',
+      kBlockTransfer    = 'B',
 
       // modifiers
       kOn            = 2,
@@ -121,6 +124,7 @@ public:
    /** begin a file transfer
      */
    bool SendFile(LPCTSTR file);
+   PNBufferTransfer* SetupTransfer( long maxNumBytes );
 
    /** terminate the current connection and session and go to idle
      */

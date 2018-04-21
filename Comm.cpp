@@ -439,7 +439,7 @@ void AComm::EndChat() {
       this->SetState(kChatting); // with failure code reported
 }
 
-bool AComm::SendFile(LPCTSTR /*filename*/) {
+bool AComm::SendFile(LPCTSTR filename) {
    ASSERT(this->IsMaster());
    //if (fImpl->fFs.get() && fImpl->fChat) {
    //   char buffer[_MAX_PATH] = {0};
@@ -453,8 +453,18 @@ bool AComm::SendFile(LPCTSTR /*filename*/) {
    // Step 2 - turn on scrolling mode (2-way back-channel reception)
    fRemote->StartScrollMode();
    // Step 3 - send the script/file transfer start message (other messages triggered by Secondary as needed to get data)
+   fRemote->SetScriptName(filename);
+   fRemote->SendOperation(kFileSend);
    // Step 4 - wait for Secondary xfer done response before returning (which starts scrolling)
-   return true;
+   this->RemoteBusyWait();
+   bool result = fRemote->isSuccessful();
+
+   return result;
+}
+
+PNBufferTransfer* AComm::SetupTransfer( long cap )
+{
+   return fRemote->PrepareDataTransfer( cap );
 }
 
 bool AComm::TestLineConditions()

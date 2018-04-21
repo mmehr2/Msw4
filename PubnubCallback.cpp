@@ -103,14 +103,26 @@ namespace rem {
       return result;
    }
 
-   std::vector<std::string> split( const char* data_, const char* delim )
+   StringVector split( const char* data_, const char* delim )
    {
-      std::vector<std::string> result;
+      StringVector result;
       CStringA data(data_);
       int pos = 0;
       CStringA token;
       for (token = data.Tokenize(delim, pos); !token.IsEmpty(); token = data.Tokenize(delim, pos)) {
          result.push_back( (LPCSTR)token );
+      }
+      return result;
+   }
+
+   std::string join( const StringVector& data_, const char* delim_ )
+   {
+      std::string result = "";
+      const char* delim = "";
+      for (StringVector::const_iterator it = data_.begin(); it != data_.end(); ++it) {
+         result += delim;
+         result += *it;
+         delim = delim_;
       }
       return result;
    }

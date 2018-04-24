@@ -5,6 +5,8 @@
 #include "RemoteDlg.h"
 #include "AddSlaveDlg.h"
 #include "Msw.h"
+#include "MswView.h"
+#include "MswDoc.h"
 #include "MainFrm.h"
 
 ARemoteDlg::ARemoteDlg() : 
@@ -131,6 +133,11 @@ void ARemoteDlg::OnConnect()
       CWaitCursor wait;
       this->opInProgress = AComm::kConnect; //kContact; // use this until the Test command is automated into the Connect call
       gComm.StartChat(slave);
+      // must set the active view's document's ModifiedSinceSend flag to allow scrolling to send the script this time
+      const size_t s = theApp.fScriptQueue.GetActive();
+      ASSERT(s < theApp.fScriptQueue.size());
+      AMswView* activeView = theApp.fScriptQueue[s].GetView();
+      activeView->GetDocument()->SetModifiedSinceSendFlag(TRUE);
    }
 }
 

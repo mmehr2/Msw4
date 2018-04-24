@@ -5,6 +5,7 @@
 #include "ScrollDialog.h"
 #include "MainFrm.h"
 #include "MswView.h"
+#include "MswDoc.h"
 #include "RtfMemFile.h"
 #include "PubBufferTransfer.h"
 
@@ -325,23 +326,45 @@ BOOL AScrollDialog::OnInitDialog()
 #ifdef _REMOTE
    // make this window the target for remote commands
    gComm.SetParent(m_hWnd);
+   AMswDoc* pDoc = activeView->GetDocument();
+   // skip the entire file transfer if document was not modified since last time it was sent successfully
+   bool isModified = pDoc->IsModifiedSinceSend() ? true : false;
+   // don't forget to allow local mode, even if remote is enabled, check to see if actually connected
+   bool isRemoted = gComm.IsConnected();
    if (gComm.IsMaster())
-   {  // spit out the file to be scrolled, and send it to the remote installation
-      LPCTSTR fileName = _T("MswScript.rtf");
-      if (fScripts.size() >= 1) {
-         fileName = fScripts[0].GetName();
-      }
-      //CFile scrollFile(fileName, CFile::modeCreate | CFile::modeWrite);
-      long capacityBytes = e.GetTextLengthEx( GTL_CLOSE | GTL_NUMBYTES );
-      PNBufferTransfer* pXfer = gComm.SetupTransfer( capacityBytes );
-      EDITSTREAM editStream;
-      editStream.dwCookie = (DWORD_PTR)pXfer;
-      editStream.pfnCallback = MemFileOutCallBack;
-      e.StreamOut(SF_RTF, editStream);
-      //scrollFile.Close();
+   {
+      if (isRemoted && isModified) {
+         // spit out the file to be scrolled, and send it to the remote installation
+         CString fileName = _T("MswScript.rtf");
+         if (fScripts.size() >= 1) {
+            fileName = fScripts[0].GetName();
+         }
 
-      gComm.SendFile(fileName);
-      gComm.SendCommand(AComm::kScroll, AComm::kOn);
+         // transfer the data out of the richedit control
+         long capacityBytes = e.GetTextLengthEx( GTL_CLOSE | GTL_NUMBYTES );
+         PNBufferTransfer* pXfer = gComm.SetupTransfer( capacityBytes );
+         EDITSTREAM editStream;
+         editStream.dwCookie = (DWORD_PTR)pXfer;
+         editStream.pfnCallback = MemFileOutCallBack;
+         e.StreamOut(SF_RTF, editStream);
+
+         // attempt to send the script to the remote Secondary
+         bool res = gComm.SendFile(fileName);
+         if (res) {
+            // transfer OK: clear the changes-sent flag in the document and continue scrolling
+            pDoc->SetModifiedSinceSendFlag(FALSE);
+            TRACE("CLEARED MOD-SINCE-SEND FLAG OF DOCUMENT %s\n", pDoc->GetPathName());
+         } else {
+            // did not complete transfer ok - put up error box and abort the scroll
+            AfxMessageBox(_T("ERROR - Unable to transfer script to Secondary."), MB_OK | MB_ICONERROR);
+            TRACE("** ERROR IN SCRIPT TRANSFER - ABORTING SCROLL **\n");
+            // TBD - need to fake a current message here? or just take the guts of the routine and make a new one to call here...
+            this->OnToggleScroll();
+            return TRUE;  // return TRUE unless you set the focus to a control
+         }
+         // continue scroll by sending the scroll command to the remote here
+         gComm.SendCommand(AComm::kScroll, AComm::kOn);
+      }
    } else if (gComm.IsSlave() && !this->IsTopParentActive()) {
       this->ActivateTopParent();
    }

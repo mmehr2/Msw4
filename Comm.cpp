@@ -441,6 +441,8 @@ void AComm::EndChat() {
 
 bool AComm::SendFile(LPCTSTR filename) {
    ASSERT(this->IsMaster());
+   if (!fRemote->isConversing())
+      return false;
    //if (fImpl->fFs.get() && fImpl->fChat) {
    //   char buffer[_MAX_PATH] = {0};
    //   VERIFY(::sprintf_s(buffer, _countof(buffer), "%S", filename) < mCountOf(buffer));

@@ -12,6 +12,7 @@ class AMswView;
 
 class AMswDoc : public CRichEditDoc
 {
+   bool modifiedSinceSend;
 protected: // create from serialization only
 	AMswDoc();
 	DECLARE_DYNCREATE(AMswDoc)
@@ -28,6 +29,9 @@ public:  // methods
 	int MapType(int nType);
 	void ForceDelayed(CMDIFrameWnd* pFrameWnd);
    int GetStreamFormat() const;
+	virtual void SetModifiedFlag(BOOL bModified = TRUE);
+   BOOL IsModifiedSinceSend() const { return modifiedSinceSend ? TRUE : FALSE; }
+   void SetModifiedSinceSendFlag(BOOL bModified) { modifiedSinceSend = (bModified != FALSE ? true : false); }
 
    virtual CRichEditCntrItem* CreateClientItem(REOBJECT*) const;
 	virtual void OnDeactivateUI(BOOL bUndoable);

@@ -35,7 +35,8 @@ END_MESSAGE_MAP()
 
 AMswDoc::AMswDoc() :
    m_nDocType(DocType::RD_UNKNOWN),
-	m_nNewDocType(DocType::RD_UNKNOWN)
+	m_nNewDocType(DocType::RD_UNKNOWN),
+   modifiedSinceSend(false)
 {
 }
 
@@ -356,4 +357,13 @@ int AMswDoc::GetStreamFormat() const
 CRichEditCntrItem* AMswDoc::CreateClientItem(REOBJECT* preo) const
 {  // cast away constness of this
 	return new CMswCntrItem(preo, (AMswDoc*)this);
+}
+
+void AMswDoc::SetModifiedFlag(BOOL bModified)
+{
+   // every time we are told the doc is modified, also set the modifiedSinceSend flag
+   // NOTE: this will be cleared every time the changes are sent to the remote secondary
+	if (bModified == TRUE)
+		modifiedSinceSend = true;
+	CRichEditDoc::SetModifiedFlag(bModified);
 }

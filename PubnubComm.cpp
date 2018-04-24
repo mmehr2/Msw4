@@ -1145,6 +1145,8 @@ const char* APubnubComm::FormatOperation(int opCode)
       cmd = this->FormatCommand( AComm::kTestNet2, 2, 0, pReceiver->GetName() );
       break;
    case AComm::kFileSend:
+      // PRIMARY: set kFileSending state (must happen first thing, before the commend gets sent)
+      this->fLinked = kFileSending;
       // make sure that the buffer variables are set
       temp = pBuffer->splitBuffer();
       xfer.SetBlockStats( pBuffer->size(), pBuffer->blockSize(), temp );
@@ -1236,7 +1238,7 @@ const char* APubnubComm::FormatCommand( int opCode, int arg1, int /*arg2*/, cons
       sprintf_s(buffer, BUF_SIZE, "%c%d,%s", AComm::kFileTransfer, arg1, argS.c_str());
       break;
    case AComm::kFileReceive:
-      sprintf_s(buffer, BUF_SIZE, "%cd,%s", AComm::kBlockTransfer, arg1, argS.c_str());
+      sprintf_s(buffer, BUF_SIZE, "%c%d,%s", AComm::kBlockTransfer, arg1, argS.c_str());
       break;
    default:
       buffer[0] = 0;
@@ -1319,7 +1321,7 @@ PNBufferTransfer* APubnubComm::PrepareDataTransfer(long capacityBytes)
 void APubnubComm::SetScriptName( LPCTSTR name_ )
 {
    CT2A name(name_);
-   this->xfer.scriptName = name;
+   this->xfer.scriptName = name.m_psz;
 }
 
 void APubnubComm::OnFileTransfer(int onOff, const std::string& payload )
@@ -1351,6 +1353,8 @@ void APubnubComm::OnFileTransfer(int onOff, const std::string& payload )
          // if OFF (cancel):
          //    set kFileCanceling state if anything in progress to wait for, else
          //    set kScrolling state again
+         this->fLinked = kScrolling;
+         this->OnFileTransferComplete( AComm::kSuccess ); // need canceled code?
       }
    } else {
       // PRIMARY:

@@ -775,9 +775,9 @@ LRESULT AMainFrame::OnUpdateSettings(WPARAM wParam, LPARAM /*lParam*/)
    return 0;
 }
 
-LRESULT AMainFrame::OnUpdateStatus(WPARAM wParam, LPARAM /*lParam*/)
+LRESULT AMainFrame::OnUpdateStatus(WPARAM wParam, LPARAM lParam)
 {
-   TRACE("UI RECEIVED TRANSACTION STATUS UPDATE CODE: %u\n", (UINT)wParam);
+   TRACE("UI RECEIVED TRANSACTION STATUS UPDATE CODE: %u on operation %u\n", (UINT)lParam, (UINT)wParam);
    return 0;
 }
 #endif // _REMOTE
